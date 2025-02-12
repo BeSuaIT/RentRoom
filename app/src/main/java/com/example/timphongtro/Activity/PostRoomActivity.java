@@ -1,6 +1,5 @@
 package com.example.timphongtro.Activity;
 
-
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -31,6 +30,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -60,7 +60,9 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -69,15 +71,15 @@ import java.util.regex.Pattern;
 public class PostRoomActivity extends AppCompatActivity {
     FirebaseUser userCurrent;
     ImageView btnBack;
-    EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater, edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
+    EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
+            edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
     Button btn_create_room;
     RadioButton radiobtnChungCu, radiobtnTro;
     ActivityResultLauncher<Intent> activityResultLauncher;
     LinearLayout pickImgAlbum, pickImgCamera;
-    CheckBox checkboxtoilet, checkboxfloor, checkbox_time_flex, checkboxfingerprint, checkboxbacony, checkboxpet, checkbox_w_owner, checkbox_air_condition, checkbox_heater, checkbox_curtain, checkboxfridge, checkboxbed, checkboxwardrobe, checkbox_washing_machine, checkboxsofa, checkboxNam, checkboxNu;
-//    RadioButton radiobtnPhongTrong;
-//    RadioButton radiobtnDaChoThue;
-
+    CheckBox checkboxtoilet, checkboxfloor, checkbox_time_flex, checkboxfingerprint, checkboxbacony, checkboxpet,
+            checkbox_w_owner, checkbox_air_condition, checkbox_heater, checkbox_curtain, checkboxfridge, checkboxbed,
+            checkboxwardrobe, checkbox_washing_machine, checkboxsofa, checkboxNam, checkboxNu;
     ImageView uploadPicture1, uploadPicture2;
     String imageURL1;
     //    String imageURL2;
@@ -85,18 +87,19 @@ public class PostRoomActivity extends AppCompatActivity {
     Bitmap photo;
     //    Uri uri2;
     Spinner spinnerCity, spinnerDistrict, spinnerWard;
-
     boolean isUploadImg1;
     boolean isUploadImg2;
     BottomSheetDialog dialog;
     List<String> cities, districts, wards;
-
     String path;
     ArrayList<FurnitureClass> furnitures;
-
     ArrayList<ExtensionRoom_class> extensions_room;
     Address address;
     private ActivityResultLauncher<Intent> cameraLauncher;
+    // Define a map to store image URIs and their corresponding ImageView
+    private Map<ImageView, Uri> imageUriMap = new HashMap<>();
+    private GridLayout imageGridLayout;
+    private static final int MAX_IMAGES = 5; // Maximum number of images allowed
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +108,11 @@ public class PostRoomActivity extends AppCompatActivity {
 
         initView();
 
+//        // Initialize the GridLayout for images
+//        imageGridLayout = findViewById(R.id.imageGridLayout);
+//
+//        // Set up the button to add images
+//        findViewById(R.id.btnAddImage).setOnClickListener(v -> showBottomDialog());
         isUploadImg1 = false;
         cities = new ArrayList<>();
         districts = new ArrayList<>();
@@ -129,7 +137,6 @@ public class PostRoomActivity extends AppCompatActivity {
             }
         });
         getDataForSpinnerDistrict();
-
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -161,9 +168,6 @@ public class PostRoomActivity extends AppCompatActivity {
                 photo = (Bitmap) data.getExtras().get("data");
                 uploadPicture1.setImageBitmap(photo);
                 isUploadImg1 = true;
-//                uri = data.getData();
-//                uploadPicture1.setImageURI(uri);
-//                isUploadImg1 = true;
                 dialog.dismiss();
             } else {
                 isUploadImg1 = false;
@@ -199,9 +203,6 @@ public class PostRoomActivity extends AppCompatActivity {
         uploadPicture1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent photoPicker = new Intent(Intent.ACTION_PICK);
-//                photoPicker.setType("image/*");
-//                activityResultLauncher.launch(photoPicker);
                 showBottomDialog();
             }
         });
@@ -209,8 +210,8 @@ public class PostRoomActivity extends AppCompatActivity {
 
     public void getDataForSpinnerDistrict() {
         districts.clear();
-        DatabaseReference databaseReferennceDistrict = FirebaseDatabase.getInstance().getReference();
-        databaseReferennceDistrict.child(path).addValueEventListener(new ValueEventListener() {
+        DatabaseReference databaseReferenceDistrict = FirebaseDatabase.getInstance().getReference();
+        databaseReferenceDistrict.child(path).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot childSnap : snapshot.getChildren()) {
@@ -231,9 +232,9 @@ public class PostRoomActivity extends AppCompatActivity {
 
     public void getDataForSpinnerCity() {
         cities.clear();
-        DatabaseReference databaseReferennce = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
         path = "city";
-        databaseReferennce.child(path).addValueEventListener(new ValueEventListener() {
+        databaseReference.child(path).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot childSnap : snapshot.getChildren()) {
@@ -264,7 +265,6 @@ public class PostRoomActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                    while (!uriTask.isComplete()) ;
                     Uri urlImage = uriTask.getResult();
                     imageURL1 = String.valueOf(urlImage);
                     onClickPushData();
@@ -285,17 +285,9 @@ public class PostRoomActivity extends AppCompatActivity {
             String uniqueImageName = "image_" + System.currentTimeMillis() + ".jpg";
             FirebaseStorage storage = FirebaseStorage.getInstance();
             StorageReference storageRef = storage.getReference("roomImgage").child(uniqueImageName);
-            // Tạo một tên duy nhất cho file hình ảnh trên Firebase Sorage
-
-            // Tham chiếu đến file trên Firebase Storage
-
-            // Tải lên mảng byte lên Firebase Storage
             UploadTask uploadTask = storageRef.putBytes(imageData);
             uploadTask.addOnSuccessListener(taskSnapshot -> {
-                // Thành công, bạn có thể lấy URL của hình ảnh tải lên từ taskSnapshot.getDownloadUrl()
-                // Ví dụ: Uri downloadUri = taskSnapshot.getDownloadUrl();
                 Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                while (!uriTask.isComplete()) ;
                 Uri urlImage = uriTask.getResult();
                 imageURL1 = String.valueOf(urlImage);
                 onClickPushData();
@@ -375,21 +367,8 @@ public class PostRoomActivity extends AppCompatActivity {
 
         DatabaseReference myRef = database.getReference("rooms/" + path);
         userCurrent = FirebaseAuth.getInstance().getCurrentUser();
-//        DatabaseReference myPostRef = null;
-//
-//        if (userCurrent != null) {
-//            myPostRef = database.getReference("myRooms/" + userCurrent.getUid());
-//        }
 
         int status_room = 0;
-//        if (radiobtnPhongTrong.isChecked() || radiobtnDaChoThue.isChecked()) {
-//            if (radiobtnDaChoThue.isChecked()) {
-//                status_room = 1;
-//            }
-//        } else {
-//            isValid = false;
-//            radiobtnTro.setError("Vui lòng chọn tình trạng phòng");
-//        }
 
         if (isEmpty(edtArea)) {
             edtArea.setError("Vui lòng nhập diện tích");
@@ -465,9 +444,7 @@ public class PostRoomActivity extends AppCompatActivity {
         extensions_room = new ArrayList<>();
         handleDataExtensions();
 
-
         ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1, "");
-//        saveImage();
 
         if (furnitures.isEmpty()) {
             isValid = false;
@@ -501,8 +478,6 @@ public class PostRoomActivity extends AppCompatActivity {
                     Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show();
                 }
             });
-//            Intent main = new Intent(this, MainActivity.class);
-//            startActivity(main);
         } else {
             Toast.makeText(PostRoomActivity.this, "Vui lòng nhập đầy đủ các trường dữ liệu", Toast.LENGTH_SHORT).show();
         }
@@ -565,58 +540,54 @@ public class PostRoomActivity extends AppCompatActivity {
     }
 
     void initView() {
-        btnBack = (ImageView) this.<View>findViewById(R.id.btnBack);
+        btnBack = this.findViewById(R.id.btnBack);
 
-        edtTitleRoom = (EditText) this.<View>findViewById(R.id.edtTitleRoom);
-        edtPrice = (EditText) this.<View>findViewById(R.id.edtPrice);
-        edtDeposit = (EditText) this.<View>findViewById(R.id.edtDeposit);
+        edtTitleRoom = this.findViewById(R.id.edtTitleRoom);
+        edtPrice = this.findViewById(R.id.edtPrice);
+        edtDeposit = this.findViewById(R.id.edtDeposit);
 
-        edtInternet = (EditText) this.<View>findViewById(R.id.edtInternet);
-        edtElectric = (EditText) this.<View>findViewById(R.id.edtElectric);
-        edtWater = (EditText) this.<View>findViewById(R.id.edtWater);
+        edtInternet = this.findViewById(R.id.edtInternet);
+        edtElectric = this.findViewById(R.id.edtElectric);
+        edtWater = this.findViewById(R.id.edtWater);
 
-        radiobtnChungCu = (RadioButton) this.<View>findViewById(R.id.radiobtnChungCu);
-        radiobtnTro = (RadioButton) this.<View>findViewById(R.id.radiobtnTro);
+        radiobtnChungCu = this.findViewById(R.id.radiobtnChungCu);
+        radiobtnTro = this.findViewById(R.id.radiobtnTro);
 
-        edtArea = (EditText) this.<View>findViewById(R.id.edtArea);
-        edtPhone = (EditText) this.<View>findViewById(R.id.edtPhone);
-        edtFloor = (EditText) this.<View>findViewById(R.id.edtFloor);
-        edtPerson = (EditText) this.<View>findViewById(R.id.edtPerson);
-        edtDescriptionRoom = (EditText) this.<View>findViewById(R.id.edtDescriptionRoom);
-        edtPark = (EditText) this.<View>findViewById(R.id.edtPark);
+        edtArea = this.findViewById(R.id.edtArea);
+        edtPhone = this.findViewById(R.id.edtPhone);
+        edtFloor = this.findViewById(R.id.edtFloor);
+        edtPerson = this.findViewById(R.id.edtPerson);
+        edtDescriptionRoom = this.findViewById(R.id.edtDescriptionRoom);
+        edtPark = this.findViewById(R.id.edtPark);
 
-        checkboxtoilet = (CheckBox) this.<View>findViewById(R.id.checkboxtoilet);
-        checkboxfloor = (CheckBox) this.<View>findViewById(R.id.checkboxfloor);
-        checkbox_time_flex = (CheckBox) this.<View>findViewById(R.id.checkbox_time_flex);
-        checkboxfingerprint = (CheckBox) this.<View>findViewById(R.id.checkboxfingerprint);
-        checkboxbacony = (CheckBox) this.<View>findViewById(R.id.checkboxbacony);
-        checkboxpet = (CheckBox) this.<View>findViewById(R.id.checkboxpet);
-        checkbox_w_owner = (CheckBox) this.<View>findViewById(R.id.checkbox_w_owner);
+        checkboxtoilet = this.findViewById(R.id.checkboxtoilet);
+        checkboxfloor = this.findViewById(R.id.checkboxfloor);
+        checkbox_time_flex = this.findViewById(R.id.checkbox_time_flex);
+        checkboxfingerprint = this.findViewById(R.id.checkboxfingerprint);
+        checkboxbacony = this.findViewById(R.id.checkboxbacony);
+        checkboxpet = this.findViewById(R.id.checkboxpet);
+        checkbox_w_owner = this.findViewById(R.id.checkbox_w_owner);
 
-        checkbox_air_condition = (CheckBox) this.<View>findViewById(R.id.checkbox_air_condition);
-        checkbox_heater = (CheckBox) this.<View>findViewById(R.id.checkbox_heater);
-        checkbox_curtain = (CheckBox) this.<View>findViewById(R.id.checkbox_curtain);
-        checkboxfridge = (CheckBox) this.<View>findViewById(R.id.checkboxfridge);
-        checkboxbed = (CheckBox) this.<View>findViewById(R.id.checkboxbed);
-        checkboxwardrobe = (CheckBox) this.<View>findViewById(R.id.checkboxwardrobe);
-        checkbox_washing_machine = (CheckBox) this.<View>findViewById(R.id.checkbox_washing_machine);
-        checkboxsofa = (CheckBox) this.<View>findViewById(R.id.checkboxsofa);
+        checkbox_air_condition = this.findViewById(R.id.checkbox_air_condition);
+        checkbox_heater = this.findViewById(R.id.checkbox_heater);
+        checkbox_curtain = this.findViewById(R.id.checkbox_curtain);
+        checkboxfridge = this.findViewById(R.id.checkboxfridge);
+        checkboxbed = this.findViewById(R.id.checkboxbed);
+        checkboxwardrobe = this.findViewById(R.id.checkboxwardrobe);
+        checkbox_washing_machine = this.findViewById(R.id.checkbox_washing_machine);
+        checkboxsofa = this.findViewById(R.id.checkboxsofa);
 
-        checkboxNam = (CheckBox) this.<View>findViewById(R.id.checkboxNam);
-        checkboxNu = (CheckBox) this.<View>findViewById(R.id.checkboxNu);
+        checkboxNam = this.findViewById(R.id.checkboxNam);
+        checkboxNu = this.findViewById(R.id.checkboxNu);
 
-//        radiobtnPhongTrong = (RadioButton) this.<View>findViewById(R.id.radiobtnPhongTrong);
-//        radiobtnDaChoThue = (RadioButton) this.<View>findViewById(R.id.radiobtnDaChoThue);
+        btn_create_room = this.findViewById(R.id.btn_create_room);
 
-        btn_create_room = (Button) this.<View>findViewById(R.id.btn_create_room);
+        uploadPicture1 = findViewById(R.id.imageViewP1);
 
-        uploadPicture1 = (ImageView) findViewById(R.id.imageViewP1);
-//        uploadPicture2 = (ImageView) findViewById(R.id  .imageViewP2);
+        spinnerCity = findViewById(R.id.spinnerCity);
+        spinnerDistrict = findViewById(R.id.spinnerDistrict);
 
-        spinnerCity = (Spinner) findViewById(R.id.spinnerCity);
-        spinnerDistrict = (Spinner) findViewById(R.id.spinnerDistrict);
-
-        edtAddress = (EditText) findViewById(R.id.edtAddress);
+        edtAddress = findViewById(R.id.edtAddress);
     }
 
     private void showBottomDialog() {
@@ -641,19 +612,12 @@ public class PostRoomActivity extends AppCompatActivity {
         pickImgCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent cameraIntent = new Intent(ACTION_IMAGE_CAPTURE);
-//                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 if (ActivityCompat.checkSelfPermission(PostRoomActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(PostRoomActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
                     return;
                 }
-//                cameraIntent.setType("image/*");
-//                activityResultLauncher.launch(cameraIntent);
-
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 cameraLauncher.launch(cameraIntent);
-
-
             }
         });
 

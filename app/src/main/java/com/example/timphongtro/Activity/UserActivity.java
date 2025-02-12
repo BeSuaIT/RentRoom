@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -23,27 +22,20 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.timphongtro.Adapter.ExtensionAdapter;
 import com.example.timphongtro.Adapter.RoomAdapter;
-import com.example.timphongtro.Entity.ExtensionRoom_class;
 import com.example.timphongtro.Entity.Room;
 import com.example.timphongtro.Entity.User;
 import com.example.timphongtro.R;
-import com.google.firebase.Firebase;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
 public class UserActivity extends AppCompatActivity {
 
-    private ImageView imageView_back;
     private TextView username, phone, email,circleImageView;
     private RecyclerView rcvUser;
     private RoomAdapter roomAdapter;
@@ -60,14 +52,13 @@ public class UserActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
         username = findViewById(R.id.username);
-        imageView_back = findViewById(R.id.imageView_back);
+        ImageView imageView_back = findViewById(R.id.imageView_back);
         rcvUser = findViewById(R.id.rcvUser);
         phone = findViewById(R.id.phone);
         email = findViewById(R.id.email);
         emailLinear = findViewById(R.id.emailLinear);
         phoneLinear = findViewById(R.id.phoneLinear);
         circleImageView = findViewById(R.id.circleImageView);
-        imageView_back.setColorFilter(ContextCompat.getColor(this, R.color.white));
         imageView_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -152,23 +143,18 @@ public class UserActivity extends AppCompatActivity {
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(UserActivity.this);
                         builder.setTitle("Bạn có muốn thực hiện một cuộc gọi")
-                                .setMessage("Đây là nội dung của dialog.").setPositiveButton("Có", new DialogInterface.OnClickListener() {
+                                .setMessage("Ứng dụng sẽ mở điện thoại lên và gọi cho số này").setPositiveButton("Có", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
-                                                    != PackageManager.PERMISSION_GRANTED) {
-                                                // Quyền gọi điện thoại chưa được cấp
-                                                // Yêu cầu quyền gọi điện thoại
-                                                ActivityCompat.requestPermissions(UserActivity.this,
-                                                        new String[]{android.Manifest.permission.CALL_PHONE},
-                                                        CALL_PHONE_PERMISSION_REQUEST_CODE);
-                                            } else {
-                                                // Quyền gọi điện thoại đã được cấp
-                                                // Tiến hành thực hiện cuộc gọi điện thoại
-//                            Toast.makeText(getApplicationContext(), roomData.getPhone(), Toast.LENGTH_SHORT).show();
-                                                makePhoneCall();
-                                            }
+                                        if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
+                                                != PackageManager.PERMISSION_GRANTED) {
+                                            // Quyền gọi điện thoại chưa được cấp
+                                            // Yêu cầu quyền gọi điện thoại
+                                            ActivityCompat.requestPermissions(UserActivity.this,
+                                                    new String[]{android.Manifest.permission.CALL_PHONE},
+                                                    CALL_PHONE_PERMISSION_REQUEST_CODE);
+                                        } else {
+                                            makePhoneCall();
                                         }
                                     }
                                 }).setNegativeButton("Không", new DialogInterface.OnClickListener() {

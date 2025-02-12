@@ -120,7 +120,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
 
         path = "city/HaNoi/district";
 
-
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -397,34 +397,6 @@
                                     android:src="@drawable/ic_upload" />
 
                             </LinearLayout>
-
-                            <!--                            <TextView-->
-                            <!--                                android:id="@+id/txvUploadImg3"-->
-                            <!--                                android:layout_width="match_parent"-->
-                            <!--                                android:layout_height="wrap_content"-->
-                            <!--                                android:layout_marginLeft="20dp"-->
-                            <!--                                android:layout_marginTop="10dp"-->
-                            <!--                                android:layout_marginBottom="10dp"-->
-                            <!--                                android:layout_weight="1"-->
-                            <!--                                android:text="Ảnh 2"-->
-                            <!--                                android:textColor="@color/black"-->
-                            <!--                                android:textSize="16sp"-->
-                            <!--                                android:textStyle="bold" />-->
-
-                            <!--                            <LinearLayout-->
-                            <!--                                android:layout_width="match_parent"-->
-                            <!--                                android:layout_height="match_parent"-->
-                            <!--                                android:layout_weight="1"-->
-                            <!--                                android:orientation="vertical">-->
-
-                            <!--                                <ImageView-->
-                            <!--                                    android:id="@+id/imageViewP2"-->
-                            <!--                                    android:layout_width="match_parent"-->
-                            <!--                                    android:layout_height="250dp"-->
-                            <!--                                    android:layout_weight="1"-->
-                            <!--                                    android:background="@drawable/border"-->
-                            <!--                                    android:src="@drawable/ic_upload" />-->
-                            <!--                            </LinearLayout>-->
 
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
@@ -1536,5 +1508,5 @@
                 android:text="Cập nhật phòng" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
