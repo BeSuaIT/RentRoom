@@ -28,7 +28,6 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText txtemail;
     private EditText txtpassword;
     private Button btnDangky;
-    private TextView txtViewDangnhap;
     private FirebaseAuth mAuth;
 
 
@@ -43,7 +42,7 @@ public class RegisterActivity extends AppCompatActivity {
         txtemail = (EditText) findViewById(R.id.txtemail);
         txtpassword = (EditText) findViewById(R.id.txtpassword);
         btnDangky = (Button) findViewById(R.id.btnDangky);
-        txtViewDangnhap = (TextView) findViewById(R.id.txtviewDangnhap);
+        TextView txtViewDangnhap = (TextView) findViewById(R.id.txtviewDangnhap);
         mAuth = FirebaseAuth.getInstance();
         txtViewDangnhap.setOnClickListener(new View.OnClickListener() {
             @Override
