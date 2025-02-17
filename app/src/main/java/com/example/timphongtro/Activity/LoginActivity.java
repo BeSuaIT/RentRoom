@@ -19,8 +19,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.timphongtro.Entity.User;
-import com.example.timphongtro.Fragment.HomeFragment;
 import com.example.timphongtro.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -64,14 +62,14 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
-        txtemail = (EditText) findViewById(R.id.txtemail);
-        txtpassword = (EditText) findViewById(R.id.txtpassword);
-        textviewDangky = (TextView) findViewById(R.id.textviewDangky);
-        btnDangnhap = (Button) findViewById(R.id.btnDangnhap);
-        txtViewForgotPassword = (TextView) findViewById(R.id.txtViewForgotPassword);
-        imgGoogleSignin = (ImageView) findViewById(R.id.imgGoogleSignin);
-        imgGuest = (ImageView) findViewById(R.id.imgGuest);
-        imgFacebookSignin = (ImageView) findViewById(R.id.imgFacebookSignin);
+        txtemail = findViewById(R.id.txtemail);
+        txtpassword = findViewById(R.id.txtpassword);
+        textviewDangky = findViewById(R.id.textviewDangky);
+        btnDangnhap = findViewById(R.id.btnDangnhap);
+        txtViewForgotPassword = findViewById(R.id.txtViewForgotPassword);
+        imgGoogleSignin = findViewById(R.id.imgGoogleSignin);
+        imgGuest = findViewById(R.id.imgGuest);
+        imgFacebookSignin = findViewById(R.id.imgFacebookSignin);
         btnDangnhap.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -172,7 +170,6 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
-
     }
 
     public void handleSignInTask(Task<GoogleSignInAccount> task) {
@@ -180,8 +177,6 @@ public class LoginActivity extends AppCompatActivity {
 
             account = task.getResult(ApiException.class);
             Intent i = new Intent(LoginActivity.this, MainActivity.class);
-            final String getFullName = account.getDisplayName();
-            final String getEmail = account.getEmail();
             if (account != null) {
                 FirebaseGoogleAuth();
                 startActivity(i);
@@ -232,24 +227,12 @@ public class LoginActivity extends AppCompatActivity {
 
                                 }
                             });
-                            // Thêm dữ liệu vào Realtime
-//                            if(isElementInArray(account.getEmail(),emails)){
-
                                 userRef.child(Objects.requireNonNull(userData.getUid())).updateChildren(userMap).addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void unused) {
-//                                        Toast.makeText(LoginActivity.this, "update", Toast.LENGTH_SHORT).show();
+
                                     }
                                 });
-//                            }else {
-//                                userRef.child(Objects.requireNonNull(mAuth.getUid())).setValue(userMap).addOnSuccessListener(new OnSuccessListener<Void>() {
-//                                    @Override
-//                                    public void onSuccess(Void unused) {
-//                                        Toast.makeText(LoginActivity.this, "setvalue", Toast.LENGTH_SHORT).show();
-//                                    }
-//                                });
-//                            }
-
                         }
                     }
                 } else {
@@ -258,13 +241,4 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
-
-//    public boolean isElementInArray(String element, ArrayList<String> array) {
-//        for (String item : array) {
-//            if (item.equals(element)) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 }
