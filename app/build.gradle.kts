@@ -37,8 +37,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation ("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0-rc01")
+    implementation ("androidx.credentials:credentials:1.5.0-rc01")
+    implementation ("androidx.credentials:credentials-play-services-api:1.5.0-rc01")
     implementation("org.jetbrains:annotations:23.0.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

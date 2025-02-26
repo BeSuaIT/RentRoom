@@ -70,18 +70,12 @@ public class LoginActivity extends AppCompatActivity {
         imgGoogleSignin = findViewById(R.id.imgGoogleSignin);
         imgGuest = findViewById(R.id.imgGuest);
         imgFacebookSignin = findViewById(R.id.imgFacebookSignin);
-        btnDangnhap.setOnClickListener(new View.OnClickListener() {
 
+        btnDangnhap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Dangnhap();
-            }
-
-            private void Dangnhap() {
-                String email;
-                String password;
-                email = txtemail.getText().toString();
-                password = txtpassword.getText().toString();
+                String email = txtemail.getText().toString();
+                String password = txtpassword.getText().toString();
                 if (TextUtils.isEmpty(email)) {
                     Toast.makeText(getApplicationContext(), "Vui lòng nhập Email.", Toast.LENGTH_SHORT).show();
                     return;
@@ -104,7 +98,6 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
             }
-
         });
 
         imgFacebookSignin.setOnClickListener(new View.OnClickListener() {
@@ -152,29 +145,28 @@ public class LoginActivity extends AppCompatActivity {
                 activityResultLauncher.launch(signInIntent);
             }
         });
+
         textviewDangky.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Dangky();
-            }
-
-            private void Dangky() {
                 Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
                 startActivity(i);
+                finish();
             }
         });
+
         txtViewForgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
                 startActivity(i);
+                finish();
             }
         });
     }
 
     public void handleSignInTask(Task<GoogleSignInAccount> task) {
         try {
-
             account = task.getResult(ApiException.class);
             Intent i = new Intent(LoginActivity.this, MainActivity.class);
             if (account != null) {
@@ -182,14 +174,12 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(i);
                 Toast.makeText(this, "Đăng nhập thành công", Toast.LENGTH_SHORT).show();
                 finish();
-
             }
         } catch (ApiException e) {
             e.printStackTrace();
             Toast.makeText(this, "Lỗi đăng nhập", Toast.LENGTH_SHORT).show();
         }
     }
-
 
     private void FirebaseGoogleAuth() {
         AuthCredential authCredential = GoogleAuthProvider.getCredential(account.getIdToken(), null);

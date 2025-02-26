@@ -24,9 +24,9 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forgot_password);
 
-        EditText txtemail = (EditText) findViewById(R.id.txtemail);
-        Button btnForgotPassword = (Button) findViewById(R.id.btnForgotPassword);
-        Button btnBack = (Button) findViewById(R.id.btnBack);
+        EditText txtemail = findViewById(R.id.txtemail);
+        Button btnForgotPassword = findViewById(R.id.btnForgotPassword);
+        Button btnBack = findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -44,7 +44,6 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 }
                 else{
                     Toast.makeText(getApplicationContext(), "Vui lòng nhập Email.", Toast.LENGTH_SHORT).show();
-                    return;
                 }
             }
             private void onClickForgotPassWord() {
@@ -62,7 +61,6 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                                 }
                             }
                         });
-
             }
         });
 

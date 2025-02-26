@@ -1,40 +1,29 @@
 package com.example.timphongtro.Entity;
 
-import com.example.timphongtro.Entity.Room;
-
-import java.util.ArrayList;
-
 public class User {
-    private String email;
-
-    private String uid;
-
-    private String phone;
-
-    private String name;
-
+    private String email, uid, phone, name, permission, birthday;
     public User() {
     }
 
-    public User(String email, String uid, String name, String phone) {
+    public User(String email, String uid, String name, String phone, String permission) {
         this.email = email;
         this.uid = uid;
         this.name = name;
         this.phone = phone;
+        this.permission = permission;
     }
 
-    public User(String email, String uid, String name) {
-        this.email = email;
-        this.uid = uid;
-        this.name = name;
-
+    public String getPermission() {
+        return permission;
     }
-
-    public String getphone() {
+    public void setPermission(String permission) {
+        this.permission = permission;
+    }
+    public String getPhone() {
         return phone;
     }
 
-    public void setphone(String phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 

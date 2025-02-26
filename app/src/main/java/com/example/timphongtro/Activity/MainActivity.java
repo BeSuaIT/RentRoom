@@ -32,7 +32,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-
 public class MainActivity extends AppCompatActivity {
     NetworkChangeReceiver networkChangeReceiver;
     private boolean isReceiverRegistered = false;
@@ -65,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     startActivity(intent);
-//                    Toast.makeText(MainActivity.this, "Vui lòng đăng nhập để sử dụng chức năng này", Toast.LENGTH_SHORT).show();
                 }
             } else if (item.getItemId() == R.id.profile) {
                 if (user != null || account != null) {
@@ -73,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     startActivity(intent);
-//                    Toast.makeText(MainActivity.this,"Vui lòng đăng nhập để sử dụng chức năng này", Toast.LENGTH_SHORT).show();
                 }
             }
             return true;
@@ -86,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-
         super.onResume();
         // Đăng ký BroadcastReceiver khi Activity được hiển thị
         if (!isReceiverRegistered) {
@@ -132,7 +128,6 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Intent login = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(login);
-//                Toast.makeText(MainActivity.this, "Bạn phải đăng nhập để sử dụng chức năng này", Toast.LENGTH_SHORT).show();
             }
         });
 

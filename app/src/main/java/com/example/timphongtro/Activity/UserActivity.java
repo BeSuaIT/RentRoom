@@ -79,7 +79,7 @@ public class UserActivity extends AppCompatActivity {
                         User user = snapshot.getValue(User.class);
                         if (user != null) {
                             username.setText(user.getName());
-                            phone.setText(user.getphone());
+                            phone.setText(user.getPhone());
                             email.setText(user.getEmail());
                             circleImageView.setText(getFirstLetter(user.getName()));
                         }

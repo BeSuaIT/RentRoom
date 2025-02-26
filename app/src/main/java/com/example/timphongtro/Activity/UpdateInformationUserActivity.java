@@ -1,6 +1,5 @@
 package com.example.timphongtro.Activity;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -10,12 +9,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.timphongtro.Entity.User;
 import com.example.timphongtro.R;
@@ -40,29 +35,21 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
     private String name, email, phone;
     private EditText txtname, txtemail, txtphone;
     private ImageView imageViewBack;
-
     private LinearLayout linearEmail;
     private User user;
-//    String imageURL;
-//    Uri uri;
     private Button btnCapnhat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_updateinformationuser);
-//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-//            return insets;
-//        });
-        txtname = (EditText) findViewById(R.id.txtname);
-        txtemail = (EditText) findViewById(R.id.txtemail);
-        imageViewBack = (ImageView) findViewById(R.id.imageViewBack);
-        btnCapnhat = (Button) findViewById(R.id.btnCapnhat);
+
+        txtname = findViewById(R.id.txtname);
+        txtemail = findViewById(R.id.txtemail);
+        imageViewBack = findViewById(R.id.imageViewBack);
+        btnCapnhat = findViewById(R.id.btnCapnhat);
         mUser = FirebaseAuth.getInstance().getCurrentUser();
-        txtphone = (EditText) findViewById(R.id.txtphone);
+        txtphone = findViewById(R.id.txtphone);
         linearEmail = findViewById(R.id.linearEmail);
         imageViewBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,7 +67,7 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
                     user = snapshot.getValue(User.class);
                     if(user!=null) {
                         email = user.getEmail();
-                        phone = user.getphone();
+                        phone = user.getPhone();
                         name = user.getName();
                         txtname.setText(name);
                         txtemail.setText(email);
@@ -102,7 +89,23 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
                         Pattern pattern = Pattern.compile(regex);
                         Matcher matcher = pattern.matcher(txtphone.getText().toString());
                         if (matcher.matches()) {
-                            uploadData();
+                            User user = new User(email, mUser.getUid(), txtname.getText().toString(), txtphone.getText().toString(), "user");
+                            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users/" + mUser.getUid());
+                            databaseRef.setValue(user)
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            // Cập nhật thành công
+                                            Toast.makeText(getApplicationContext(), "Cập nhật thành công", Toast.LENGTH_SHORT).show();
+                                            finish();
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            // Có lỗi xảy ra khi cập nhật
+                                        }
+                                    });
                         } else {
                             Toast.makeText(getApplicationContext(),"Vui lòng nhập đúng định dạng số điện thoại",Toast.LENGTH_SHORT).show();
                     }
@@ -120,25 +123,5 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),"Không được chỉnh sửa trường email",Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    private void uploadData() {
-        User user = new User(email, mUser.getUid(), txtname.getText().toString(), txtphone.getText().toString());
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users/" + mUser.getUid());
-        databaseRef.setValue(user)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        // Cập nhật thành công
-                        Toast.makeText(getApplicationContext(), "Cập nhật thành công", Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        // Có lỗi xảy ra khi cập nhật
-                    }
-                });
     }
 }

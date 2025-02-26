@@ -20,7 +20,7 @@
             android:id="@+id/img_district"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/border"
+            android:background="@drawable/background_edittext"
             android:scaleType="centerCrop"
             android:src="@drawable/image3"
             app:layout_constraintBottom_toTopOf="@id/textviewholder"
