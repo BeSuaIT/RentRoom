@@ -54,7 +54,6 @@ public class RegisterActivity extends AppCompatActivity {
                 String name = txtViewName.getText().toString();
                 String email = txtViewEmail.getText().toString();
                 String password = txtViewPassword.getText().toString();
-                String permission = "user";
                 if (TextUtils.isEmpty(name)) {
                     Toast.makeText(getApplicationContext(), "Vui lòng nhập Họ tên.", Toast.LENGTH_SHORT).show();
                     return;
