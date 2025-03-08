@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,12 +8,11 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_marginBottom="20dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
         <ImageView
             android:id="@+id/imageView8"
@@ -29,20 +27,20 @@
             android:layout_marginTop="40dp"
             android:text="@string/hoten"
             android:textColor="@color/black"
-            android:textSize="20sp"/>
+            android:textSize="20sp" />
 
         <EditText
             android:id="@+id/txtname"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginBottom="10dp"
             android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/background_edittext"
             android:ems="10"
             android:hint="@string/hoten"
             android:inputType="textEmailAddress"
-            android:text=""
-            android:paddingStart="20dp"/>
+            android:paddingStart="20dp"
+            android:text="" />
 
         <TextView
             android:layout_width="match_parent"
@@ -50,41 +48,41 @@
             android:layout_marginTop="10dp"
             android:text="@string/email"
             android:textColor="@color/black"
-            android:textSize="20sp"/>
+            android:textSize="20sp" />
 
         <EditText
             android:id="@+id/txtemail"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginBottom="10dp"
             android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/background_edittext"
             android:ems="10"
             android:hint="@string/email"
             android:inputType="textEmailAddress"
-            android:text=""
-            android:paddingStart="20dp"/>
+            android:paddingStart="20dp"
+            android:text="" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:text="@string/matkhau"
             android:textColor="@color/black"
-            android:layout_marginTop="10dp"
-            android:textSize="20sp"/>
+            android:textSize="20sp" />
 
         <EditText
             android:id="@+id/txtpassword"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginBottom="10dp"
             android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/background_edittext"
             android:ems="10"
             android:hint="@string/matkhau"
             android:inputType="textPassword"
-            android:text=""
-            android:paddingStart="20dp"/>
+            android:paddingStart="20dp"
+            android:text="" />
 
         <Button
             android:id="@+id/btnDangky"
@@ -92,10 +90,10 @@
             android:layout_height="50dp"
             android:layout_marginTop="30dp"
             android:layout_marginBottom="10dp"
-            android:textColor="@color/white"
-            android:textSize="15sp"
             android:background="@drawable/background_btn"
-            android:text="@string/btn_dangky" />
+            android:text="@string/btn_dangky"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
 
         <LinearLayout
             android:id="@+id/layout_dangky"
@@ -124,5 +122,37 @@
                 android:textSize="20sp" />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="2dp"
+            android:text="Hoặc đăng ký nhanh bằng"
+            android:textAlignment="center"
+            android:textSize="20sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/imgGoogleSignin"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="40dp"
+                android:layout_weight="1"
+                android:src="@drawable/ic_google" />
+
+            <ImageView
+                android:id="@+id/imgFacebookSignin"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="40dp"
+                android:layout_weight="1"
+                android:src="@drawable/ic_facebook" />
+        </LinearLayout>
+
     </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

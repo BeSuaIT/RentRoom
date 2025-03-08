@@ -86,7 +86,7 @@ public class RegisterActivity extends AppCompatActivity {
                             String phone = "";
                             String permission = "user";
 
-                            User user = new User(email,uid,name, phone, permission);
+                            User user = new User(email, uid, name, phone, permission);
                             mDatabase.child("users").child(uid).setValue(user);
                             Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
                             startActivity(intent);
