@@ -31,7 +31,6 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -73,7 +72,6 @@ public class PostRoomActivity extends AppCompatActivity {
     private EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
             edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
     private Button btn_create_room;
-    private RadioButton radiobtnChungCu, radiobtnTro;
     private RadioGroup radioGroup;
     private ActivityResultLauncher<Intent> activityResultLauncher, cameraLauncher;
     private LinearLayout pickImgAlbum, pickImgCamera;
@@ -124,21 +122,17 @@ public class PostRoomActivity extends AppCompatActivity {
         });
         getDataForSpinnerDistrict();
 
-        btnBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Intent main = new Intent(PostRoomActivity.this, MainActivity.class);
-                startActivity(main);
-            }
+        btnBack.setOnClickListener(v -> {
+            Intent main = new Intent(PostRoomActivity.this, MainActivity.class);
+            startActivity(main);
         });
+
         activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             try {
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     Intent data = result.getData();
                     if (data != null && data.getData() != null) {
                         uri = data.getData();
-                        // Create a copy of the image in app's cache directory
                         uri = copyImageToCache(uri);
                         uploadPicture1.setImageURI(uri);
                         isUploadImg1 = true;
@@ -146,7 +140,7 @@ public class PostRoomActivity extends AppCompatActivity {
                     }
                 } else {
                     isUploadImg1 = false;
-                    Toast.makeText(PostRoomActivity.this, "No image selected", Toast.LENGTH_LONG).show();
+                    Toast.makeText(PostRoomActivity.this, "Không có ảnh nào được chọn", Toast.LENGTH_LONG).show();
                 }
             } catch (Exception e) {
                 Log.e("ImagePicker", "Error handling image pick result", e);
@@ -167,39 +161,80 @@ public class PostRoomActivity extends AppCompatActivity {
             }
         });
 
-        btn_create_room.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(PostRoomActivity.this);
-                builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
-                        .setMessage("Bạn có muốn đăng bài không?")
-                        .setPositiveButton("Có", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (isUploadImg1) saveImage();
-                                else
-                                    Toast.makeText(getApplicationContext(), "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .setNegativeButton("Không", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Xử lý khi người dùng chọn No
-                            }
-                        });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
-            }
+        btn_create_room.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(PostRoomActivity.this);
+            builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
+                    .setMessage("Bạn có muốn đăng bài không?")
+                    .setPositiveButton("Có", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (isUploadImg1) saveImage();
+                            else
+                                Toast.makeText(getApplicationContext(), "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNegativeButton("Không", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Xử lý khi người dùng chọn No
+                        }
+                    });
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
         });
 
-        uploadPicture1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showBottomDialog();
-            }
-        });
+        uploadPicture1.setOnClickListener(v -> showBottomDialog());
     }
 
+    void initView() {
+        btnBack = this.findViewById(R.id.btnBack);
+
+        edtTitleRoom = this.findViewById(R.id.edtTitleRoom);
+        edtPrice = this.findViewById(R.id.edtPrice);
+        edtDeposit = this.findViewById(R.id.edtDeposit);
+
+        edtInternet = this.findViewById(R.id.edtInternet);
+        edtElectric = this.findViewById(R.id.edtElectric);
+        edtWater = this.findViewById(R.id.edtWater);
+
+        radioGroup = this.findViewById(R.id.radioGroupType);
+
+        edtArea = this.findViewById(R.id.edtArea);
+        edtPhone = this.findViewById(R.id.edtPhone);
+        edtFloor = this.findViewById(R.id.edtFloor);
+        edtPerson = this.findViewById(R.id.edtPerson);
+        edtDescriptionRoom = this.findViewById(R.id.edtDescriptionRoom);
+        edtPark = this.findViewById(R.id.edtPark);
+
+        checkboxtoilet = this.findViewById(R.id.checkboxtoilet);
+        checkboxfloor = this.findViewById(R.id.checkboxfloor);
+        checkbox_time_flex = this.findViewById(R.id.checkbox_time_flex);
+        checkboxfingerprint = this.findViewById(R.id.checkboxfingerprint);
+        checkboxbacony = this.findViewById(R.id.checkboxbacony);
+        checkboxpet = this.findViewById(R.id.checkboxpet);
+        checkbox_w_owner = this.findViewById(R.id.checkbox_w_owner);
+
+        checkbox_air_condition = this.findViewById(R.id.checkbox_air_condition);
+        checkbox_heater = this.findViewById(R.id.checkbox_heater);
+        checkbox_curtain = this.findViewById(R.id.checkbox_curtain);
+        checkboxfridge = this.findViewById(R.id.checkboxfridge);
+        checkboxbed = this.findViewById(R.id.checkboxbed);
+        checkboxwardrobe = this.findViewById(R.id.checkboxwardrobe);
+        checkbox_washing_machine = this.findViewById(R.id.checkbox_washing_machine);
+        checkboxsofa = this.findViewById(R.id.checkboxsofa);
+
+        checkboxNam = this.findViewById(R.id.checkboxNam);
+        checkboxNu = this.findViewById(R.id.checkboxNu);
+
+        btn_create_room = this.findViewById(R.id.btn_create_room);
+
+        uploadPicture1 = findViewById(R.id.imageViewP1);
+
+        spinnerCity = findViewById(R.id.spinnerCity);
+        spinnerDistrict = findViewById(R.id.spinnerDistrict);
+
+        edtAddress = findViewById(R.id.edtAddress);
+    }
     private Uri copyImageToCache(Uri sourceUri) {
         try {
             InputStream input = getContentResolver().openInputStream(sourceUri);
@@ -222,51 +257,6 @@ public class PostRoomActivity extends AppCompatActivity {
             Log.e("ImageCopy", "Error copying image", e);
             return sourceUri;
         }
-    }
-
-    public void getDataForSpinnerDistrict() {
-        districts.clear();
-        DatabaseReference databaseReferenceDistrict = FirebaseDatabase.getInstance().getReference();
-        databaseReferenceDistrict.child(path).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot childSnap : snapshot.getChildren()) {
-                    String DistrictName = childSnap.child("name").getValue(String.class);
-                    districts.add(DistrictName);
-                }
-                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(PostRoomActivity.this, android.R.layout.simple_spinner_item, districts);
-                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerDistrict.setAdapter(spinnerAdapter);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-    }
-
-    public void getDataForSpinnerCity() {
-        cities.clear();
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-        path = "city";
-        databaseReference.child(path).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot childSnap : snapshot.getChildren()) {
-                    String CityName = childSnap.child("name").getValue(String.class);
-                    cities.add(CityName);
-                }
-                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(PostRoomActivity.this, android.R.layout.simple_spinner_item, cities);
-                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerCity.setAdapter(spinnerAdapter);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
     }
 
     public void saveImage() {
@@ -323,24 +313,24 @@ public class PostRoomActivity extends AppCompatActivity {
         }
     }
 
-
     void onClickPushData() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         String id_room = UUID.randomUUID().toString();
-        String title_room = String.valueOf(edtTitleRoom.getText());
         String city = spinnerCity.getSelectedItem().toString();
         String district = spinnerDistrict.getSelectedItem().toString();
         String detail = edtAddress.getText().toString();
         String ward = "";
         String address_combine = detail + ", " + district + ", " + city;
+        int status_room = 0;
+        String id_own_post = userCurrent.getUid();
 
         if ("".equals(detail)) {
             address = new Address(city, district);
         } else {
             address = new Address(city, district, detail, ward, address_combine);
         }
-        String area_room = edtArea.getText().toString();
-        String gender_room = "";
+
+        String gender_room;
         if (checkboxNam.isChecked()) {
             if (!checkboxNu.isChecked()) {
                 gender_room = "Nam";
@@ -355,6 +345,7 @@ public class PostRoomActivity extends AppCompatActivity {
             }
         }
 
+        String title_room = String.valueOf(edtTitleRoom.getText());
         boolean isValid = true;
         if (isEmpty(edtTitleRoom)) {
             edtTitleRoom.setError("Vui lòng nhập tiêu đề bài đăng");
@@ -394,14 +385,14 @@ public class PostRoomActivity extends AppCompatActivity {
         DatabaseReference myRef = database.getReference("rooms/" + path);
         userCurrent = FirebaseAuth.getInstance().getCurrentUser();
 
-        int status_room = 0;
-
+        String area_room = edtArea.getText().toString();
         if (isEmpty(edtArea)) {
             edtArea.setError("Vui lòng nhập diện tích");
             isValid = false;
         } else {
             area_room = edtArea.getText().toString();
         }
+
         String phone = "";
         if (isEmpty(edtPhone)) {
             edtPhone.setError("Vui lòng nhập số điện thoại");
@@ -416,7 +407,6 @@ public class PostRoomActivity extends AppCompatActivity {
                 edtPhone.setError("Vui lòng nhập đúng định dạng số điện thoại");
                 isValid = false;
             }
-
         }
 
         int floor = 1;
@@ -426,6 +416,7 @@ public class PostRoomActivity extends AppCompatActivity {
         } else {
             floor = Integer.parseInt(edtFloor.getText().toString());
         }
+
         int person_in_room = 1;
         if (isEmpty(edtPerson)) {
             edtPerson.setError("Vui lòng nhập số người/phòng");
@@ -463,10 +454,9 @@ public class PostRoomActivity extends AppCompatActivity {
             }
         }
 
-        // Them noi that
         furnitures = new ArrayList<>();
         handleDataFurniture();
-        //Them tien ich
+
         extensions_room = new ArrayList<>();
         handleDataExtensions();
 
@@ -480,10 +470,7 @@ public class PostRoomActivity extends AppCompatActivity {
             isValid = false;
             checkboxtoilet.setError("Vui lòng chọn 1 tiện ích");
         }
-        String id_own_post = "";
-        if (userCurrent != null) {
-            id_own_post = userCurrent.getUid();
-        }
+
         if (isValid) {
             Room room = new Room(id_own_post, id_room, title_room, price_room, address, area_room, deposit_room, description_room, gender_room, park_slot,
                     person_in_room, status_room, type_room, phone, floor, images, furnitures, extensions_room,
@@ -494,8 +481,6 @@ public class PostRoomActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(Void unused) {
                     Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
-//                    Intent main = new Intent(PostRoomActivity.this, MainActivity.class);
-//                    startActivity(main);
                     finish();
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -560,61 +545,54 @@ public class PostRoomActivity extends AppCompatActivity {
         }
     }
 
+    public void getDataForSpinnerDistrict() {
+        districts.clear();
+        DatabaseReference databaseReferenceDistrict = FirebaseDatabase.getInstance().getReference();
+        databaseReferenceDistrict.child(path).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnap : snapshot.getChildren()) {
+                    String DistrictName = childSnap.child("name").getValue(String.class);
+                    districts.add(DistrictName);
+                }
+                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(PostRoomActivity.this, android.R.layout.simple_spinner_item, districts);
+                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerDistrict.setAdapter(spinnerAdapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    public void getDataForSpinnerCity() {
+        cities.clear();
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+        path = "city";
+        databaseReference.child(path).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnap : snapshot.getChildren()) {
+                    String CityName = childSnap.child("name").getValue(String.class);
+                    cities.add(CityName);
+                }
+                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(PostRoomActivity.this, android.R.layout.simple_spinner_item, cities);
+                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerCity.setAdapter(spinnerAdapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
     boolean isEmpty(EditText text) {
         CharSequence str = text.getText().toString();
         return TextUtils.isEmpty(str);
-    }
-
-    void initView() {
-        btnBack = this.findViewById(R.id.btnBack);
-
-        edtTitleRoom = this.findViewById(R.id.edtTitleRoom);
-        edtPrice = this.findViewById(R.id.edtPrice);
-        edtDeposit = this.findViewById(R.id.edtDeposit);
-
-        edtInternet = this.findViewById(R.id.edtInternet);
-        edtElectric = this.findViewById(R.id.edtElectric);
-        edtWater = this.findViewById(R.id.edtWater);
-
-        radioGroup = this.findViewById(R.id.radioGroupType);
-        radiobtnChungCu = this.findViewById(R.id.radiobtnChungCu);
-        radiobtnTro = this.findViewById(R.id.radiobtnTro);
-
-        edtArea = this.findViewById(R.id.edtArea);
-        edtPhone = this.findViewById(R.id.edtPhone);
-        edtFloor = this.findViewById(R.id.edtFloor);
-        edtPerson = this.findViewById(R.id.edtPerson);
-        edtDescriptionRoom = this.findViewById(R.id.edtDescriptionRoom);
-        edtPark = this.findViewById(R.id.edtPark);
-
-        checkboxtoilet = this.findViewById(R.id.checkboxtoilet);
-        checkboxfloor = this.findViewById(R.id.checkboxfloor);
-        checkbox_time_flex = this.findViewById(R.id.checkbox_time_flex);
-        checkboxfingerprint = this.findViewById(R.id.checkboxfingerprint);
-        checkboxbacony = this.findViewById(R.id.checkboxbacony);
-        checkboxpet = this.findViewById(R.id.checkboxpet);
-        checkbox_w_owner = this.findViewById(R.id.checkbox_w_owner);
-
-        checkbox_air_condition = this.findViewById(R.id.checkbox_air_condition);
-        checkbox_heater = this.findViewById(R.id.checkbox_heater);
-        checkbox_curtain = this.findViewById(R.id.checkbox_curtain);
-        checkboxfridge = this.findViewById(R.id.checkboxfridge);
-        checkboxbed = this.findViewById(R.id.checkboxbed);
-        checkboxwardrobe = this.findViewById(R.id.checkboxwardrobe);
-        checkbox_washing_machine = this.findViewById(R.id.checkbox_washing_machine);
-        checkboxsofa = this.findViewById(R.id.checkboxsofa);
-
-        checkboxNam = this.findViewById(R.id.checkboxNam);
-        checkboxNu = this.findViewById(R.id.checkboxNu);
-
-        btn_create_room = this.findViewById(R.id.btn_create_room);
-
-        uploadPicture1 = findViewById(R.id.imageViewP1);
-
-        spinnerCity = findViewById(R.id.spinnerCity);
-        spinnerDistrict = findViewById(R.id.spinnerDistrict);
-
-        edtAddress = findViewById(R.id.edtAddress);
     }
 
     private void checkPermissions() {

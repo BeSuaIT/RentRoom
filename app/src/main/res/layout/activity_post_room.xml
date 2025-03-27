@@ -213,7 +213,7 @@
                             android:layout_height="0dp"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="Địa chỉ chi tiết"
+                            android:text="Địa chỉ chi tiết (Số nhà, tên đường)"
                             android:textColor="@color/black"
                             android:textSize="14sp"
                             android:textStyle="bold" />
