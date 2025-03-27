@@ -76,10 +76,7 @@ public class ManagePostActivity extends AppCompatActivity {
 
         if (userCurrent != null) {
             roomlist = new ArrayList<>();
-//            roomdatabase = FirebaseDatabase.getInstance().getReference("myRooms/" + userCurrent.getUid());
             roomdatabase = FirebaseDatabase.getInstance().getReference("rooms/");
-
-//            fecthRoomData_statusRoom();
             rcvMyPost.setLayoutManager(new LinearLayoutManager(ManagePostActivity.this, LinearLayoutManager.VERTICAL, false));
             manageRoomAdapter = new ManageRoomAdapter(roomlist, ManagePostActivity.this);
             rcvMyPost.setAdapter(manageRoomAdapter);
@@ -111,27 +108,6 @@ public class ManagePostActivity extends AppCompatActivity {
 
             }
         });
-//        spinnerStatusRoom.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//                String statusRoom = parent.getItemAtPosition(position).toString();
-//                if ("Phòng trống".equals(statusRoom)) {
-//                    statusRoomInt = 0;
-//                } else if ("Đã cho thuê".equals(statusRoom)) {
-//                    statusRoomInt = 1;
-//                } else {
-//                    statusRoomInt = 0;
-//                }
-//
-//                fecthRoomData_statusRoom();
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//
-//            }
-//        });
-
     }
 
     private void fecthRoomData_statusRoom() {

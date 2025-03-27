@@ -1,12 +1,9 @@
 package com.example.timphongtro.Activity;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.app.Activity;
@@ -18,9 +15,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,10 +29,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -45,7 +44,6 @@ import com.example.timphongtro.Entity.FurnitureClass;
 import com.example.timphongtro.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -56,63 +54,51 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PostRoomActivity extends AppCompatActivity {
-    FirebaseUser userCurrent;
-    ImageView btnBack;
-    EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
+    private FirebaseUser userCurrent;
+    private ImageView btnBack, uploadPicture1;
+    private EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
             edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
-    Button btn_create_room;
-    RadioButton radiobtnChungCu, radiobtnTro;
-    ActivityResultLauncher<Intent> activityResultLauncher;
-    LinearLayout pickImgAlbum, pickImgCamera;
-    CheckBox checkboxtoilet, checkboxfloor, checkbox_time_flex, checkboxfingerprint, checkboxbacony, checkboxpet,
-            checkbox_w_owner, checkbox_air_condition, checkbox_heater, checkbox_curtain, checkboxfridge, checkboxbed,
-            checkboxwardrobe, checkbox_washing_machine, checkboxsofa, checkboxNam, checkboxNu;
-    ImageView uploadPicture1, uploadPicture2;
-    String imageURL1;
-    //    String imageURL2;
-    Uri uri, uriBitmap;
-    Bitmap photo;
-    //    Uri uri2;
-    Spinner spinnerCity, spinnerDistrict, spinnerWard;
-    boolean isUploadImg1;
-    boolean isUploadImg2;
-    BottomSheetDialog dialog;
-    List<String> cities, districts, wards;
-    String path;
-    ArrayList<FurnitureClass> furnitures;
-    ArrayList<ExtensionRoom_class> extensions_room;
-    Address address;
-    private ActivityResultLauncher<Intent> cameraLauncher;
-    // Define a map to store image URIs and their corresponding ImageView
-    private Map<ImageView, Uri> imageUriMap = new HashMap<>();
-    private GridLayout imageGridLayout;
-    private static final int MAX_IMAGES = 5; // Maximum number of images allowed
-
+    private Button btn_create_room;
+    private RadioButton radiobtnChungCu, radiobtnTro;
+    private RadioGroup radioGroup;
+    private ActivityResultLauncher<Intent> activityResultLauncher, cameraLauncher;
+    private LinearLayout pickImgAlbum, pickImgCamera;
+    private CheckBox checkboxtoilet, checkboxfloor, checkbox_time_flex, checkboxfingerprint,
+            checkboxbacony, checkboxpet, checkbox_w_owner, checkbox_air_condition, checkbox_heater,
+            checkbox_curtain, checkboxfridge, checkboxbed, checkboxwardrobe, checkbox_washing_machine,
+            checkboxsofa, checkboxNam, checkboxNu;
+    private String imageURL1;
+    private Uri uri;
+    private Bitmap photo;
+    private Spinner spinnerCity, spinnerDistrict;
+    private boolean isUploadImg1;
+    private BottomSheetDialog dialog;
+    private List<String> cities, districts;
+    private String path;
+    private ArrayList<FurnitureClass> furnitures;
+    private ArrayList<ExtensionRoom_class> extensions_room;
+    private Address address;
+    private static final int PERMISSION_CODE = 1001;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_room);
 
         initView();
-
-//        // Initialize the GridLayout for images
-//        imageGridLayout = findViewById(R.id.imageGridLayout);
-//
-//        // Set up the button to add images
-//        findViewById(R.id.btnAddImage).setOnClickListener(v -> showBottomDialog());
         isUploadImg1 = false;
         cities = new ArrayList<>();
         districts = new ArrayList<>();
@@ -146,19 +132,25 @@ public class PostRoomActivity extends AppCompatActivity {
                 startActivity(main);
             }
         });
-        activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
-            @Override
-            public void onActivityResult(ActivityResult result) {
+        activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            try {
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     Intent data = result.getData();
-                    uri = data.getData();
-                    uploadPicture1.setImageURI(uri);
-                    isUploadImg1 = true;
-                    dialog.dismiss();
+                    if (data != null && data.getData() != null) {
+                        uri = data.getData();
+                        // Create a copy of the image in app's cache directory
+                        uri = copyImageToCache(uri);
+                        uploadPicture1.setImageURI(uri);
+                        isUploadImg1 = true;
+                        dialog.dismiss();
+                    }
                 } else {
                     isUploadImg1 = false;
                     Toast.makeText(PostRoomActivity.this, "No image selected", Toast.LENGTH_LONG).show();
                 }
+            } catch (Exception e) {
+                Log.e("ImagePicker", "Error handling image pick result", e);
+                Toast.makeText(PostRoomActivity.this, "Error processing image", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -206,6 +198,30 @@ public class PostRoomActivity extends AppCompatActivity {
                 showBottomDialog();
             }
         });
+    }
+
+    private Uri copyImageToCache(Uri sourceUri) {
+        try {
+            InputStream input = getContentResolver().openInputStream(sourceUri);
+            File cacheDir = getCacheDir();
+            File outputFile = new File(cacheDir, "temp_image_" + System.currentTimeMillis() + ".jpg");
+            OutputStream output = new FileOutputStream(outputFile);
+
+            byte[] buffer = new byte[4 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+
+            output.flush();
+            output.close();
+            input.close();
+
+            return Uri.fromFile(outputFile);
+        } catch (Exception e) {
+            Log.e("ImageCopy", "Error copying image", e);
+            return sourceUri;
+        }
     }
 
     public void getDataForSpinnerDistrict() {
@@ -259,44 +275,54 @@ public class PostRoomActivity extends AppCompatActivity {
         builder.setView(R.layout.progress_layout);
         AlertDialog dialog = builder.create();
         dialog.show();
+
         if (uri != null) {
-            StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("roomImgage").child(Objects.requireNonNull(uri.getLastPathSegment()));
-            storageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                    Uri urlImage = uriTask.getResult();
-                    imageURL1 = String.valueOf(urlImage);
-                    onClickPushData();
-                    dialog.dismiss();
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    dialog.dismiss();
-                }
+            StorageReference storageReference = FirebaseStorage.getInstance().getReference()
+                    .child("roomImgage")
+                    .child(Objects.requireNonNull(uri.getLastPathSegment()));
+
+            storageReference.putFile(uri).addOnSuccessListener(taskSnapshot ->
+                    storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                        imageURL1 = uri.toString();
+                        onClickPushData();  // Chỉ gọi khi đã có URL ảnh
+                        dialog.dismiss();
+                    }).addOnFailureListener(e -> {
+                        Log.e("Firebase", "Lỗi khi lấy URL ảnh", e);
+                        dialog.dismiss();
+                    })
+            ).addOnFailureListener(e -> {
+                Log.e("Firebase", "Lỗi khi upload ảnh", e);
+                dialog.dismiss();
             });
 
-        } else {
-            // Chuyển đổi Bitmap thành mảng byte
+        } else if (photo != null) {  // Kiểm tra ảnh từ Bitmap
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             byte[] imageData = baos.toByteArray();
+
             String uniqueImageName = "image_" + System.currentTimeMillis() + ".jpg";
-            FirebaseStorage storage = FirebaseStorage.getInstance();
-            StorageReference storageRef = storage.getReference("roomImgage").child(uniqueImageName);
-            UploadTask uploadTask = storageRef.putBytes(imageData);
-            uploadTask.addOnSuccessListener(taskSnapshot -> {
-                Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                Uri urlImage = uriTask.getResult();
-                imageURL1 = String.valueOf(urlImage);
-                onClickPushData();
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference("roomImgage").child(uniqueImageName);
+
+            storageRef.putBytes(imageData).addOnSuccessListener(taskSnapshot ->
+                    storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                        imageURL1 = uri.toString();
+                        onClickPushData();
+                        dialog.dismiss();
+                    }).addOnFailureListener(e -> {
+                        Log.e("Firebase", "Lỗi khi lấy URL ảnh", e);
+                        dialog.dismiss();
+                    })
+            ).addOnFailureListener(e -> {
+                Log.e("Firebase", "Lỗi khi upload ảnh", e);
                 dialog.dismiss();
-            }).addOnFailureListener(exception -> {
-                // Xảy ra lỗi trong quá trình tải lên
             });
+
+        } else {
+            Log.e("Firebase", "Không có ảnh để tải lên.");
+            dialog.dismiss();
         }
     }
+
 
     void onClickPushData() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -355,14 +381,14 @@ public class PostRoomActivity extends AppCompatActivity {
 
         int type_room = 0;
         String path = "Tro";
-        if (radiobtnChungCu.isChecked() || radiobtnTro.isChecked()) {
-            if (radiobtnChungCu.isChecked()) {
-                path = "ChungCuMini";
-                type_room = 1;
-            }
+        if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnChungCu) {
+            path = "ChungCuMini";
+            type_room = 1;
+        } else if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnTro) {
+            path = "Tro";
         } else {
             isValid = false;
-            radiobtnTro.setError("Vui lòng chọn loại phòng");
+            Toast.makeText(this, "Vui lòng chọn loại phòng", Toast.LENGTH_SHORT).show();
         }
 
         DatabaseReference myRef = database.getReference("rooms/" + path);
@@ -550,6 +576,7 @@ public class PostRoomActivity extends AppCompatActivity {
         edtElectric = this.findViewById(R.id.edtElectric);
         edtWater = this.findViewById(R.id.edtWater);
 
+        radioGroup = this.findViewById(R.id.radioGroupType);
         radiobtnChungCu = this.findViewById(R.id.radiobtnChungCu);
         radiobtnTro = this.findViewById(R.id.radiobtnTro);
 
@@ -590,6 +617,18 @@ public class PostRoomActivity extends AppCompatActivity {
         edtAddress = findViewById(R.id.edtAddress);
     }
 
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, PERMISSION_CODE);
+            }
+        } else {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
+            }
+        }
+    }
+
     private void showBottomDialog() {
         dialog = new BottomSheetDialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -603,21 +642,24 @@ public class PostRoomActivity extends AppCompatActivity {
         pickImgAlbum.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                checkPermissions();
                 Intent photoPicker = new Intent(Intent.ACTION_PICK);
                 photoPicker.setType("image/*");
                 activityResultLauncher.launch(photoPicker);
             }
         });
 
-        pickImgCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ActivityCompat.checkSelfPermission(PostRoomActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(PostRoomActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
-                    return;
-                }
+        pickImgCamera.setOnClickListener(v -> {
+            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.CAMERA}, PERMISSION_CODE);
+                return;
+            }
+            try {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 cameraLauncher.launch(cameraIntent);
+            } catch (Exception e) {
+                Log.e("Camera", "Error launching camera", e);
+                Toast.makeText(this, "Error launching camera", Toast.LENGTH_SHORT).show();
             }
         });
 

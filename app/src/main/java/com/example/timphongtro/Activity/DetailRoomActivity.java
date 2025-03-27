@@ -65,7 +65,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class DetailRoomActivity extends AppCompatActivity {
     private Room roomData;
     private TextView textViewTitle, textViewPrice, textViewCombine_address, textViewPhone, textViewTypeRoom,
@@ -80,7 +79,6 @@ public class DetailRoomActivity extends AppCompatActivity {
     private LinearLayout userPost;
     private FirebaseUser user;
     private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
-    private static final int codeL = 100;
     FirebaseDatabase database;
     DatabaseReference myLovePostRef;
     DatabaseReference roomRef;
@@ -229,7 +227,6 @@ public class DetailRoomActivity extends AppCompatActivity {
             });
 
             myLovePostRef = null;
-            if (user != null) {
 
                 myLovePostRef = database.getReference("LovePost/" + user.getUid());
 
@@ -247,8 +244,6 @@ public class DetailRoomActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         isLove = true; //flag đánh dấu xem đã thực hiện xong chưa
-//                        imageViewLove.setImageResource(R.drawable.ic_love_fill);
-                        if (user != null) {
                             roomRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -277,19 +272,8 @@ public class DetailRoomActivity extends AppCompatActivity {
 
                                 }
                             });
-                        }
                     }
                 });
-            } else {
-                imageViewLove.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent login = new Intent(DetailRoomActivity.this, LoginActivity.class);
-                        startActivity(login);
-                        Toast.makeText(DetailRoomActivity.this, "Bạn phải đăng nhập để sử dụng chức năng này", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
 
             btnCall.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -308,13 +292,7 @@ public class DetailRoomActivity extends AppCompatActivity {
             btnBookRoom.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (user != null) {
                         showBottomDialog();
-                    } else {
-                        Intent login = new Intent(DetailRoomActivity.this, LoginActivity.class);
-                        startActivity(login);
-                        Toast.makeText(DetailRoomActivity.this, "Bạn phải đăng nhập để sử dụng chức năng này", Toast.LENGTH_SHORT).show();
-                    }
                 }
             });
 
@@ -343,17 +321,12 @@ public class DetailRoomActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
 
-                    //phải sửa ở đây
                     String url = "http://zalo.me/" + "0964259203"; // URL bạn muốn chuyển đến
 
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(url));
-//                    if (intent.resolveActivity(getPackageManager()) != null) {
                     Toast.makeText(DetailRoomActivity.this, "Bạn chỉ sử dụng chức năng khi máy đã cài đặt Zalo", Toast.LENGTH_SHORT).show();
                     startActivity(intent);
-//                    } else {
-//                        // Không có ứng dụng nào có thể xử lý Intent này
-//                    }
                 }
             });
 
@@ -447,7 +420,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
         btnConfirm = dialog.findViewById(R.id.btnConfirm);
         scheduleVisitRoomref = null;
-        if (user != null) {
             uuid = UUID.randomUUID();
             scheduleVisitRoomref = database.getReference("scheduleVisitRoom/" + uuid.toString());
 
@@ -457,7 +429,6 @@ public class DetailRoomActivity extends AppCompatActivity {
                     scheduleVisitRoom();
                 }
             });
-        }
 
         btnCancel = dialog.findViewById(R.id.btnCancel);
         btnCancel.setOnClickListener(new View.OnClickListener() {
@@ -511,7 +482,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
         if (isValid) {
             ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(roomData.getType_room(), uuid.toString(), edtYourName.getText().toString(), phone, edtNote.getText().toString(), edtTime.getText().toString(), roomData.getId_own_post(), user.getUid(), "0", roomData.getId_room()); // status create
-            if (user != null) {
                 if (!user.getUid().equals(roomData.getId_own_post())) {
                     scheduleVisitRoomref.setValue(schedule).addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
@@ -528,7 +498,6 @@ public class DetailRoomActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(getApplicationContext(), "Bạn không thể đặt lịch hẹn với chính bài đăng của mình", Toast.LENGTH_LONG).show();
                 }
-            }
         } else {
             Toast.makeText(getApplicationContext(), "Vui lòng nhập đầy đủ các trường yêu cầu", Toast.LENGTH_LONG).show();
         }

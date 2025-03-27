@@ -25,7 +25,7 @@ import java.util.ArrayList;
 public class MyLovePostActivity extends AppCompatActivity {
     FirebaseUser user;
     FirebaseDatabase database;
-    DatabaseReference myLovePostRef, roomRef, myLovePostRemoveRef;
+    DatabaseReference myLovePostRef, roomRef;
     ArrayList<String> roomsLove;
     ArrayList<Room> rooms;
     RoomAdapter roomAdapter;
@@ -104,35 +104,6 @@ public class MyLovePostActivity extends AppCompatActivity {
 
                 }
             });
-//            roomRef = database.getReference("rooms");
-//            roomRef.addValueEventListener(new ValueEventListener() {
-//                @Override
-//                public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                    rooms.clear();
-//                    if (snapshot.exists()) {
-//                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-//                            String key = dataSnapshot.getKey();
-//                            if (key.equals("Tro") || key.equals("ChungCuMini")) {
-//                                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-//                                    if(childSnapshot.exists()){
-//                                        if (roomsLove.contains(childSnapshot.getKey())){
-//                                            Room room = childSnapshot.getValue(Room.class);
-////                                            if (room != null) {
-//                                                rooms.add(room);
-////                                            }
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                @Override
-//                public void onCancelled(@NonNull DatabaseError error) {
-//
-//                }
-//            });
         }
 
 

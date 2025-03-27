@@ -3,19 +3,14 @@ package com.example.timphongtro.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Entity.Room;
@@ -34,7 +29,6 @@ import com.google.gson.Gson;
 public class ScheduleVisitDetailActivity extends AppCompatActivity {
     ScheduleVisitRoomClass schedule;
     TextView tvName, tvTime, tvNote, PostTitle, RoomCost, CityName, DistrictName, DetailName, DienTich, Size, tvprofileDetail, textViewNameUser;
-//    TextView tvStatus;
     ImageView img_post,imageViewBack;
     User user;
     Room room;
@@ -45,13 +39,7 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_schedule_visit_detail);
-//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-//            return insets;
-//        });
 
         //Schedule
         tvName = findViewById(R.id.tvName);
@@ -131,7 +119,6 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
                     if (snapshot.exists()) {
                         room = snapshot.getValue(Room.class);
                         if (room != null) {
-
                             PostTitle.setText(room.getTitle_room());
                             RoomCost.setText(String.valueOf(room.getPrice_room()));
                             DistrictName.setText(room.getAddress().getDistrict());

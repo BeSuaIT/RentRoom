@@ -74,7 +74,7 @@
                         android:layout_width="80dp"
                         android:layout_height="80dp"
                         android:layout_gravity="center_horizontal"
-                        android:src="@drawable/ic_chothuenoithat"></ImageView>
+                        android:src="@drawable/ic_chothuenoithat" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -244,7 +244,7 @@
                         android:layout_width="80dp"
                         android:layout_height="80dp"
                         android:layout_gravity="center_horizontal"
-                        android:src="@drawable/ic_doibinhga"></ImageView>
+                        android:src="@drawable/ic_doibinhga" />
 
                     <TextView
                         android:layout_width="wrap_content"

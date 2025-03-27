@@ -30,14 +30,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
     NetworkChangeReceiver networkChangeReceiver;
     private boolean isReceiverRegistered = false;
     private ActivityMainBinding binding;
-    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    private FirebaseUser user;
     GoogleSignInAccount account;
 
     @Override
@@ -48,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         networkChangeReceiver = new NetworkChangeReceiver();
         account = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
-        user = firebaseAuth.getCurrentUser();
+
         //Sử dụng ViewBinding để tối ưu về lượng code cho thanh bottom nav chuyển tab
         replaceFragment(new HomeFragment());
         binding.bottomNavigationView.setBackground(null);
@@ -59,19 +56,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.service) {
                 replaceFragment(new ServiceFragment());
             } else if (item.getItemId() == R.id.notification) {
-                if (user != null || account != null) {
                     replaceFragment(new NotificationFragment());
-                } else {
-                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                }
             } else if (item.getItemId() == R.id.profile) {
-                if (user != null || account != null) {
                     replaceFragment(new ProfileFragment());
-                } else {
-                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                }
             }
             return true;
         });
@@ -122,13 +109,8 @@ public class MainActivity extends AppCompatActivity {
 
         contract.setOnClickListener(v -> {
             dialog.dismiss();
-            if (user != null || account != null) {
                 Intent post = new Intent(this, PostRoomActivity.class);
                 startActivity(post);
-            } else {
-                Intent login = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(login);
-            }
         });
 
         cancelButton.setOnClickListener(v -> dialog.dismiss());
