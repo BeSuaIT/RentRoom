@@ -187,6 +187,15 @@ public class PostRoomActivity extends AppCompatActivity {
     }
 
     void initView() {
+
+        userCurrent = FirebaseAuth.getInstance().getCurrentUser();
+        if (userCurrent == null) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         btnBack = this.findViewById(R.id.btnBack);
 
         edtTitleRoom = this.findViewById(R.id.edtTitleRoom);
@@ -314,6 +323,13 @@ public class PostRoomActivity extends AppCompatActivity {
     }
 
     void onClickPushData() {
+        if (userCurrent == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập để đăng tin", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         String id_room = UUID.randomUUID().toString();
         String city = spinnerCity.getSelectedItem().toString();
