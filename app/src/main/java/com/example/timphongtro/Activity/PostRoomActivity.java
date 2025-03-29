@@ -277,7 +277,7 @@ public class PostRoomActivity extends AppCompatActivity {
 
         if (uri != null) {
             StorageReference storageReference = FirebaseStorage.getInstance().getReference()
-                    .child("roomImgage")
+                    .child("roomImage")
                     .child(Objects.requireNonNull(uri.getLastPathSegment()));
 
             storageReference.putFile(uri).addOnSuccessListener(taskSnapshot ->
