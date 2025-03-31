@@ -53,7 +53,7 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
         linearEmail = findViewById(R.id.linearEmail);
         imageViewBack.setOnClickListener(v -> finish());
         database = FirebaseDatabase.getInstance();
-        userRef = database.getReference("users/" + mUser.getUid());
+        userRef = database.getReference("Users/" + mUser.getUid());
 
         userRef.addValueEventListener(new ValueEventListener() {
             @Override

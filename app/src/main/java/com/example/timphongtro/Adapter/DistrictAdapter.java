@@ -13,7 +13,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Entity.DistrictData;
+import com.example.timphongtro.Entity.District;
 import com.example.timphongtro.Activity.SearchActivity;
 import com.example.timphongtro.R;
 
@@ -23,9 +23,9 @@ public class DistrictAdapter extends RecyclerView.Adapter<DistrictAdapter.MyView
 
     Context context; 
 
-    ArrayList<DistrictData> list;
+    ArrayList<District> list;
 
-    public DistrictAdapter(Context context, ArrayList<DistrictData> list) {
+    public DistrictAdapter(Context context, ArrayList<District> list) {
         this.context = context;
         this.list = list;
     }
@@ -40,9 +40,9 @@ public class DistrictAdapter extends RecyclerView.Adapter<DistrictAdapter.MyView
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        DistrictData districtData = list.get(position);
-        Glide.with(context).load(districtData.getImg_district()).centerCrop().into(holder.img_district);
-        holder.name.setText(districtData.getName());
+        District district = list.get(position);
+        Glide.with(context).load(district.getImg_district()).centerCrop().into(holder.img_district);
+        holder.name.setText(district.getName());
         holder.cardViewDistrict.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

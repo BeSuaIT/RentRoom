@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize view binding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -44,12 +46,27 @@ public class MainActivity extends AppCompatActivity {
                 .setServerClientId(getString(R.string.default_web_client_id))
                 .build();
 
+        // Configure Google Sign-In
+        new GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(true)
+                .setServerClientId(getString(R.string.default_web_client_id))
+                .build();
+
+        // Initialize network receiver
         networkChangeReceiver = new NetworkChangeReceiver();
 
-        //Sử dụng ViewBinding để tối ưu về lượng code cho thanh bottom nav chuyển tab
+        // Set initial fragment and bottom navigation setup
+        setupNavigation();
+    }
+
+    private void setupNavigation() {
+        // Set initial fragment
         replaceFragment(new HomeFragment());
+
+        // Remove background from bottom navigation
         binding.bottomNavigationView.setBackground(null);
 
+        // Handle bottom navigation item selection
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.home) {
                 replaceFragment(new HomeFragment());
@@ -63,15 +80,12 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        binding.fab.setOnClickListener(v -> {
-            showBottomDialog();
-        });
+        binding.fab.setOnClickListener(v -> showBottomDialog());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Đăng ký BroadcastReceiver khi Activity được hiển thị
         if (!isReceiverRegistered) {
             registerReceiver(networkChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
             isReceiverRegistered = true;
@@ -85,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.commit();
     }
 
-    //Hiển thị khay dưới khi bấm dấu cộng
     private void showBottomDialog() {
         final BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -121,5 +134,15 @@ public class MainActivity extends AppCompatActivity {
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         dialog.getWindow().setGravity(Gravity.BOTTOM);
         dialog.setCancelable(true);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister network receiver
+        if (isReceiverRegistered) {
+            unregisterReceiver(networkChangeReceiver);
+            isReceiverRegistered = false;
+        }
     }
 }
