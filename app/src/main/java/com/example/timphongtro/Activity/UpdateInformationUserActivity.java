@@ -51,12 +51,7 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
         mUser = FirebaseAuth.getInstance().getCurrentUser();
         txtphone = findViewById(R.id.txtphone);
         linearEmail = findViewById(R.id.linearEmail);
-        imageViewBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        imageViewBack.setOnClickListener(v -> finish());
         database = FirebaseDatabase.getInstance();
         userRef = database.getReference("users/" + mUser.getUid());
 
@@ -81,47 +76,38 @@ public class UpdateInformationUserActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
             }
         });
-        btnCapnhat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!TextUtils.isEmpty(txtname.getText().toString()) && !TextUtils.isEmpty(txtphone.getText().toString())){
-                        String regex = "^\\d{10}$";
-                        Pattern pattern = Pattern.compile(regex);
-                        Matcher matcher = pattern.matcher(txtphone.getText().toString());
-                        if (matcher.matches()) {
-                            User user = new User(email, mUser.getUid(), txtname.getText().toString(), txtphone.getText().toString(), "user");
-                            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users/" + mUser.getUid());
-                            databaseRef.setValue(user)
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            // Cập nhật thành công
-                                            Toast.makeText(getApplicationContext(), "Cập nhật thành công", Toast.LENGTH_SHORT).show();
-                                            finish();
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            // Có lỗi xảy ra khi cập nhật
-                                        }
-                                    });
-                        } else {
-                            Toast.makeText(getApplicationContext(),"Vui lòng nhập đúng định dạng số điện thoại",Toast.LENGTH_SHORT).show();
-                    }
-                }
-                else{
-                    Toast.makeText(getApplicationContext(),"Vui lòng nhập đầy đủ các trường thông tin",Toast.LENGTH_SHORT).show();
+        btnCapnhat.setOnClickListener(v -> {
+            if(!TextUtils.isEmpty(txtname.getText().toString()) && !TextUtils.isEmpty(txtphone.getText().toString())){
+                String regex = "^\\d{10}$";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(txtphone.getText().toString());
+                if (matcher.matches()) {
+                    User updatedUser = new User(
+                            email,
+                            mUser.getUid(),
+                            txtname.getText().toString(),
+                            txtphone.getText().toString(),
+                            user.getPermission(),
+                            user.getCreatedAt()
+                    );
 
+                    DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("Users/" + mUser.getUid());
+                    databaseRef.setValue(updatedUser)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(getApplicationContext(), "Cập nhật thành công", Toast.LENGTH_SHORT).show();
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                // Có lỗi xảy ra khi cập nhật
+                            });
+                } else {
+                    Toast.makeText(getApplicationContext(),"Vui lòng nhập đúng định dạng số điện thoại",Toast.LENGTH_SHORT).show();
                 }
+            } else {
+                Toast.makeText(getApplicationContext(),"Vui lòng nhập đầy đủ các trường thông tin",Toast.LENGTH_SHORT).show();
             }
         });
 
-        linearEmail.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getApplicationContext(),"Không được chỉnh sửa trường email",Toast.LENGTH_SHORT).show();
-            }
-        });
+        linearEmail.setOnClickListener(v -> Toast.makeText(getApplicationContext(),"Không được chỉnh sửa trường email",Toast.LENGTH_SHORT).show());
     }
 }

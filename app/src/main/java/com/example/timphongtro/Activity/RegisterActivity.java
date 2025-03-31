@@ -98,8 +98,10 @@ public class RegisterActivity extends AppCompatActivity {
         String name = nameEditText.getText().toString();
         String phone = "";
         String permission = "user";
+        String createdAt = String.valueOf(System.currentTimeMillis());
 
-        User userData = new User(email, uid, name, phone, permission);
+
+        User userData = new User(email, uid, name, phone, permission, createdAt);
         databaseReference.child("Users").child(uid).setValue(userData).addOnSuccessListener(unused -> {
             hideLoadingDialog();
             Toast.makeText(RegisterActivity.this,

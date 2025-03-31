@@ -161,7 +161,7 @@ public class ProfileFragment extends Fragment {
             });
             database = FirebaseDatabase.getInstance();
 
-            userRef = database.getReference("users/" + mUser.getUid());
+            userRef = database.getReference("Users/" + mUser.getUid());
             userRef.child("name").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {

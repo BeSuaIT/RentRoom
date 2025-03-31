@@ -20,6 +20,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.timphongtro.R;
@@ -50,7 +51,7 @@ import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
     private EditText emailEditText, passwordEditText;
-    private LinearLayout registerTextView, forgotPasswordTextView;
+    private TextView registerTextView, forgotPasswordTextView;
     private ImageView googleSignInImageView, facebookSignInImageView;
     private Button loginButton;
     private FirebaseAuth firebaseAuth;
@@ -73,7 +74,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Initialize Firebase Database with explicit URL
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        databaseReference = database.getReference("users");
+        databaseReference = database.getReference("Users");
 
         credentialManager = CredentialManager.create(this);
 
@@ -99,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.passwordEditText);
         registerTextView = findViewById(R.id.registerTextView);
         loginButton = findViewById(R.id.loginButton);
-        forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
+        forgotPasswordTextView = findViewById(R.id.forgotPasswordText);
         googleSignInImageView = findViewById(R.id.googleSignInImageView);
         facebookSignInImageView = findViewById(R.id.facebookSignInImageView);
 
@@ -166,13 +167,11 @@ public class LoginActivity extends AppCompatActivity {
         registerTextView.setOnClickListener(v -> {
             Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
             startActivity(i);
-            finish();
         });
 
         forgotPasswordTextView.setOnClickListener(v -> {
             Intent i = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
             startActivity(i);
-            finish();
         });
     }
 
@@ -228,6 +227,9 @@ public class LoginActivity extends AppCompatActivity {
                     userMap.put("uid", firebaseUser.getUid());
                     userMap.put("email", firebaseUser.getEmail());
                     userMap.put("name", firebaseUser.getDisplayName());
+                    userMap.put("phone", "");
+                    userMap.put("permission", "user");
+                    userMap.put("createdAt", System.currentTimeMillis());
 
                     emails = new ArrayList<>();
                     databaseReference.addValueEventListener(new ValueEventListener() {
@@ -300,7 +302,8 @@ public class LoginActivity extends AppCompatActivity {
                             userMap.put("uid", firebaseUser.getUid());
                             userMap.put("email", firebaseUser.getEmail());
                             userMap.put("name", firebaseUser.getDisplayName());
-                            userMap.put("provider", "facebook");
+                            userMap.put("phone", "");
+                            userMap.put("permission", "user");
                             userMap.put("createdAt", System.currentTimeMillis());
 
                             // Get database reference

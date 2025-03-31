@@ -1,18 +1,24 @@
 package com.example.timphongtro.Entity;
 
 public class User {
-    private String email, uid, phone, name, permission, birthday;
+    private String email, uid, phone, name, permission, createdAt;
     public User() {
     }
 
-    public User(String email, String uid, String name, String phone, String permission) {
+    public User(String email, String uid, String name, String phone, String permission, String createdAt) {
         this.email = email;
         this.uid = uid;
         this.name = name;
         this.phone = phone;
         this.permission = permission;
+        this.createdAt = createdAt;
     }
-
+    public String getCreatedAt() {
+        return createdAt;
+    }
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
     public String getPermission() {
         return permission;
     }
