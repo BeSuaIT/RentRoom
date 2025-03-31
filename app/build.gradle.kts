@@ -60,6 +60,7 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
 
     // Third party libraries
+    implementation("com.facebook.android:facebook-android-sdk:latest.release")
     implementation("com.github.denzcoskun:ImageSlideshow:0.1.2")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.code.gson:gson:2.10.1")

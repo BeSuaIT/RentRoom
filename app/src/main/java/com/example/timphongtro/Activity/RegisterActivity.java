@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,70 +19,85 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private TextView txtViewName, txtViewEmail, txtViewPassword, txtViewLogin;
-    private Button btnRegister;
-    private FirebaseAuth mAuth;
-    private DatabaseReference mDatabase;
+    private EditText nameEditText, emailEditText, passwordEditText;
+    private TextView loginTextView;
+    private Button registerButton;
+    private FirebaseAuth firebaseAuth;
+    private DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        txtViewName = findViewById(R.id.txtname);
-        txtViewEmail = findViewById(R.id.txtemail);
-        txtViewPassword = findViewById(R.id.txtpassword);
-        btnRegister = findViewById(R.id.btnDangky);
-        txtViewLogin = findViewById(R.id.txtviewDangnhap);
-        mAuth = FirebaseAuth.getInstance();
+        // Initialize views
+        nameEditText = findViewById(R.id.nameEditText);
+        emailEditText = findViewById(R.id.emailEditText);
+        passwordEditText = findViewById(R.id.passwordEditText);
+        registerButton = findViewById(R.id.registerButton);
+        loginTextView = findViewById(R.id.loginTextView);
+        firebaseAuth = FirebaseAuth.getInstance();
 
-        txtViewLogin.setOnClickListener(v -> {
+        loginTextView.setOnClickListener(v -> {
             Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
             startActivity(i);
         });
 
-        btnRegister.setOnClickListener(v -> {
-            String name = txtViewName.getText().toString();
-            String email = txtViewEmail.getText().toString();
-            String password = txtViewPassword.getText().toString();
+        registerButton.setOnClickListener(v -> {
+            String name = nameEditText.getText().toString();
+            String email = emailEditText.getText().toString();
+            String password = passwordEditText.getText().toString();
+
             if (TextUtils.isEmpty(name)) {
-                Toast.makeText(getApplicationContext(), "Vui lòng nhập Họ tên.", Toast.LENGTH_SHORT).show();
-                return;
+                nameEditText.setError("Vui lòng nhập tên");
+                nameEditText.requestFocus();
             }
             if (TextUtils.isEmpty(email)) {
-                Toast.makeText(getApplicationContext(), "Vui lòng nhập Email.", Toast.LENGTH_SHORT).show();
-                return;
+                emailEditText.setError("Vui lòng nhập email");
+                emailEditText.requestFocus();
             }
             if (TextUtils.isEmpty(password)) {
-                Toast.makeText(getApplicationContext(), "Vui lòng nhập Mật khẩu.", Toast.LENGTH_SHORT).show();
-                return;
+                passwordEditText.setError("Vui lòng nhập mật khẩu");
+                passwordEditText.requestFocus();
             }
             if (password.length() < 6) {
-                Toast.makeText(getApplicationContext(), "Mật khẩu phải có ít nhất 6 ký tự.", Toast.LENGTH_SHORT).show();
-                return;
+                passwordEditText.setError("Mật khẩu phải có ít nhất 6 ký tự");
+                passwordEditText.requestFocus();
             }
-            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+            firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    Toast.makeText(getApplicationContext(), "Đăng ký thành công.", Toast.LENGTH_SHORT).show();
-                    btnRegister.setEnabled(false);
-                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                    mDatabase = database.getReference();
-                    FirebaseUser currentUser = mAuth.getCurrentUser();
-
-                    String uid = currentUser.getUid();
-                    String email1 = currentUser.getEmail();
-                    String name1 = txtViewName.getText().toString();
-                    String phone = "";
-                    String permission = "user";
-
-                    User user = new User(email1, uid, name1, phone, permission);
-                    mDatabase.child("users").child(uid).setValue(user);
-                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                    startActivity(intent);
+                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    if (user != null) {
+                        user.sendEmailVerification().addOnCompleteListener(verificationTask -> {
+                            if (verificationTask.isSuccessful()) {
+                                Toast.makeText(getApplicationContext(), "Đăng ký thành công. Vui lòng kiểm tra email để xác minh.", Toast.LENGTH_SHORT).show();
+                                registerButton.setEnabled(false);
+                                saveUserData(user);
+                                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                startActivity(intent);
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Gửi email xác minh thất bại.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
                 } else {
                     Toast.makeText(getApplicationContext(), "Đăng ký thất bại.", Toast.LENGTH_SHORT).show();
                 }
             });
         });
+    }
+
+    // Save user data to Firebase Realtime Database
+    private void saveUserData(FirebaseUser user) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        databaseReference = database.getReference();
+        String uid = user.getUid();
+        String email = user.getEmail();
+        String name = nameEditText.getText().toString();
+        String phone = "";
+        String permission = "user";
+
+        User userData = new User(email, uid, name, phone, permission);
+        databaseReference.child("Users").child(uid).setValue(userData);
     }
 }

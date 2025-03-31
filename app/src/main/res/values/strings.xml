@@ -30,10 +30,17 @@
     <string name="chinhsuataikhoan">Chỉnh sửa tài khoản</string>
     <string name="capnhat">Cập nhật</string>
     <string name="default_web_client_id">788411668486-ovl0444bqj11oh4tjhuqs30eoimmv1kd.apps.googleusercontent.com</string>
-<!--    <string name="default_web_client_id">1089171230154-vojh1sgv5mgtk7dmk3in7hhk48449edo.apps.googleusercontent.com</string>-->
+    <!--    <string name="default_web_client_id">1089171230154-vojh1sgv5mgtk7dmk3in7hhk48449edo.apps.googleusercontent.com</string>-->
     <string name="confirm">Phản hồi</string>
     <string name="confirmed">Đã xác nhận</string>
     <string name="refuse">Đã từ chối</string>
     <string name="send">Đã gửi</string>
     <string name="Search">Tìm kiếm...</string>
+
+
+    <string name="facebook_app_id">1093262142482244</string>
+    <string name="fb_login_protocol_scheme">fb1093262142482244</string>
+    <string name="facebook_client_token">23ac5f16f915c119404ab4a260b52225</string>
+
+
 </resources>

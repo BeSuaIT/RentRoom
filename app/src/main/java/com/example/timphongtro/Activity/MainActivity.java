@@ -26,16 +26,13 @@ import com.example.timphongtro.Fragment.ProfileFragment;
 import com.example.timphongtro.Fragment.ServiceFragment;
 import com.example.timphongtro.R;
 import com.example.timphongtro.databinding.ActivityMainBinding;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
     NetworkChangeReceiver networkChangeReceiver;
     private boolean isReceiverRegistered = false;
     private ActivityMainBinding binding;
-    GoogleSignInAccount account;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +40,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        new GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(true)
+                .setServerClientId(getString(R.string.default_web_client_id))
+                .build();
+
         networkChangeReceiver = new NetworkChangeReceiver();
-        account = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
 
         //Sử dụng ViewBinding để tối ưu về lượng code cho thanh bottom nav chuyển tab
         replaceFragment(new HomeFragment());
@@ -56,9 +58,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.service) {
                 replaceFragment(new ServiceFragment());
             } else if (item.getItemId() == R.id.notification) {
-                    replaceFragment(new NotificationFragment());
+                replaceFragment(new NotificationFragment());
             } else if (item.getItemId() == R.id.profile) {
-                    replaceFragment(new ProfileFragment());
+                replaceFragment(new ProfileFragment());
             }
             return true;
         });

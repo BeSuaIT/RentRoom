@@ -16,21 +16,25 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.timphongtro.R;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
@@ -40,102 +44,145 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
-    private EditText editTextEmail;
-    private EditText editTextPassword;
-    private Button btnSignIn;
-    private FirebaseAuth mAuth;
-    private FirebaseUser userData;
-    private DatabaseReference userRef;
+    private EditText emailEditText, passwordEditText;
+    private LinearLayout registerTextView, forgotPasswordTextView;
+    private ImageView googleSignInImageView, facebookSignInImageView;
+    private Button loginButton;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
+    private DatabaseReference databaseReference;
     private HashMap<String, Object> userMap;
     private ArrayList<String> emails;
     private CredentialManager credentialManager;
-    private GetGoogleIdOption googleIdOption;
+    private GetGoogleIdOption getGoogleIdOption;
+    private CallbackManager callbackManager;
+    private LoginManager loginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mAuth = FirebaseAuth.getInstance();
+        // Initialize Firebase Auth
+        firebaseAuth = FirebaseAuth.getInstance();
+
+        // Initialize Firebase Database with explicit URL
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        databaseReference = database.getReference("users");
+
         credentialManager = CredentialManager.create(this);
 
-        googleIdOption = new GetGoogleIdOption.Builder()
+        // Initialize Facebook callback manager
+        callbackManager = CallbackManager.Factory.create();
+        loginManager = LoginManager.getInstance();
+
+        // Check if user is already logged in
+        getGoogleIdOption = new GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(true)
                 .setServerClientId(getString(R.string.default_web_client_id))
                 .build();
 
-        editTextEmail = findViewById(R.id.txtemail);
-        editTextPassword = findViewById(R.id.txtpassword);
-        TextView textViewRegister = findViewById(R.id.textviewDangky);
-        btnSignIn = findViewById(R.id.btnDangnhap);
-        TextView txtViewForgotPassword = findViewById(R.id.txtViewForgotPassword);
-        ImageView imgGoogleSignIn = findViewById(R.id.imgGoogleSignin);
-        ImageView imgFacebookSignIn = findViewById(R.id.imgFacebookSignin);
+        // Check if user is already logged in
+        if (firebaseAuth.getCurrentUser() != null) {
+            Intent i = new Intent(LoginActivity.this, MainActivity.class);
+            startActivity(i);
+            finish();
+        }
 
-        btnSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String email = editTextEmail.getText().toString();
-                String password = editTextPassword.getText().toString();
-                if (TextUtils.isEmpty(email)) {
-                    Toast.makeText(getApplicationContext(), "Vui lòng nhập Email.", LENGTH_SHORT).show();
-                    return;
-                }
-                if (TextUtils.isEmpty(password)) {
-                    Toast.makeText(getApplicationContext(), "Vui lòng nhập Mật khẩu.", LENGTH_SHORT).show();
-                    return;
-                }
-                mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "Đăng nhập thành công", LENGTH_SHORT).show();
-                            Intent i = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(i);
-                            btnSignIn.setEnabled(false);
-                        } else {
-                            Toast.makeText(getApplicationContext(), "Đăng nhập không thành công", LENGTH_SHORT).show();
+        // Initialize UI elements
+        emailEditText = findViewById(R.id.emailEditText);
+        passwordEditText = findViewById(R.id.passwordEditText);
+        registerTextView = findViewById(R.id.registerTextView);
+        loginButton = findViewById(R.id.loginButton);
+        forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
+        googleSignInImageView = findViewById(R.id.googleSignInImageView);
+        facebookSignInImageView = findViewById(R.id.facebookSignInImageView);
+
+        loginButton.setOnClickListener(v -> {
+            String email = emailEditText.getText().toString();
+            String password = passwordEditText.getText().toString();
+
+            // Validate input
+            if (TextUtils.isEmpty(email)) {
+                emailEditText.setError("Vui lòng nhập Email");
+                emailEditText.requestFocus();
+                return;
+            }
+
+            // Validate email format
+            if (!isValidEmail(email)) {
+                emailEditText.setError("Email không hợp lệ");
+                emailEditText.requestFocus();
+                return;
+            }
+
+            // Validate password
+            if (TextUtils.isEmpty(password)) {
+                passwordEditText.setError("Vui lòng nhập Mật khẩu");
+                passwordEditText.requestFocus();
+                return;
+            }
+
+            // Validate password length
+            if (password.length() < 6) {
+                passwordEditText.setError("Mật khẩu phải có ít nhất 6 ký tự");
+                passwordEditText.requestFocus();
+                return;
+            }
+            firebaseAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    if (user != null && user.isEmailVerified()) {
+                        Toast.makeText(getApplicationContext(), "Đăng nhập thành công", LENGTH_SHORT).show();
+                        Intent i = new Intent(LoginActivity.this, MainActivity.class);
+                        startActivity(i);
+                        loginButton.setEnabled(false);
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Email chưa được xác minh. Vui lòng kiểm tra email của bạn.", LENGTH_SHORT).show();
+                        firebaseAuth.signOut();
+                    }
+                } else {
+                    String errorMessage = "Đăng nhập không thành công";
+                    Exception error = task.getException();
+                    if (error != null) {
+                        if (error instanceof FirebaseAuthInvalidCredentialsException) {
+                            errorMessage = "Email hoặc mật khẩu không chính xác";
                         }
                     }
-                });
-            }
+                    Toast.makeText(getApplicationContext(), errorMessage, LENGTH_SHORT).show();
+                }
+            });
         });
 
-        imgGoogleSignIn.setOnClickListener(v -> signInWithCredentialManager());
+        googleSignInImageView.setOnClickListener(v -> signInWithCredentialManager());
 
-        imgFacebookSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "In Developing", LENGTH_SHORT).show();
-            }
+        facebookSignInImageView.setOnClickListener(v -> signInWithFacebook());
+
+        registerTextView.setOnClickListener(v -> {
+            Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(i);
+            finish();
         });
 
-        textViewRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
-                startActivity(i);
-                finish();
-            }
+        forgotPasswordTextView.setOnClickListener(v -> {
+            Intent i = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+            startActivity(i);
+            finish();
         });
+    }
 
-        txtViewForgotPassword.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
-                startActivity(i);
-                finish();
-            }
-        });
+    private boolean isValidEmail(String email) {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
     private void signInWithCredentialManager() {
         GetCredentialRequest request = new GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
+                .addCredentialOption(getGoogleIdOption)
                 .build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -154,7 +201,7 @@ public class LoginActivity extends AppCompatActivity {
                                         credential.getType())) {
                                     GoogleIdTokenCredential googleIdTokenCredential =
                                             GoogleIdTokenCredential.createFrom(
-                                                    ((CustomCredential) credential).getData());
+                                                    credential.getData());
                                     String idToken = googleIdTokenCredential.getIdToken();
                                     firebaseAuthWithGoogle(idToken);
                                 }
@@ -173,18 +220,17 @@ public class LoginActivity extends AppCompatActivity {
 
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential authCredential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(authCredential).addOnCompleteListener(this, task -> {
+        firebaseAuth.signInWithCredential(authCredential).addOnCompleteListener(this, task -> {
             if (task.isSuccessful()) {
-                userData = mAuth.getCurrentUser();
-                if (userData != null) {
+                firebaseUser = firebaseAuth.getCurrentUser();
+                if (firebaseUser != null) {
                     userMap = new HashMap<>();
-                    userMap.put("uid", userData.getUid());
-                    userMap.put("email", userData.getEmail());
-                    userMap.put("name", userData.getDisplayName());
+                    userMap.put("uid", firebaseUser.getUid());
+                    userMap.put("email", firebaseUser.getEmail());
+                    userMap.put("name", firebaseUser.getDisplayName());
 
-                    userRef = FirebaseDatabase.getInstance().getReference("users");
                     emails = new ArrayList<>();
-                    userRef.addValueEventListener(new ValueEventListener() {
+                    databaseReference.addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             if (snapshot.exists()) {
@@ -202,7 +248,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
 
-                    userRef.child(Objects.requireNonNull(userData.getUid())).updateChildren(userMap)
+                    databaseReference.child(Objects.requireNonNull(firebaseUser.getUid())).updateChildren(userMap)
                             .addOnSuccessListener(unused -> {
                                 Toast.makeText(LoginActivity.this, "Đăng nhập thành công", LENGTH_SHORT).show();
                                 Intent i = new Intent(LoginActivity.this, MainActivity.class);
@@ -214,5 +260,84 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(LoginActivity.this, "Đăng nhập thất bại", LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void signInWithFacebook() {
+        loginManager.logInWithReadPermissions(this, Arrays.asList("email", "public_profile"));
+        loginManager.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+
+
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                handleFacebookAccessToken(loginResult.getAccessToken());
+            }
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(LoginActivity.this,
+                        "Đăng nhập Facebook đã bị hủy",
+                        LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(@NonNull FacebookException e) {
+                Toast.makeText(LoginActivity.this,
+                        "Đăng nhập Facebook thất bại: " + e.getMessage(),
+                        LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void handleFacebookAccessToken(AccessToken token) {
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+        firebaseAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        firebaseUser = firebaseAuth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            // Create user data map
+                            userMap = new HashMap<>();
+                            userMap.put("uid", firebaseUser.getUid());
+                            userMap.put("email", firebaseUser.getEmail());
+                            userMap.put("name", firebaseUser.getDisplayName());
+                            userMap.put("provider", "facebook");
+                            userMap.put("createdAt", System.currentTimeMillis());
+
+                            // Get database reference
+                            DatabaseReference userRef = FirebaseDatabase.getInstance()
+                                    .getReference()
+                                    .child("users")
+                                    .child(firebaseUser.getUid());
+
+                            // Set value instead of update to ensure all data is written
+                            userRef.setValue(userMap)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(LoginActivity.this,
+                                                "Đăng nhập thành công",
+                                                LENGTH_SHORT).show();
+                                        Intent i = new Intent(LoginActivity.this, MainActivity.class);
+                                        startActivity(i);
+                                        finish();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(LoginActivity.this,
+                                                "Lỗi lưu dữ liệu: " + e.getMessage(),
+                                                LENGTH_SHORT).show();
+                                        firebaseAuth.signOut();
+                                    });
+                        }
+                    } else {
+                        Toast.makeText(LoginActivity.this,
+                                "Đăng nhập thất bại: " +
+                                        (task.getException() != null ? task.getException().getMessage() : "Unknown error"),
+                                LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        callbackManager.onActivityResult(requestCode, resultCode, data);
     }
 }

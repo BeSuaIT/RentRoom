@@ -1,12 +1,19 @@
 package com.example.timphongtro.Fragment;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.credentials.ClearCredentialStateRequest;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.fragment.app.Fragment;
 
+import android.os.CancellationSignal;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +21,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.timphongtro.Activity.UpdateInformationUserActivity;
-import com.example.timphongtro.Activity.DetailRoomActivity;
 import com.example.timphongtro.Activity.HistoryActivity;
 import com.example.timphongtro.Activity.LoginActivity;
 import com.example.timphongtro.Activity.ManagePostActivity;
@@ -22,9 +28,6 @@ import com.example.timphongtro.Activity.MyLovePostActivity;
 import com.example.timphongtro.Activity.UserActivity;
 import com.example.timphongtro.Activity.scheduleVisitRoomActivity;
 import com.example.timphongtro.R;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -37,7 +40,6 @@ public class ProfileFragment extends Fragment {
 
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    GoogleSignInAccount account;
     FirebaseDatabase database;
     private String name;
     DatabaseReference userRef;
@@ -52,6 +54,7 @@ public class ProfileFragment extends Fragment {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -71,74 +74,90 @@ public class ProfileFragment extends Fragment {
         tvprofile = view.findViewById(R.id.tvprofile);
         linear_layoutProfile = view.findViewById(R.id.linear_layoutProfile);
         btntrangcanhan = view.findViewById(R.id.btntrangcanhan);
-//        account = GoogleSignIn.getLastSignedInAccount(getActivity().getApplicationContext());
-//        String id_user = mUser != null ? mUser.getUid() : (account != null ? account.getId() : "");
+
         if(mUser != null){
-            btntrangcanhan.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //chuyen intent trang ca nhan
-                    Intent myprofile = new Intent(getActivity().getApplicationContext(), UserActivity.class);
-                    myprofile.putExtra("id_own_post",mUser.getUid());
-                    startActivity(myprofile);
-                }
+            btntrangcanhan.setOnClickListener(v -> {
+                Intent myprofile = new Intent(getActivity().getApplicationContext(), UserActivity.class);
+                myprofile.putExtra("id_own_post",mUser.getUid());
+                startActivity(myprofile);
             });
-            btnlichsu.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(getActivity(), HistoryActivity.class);
+            btnlichsu.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), HistoryActivity.class);
+                startActivity(intent);
+            });
+            btndangxuat.setOnClickListener(v -> {
+                // Clear credentials first
+                CredentialManager credentialManager = CredentialManager.create(requireContext());
+                ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+                CancellationSignal cancellationSignal = new CancellationSignal();
+
+                credentialManager.clearCredentialStateAsync(
+                        request,
+                        cancellationSignal,
+                        getActivity().getMainExecutor(),
+                        new CredentialManagerCallback<Void, ClearCredentialException>() {
+                            @Override
+                            public void onResult(Void unused) {
+                                // Only logout after credentials are cleared
+                                // Sign out from Facebook if logged in
+                                if (com.facebook.AccessToken.getCurrentAccessToken() != null) {
+                                    com.facebook.login.LoginManager.getInstance().logOut();
+                                }
+
+                                // Sign out from Firebase
+                                mAuth.signOut();
+
+                                // Redirect to login screen
+                                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                if (getActivity() != null) {
+                                    getActivity().finish();
+                                }
+                            }
+
+                            @Override
+                            public void onError(@NonNull ClearCredentialException e) {
+                                // Still proceed with logout even if clearing credentials fails
+                                if (com.facebook.AccessToken.getCurrentAccessToken() != null) {
+                                    com.facebook.login.LoginManager.getInstance().logOut();
+                                }
+                                mAuth.signOut();
+
+                                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                if (getActivity() != null) {
+                                    getActivity().finish();
+                                }
+                            }
+                        }
+                );
+            });
+
+            btnquanlyphong.setOnClickListener(v -> {
+                if (mUser != null) {
+                    Intent mypost = new Intent(getActivity(), ManagePostActivity.class);
+                    startActivity(mypost);
+                } else {
+                    Intent intent = new Intent(getActivity(), LoginActivity.class);
                     startActivity(intent);
                 }
             });
-            btndangxuat.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mAuth.signOut();
-                    GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestEmail()
-                            .requestIdToken(getString(R.string.default_web_client_id)).build();
-                    GoogleSignIn.getClient(getActivity().getApplicationContext(), GoogleSignInOptions.DEFAULT_SIGN_IN).signOut();
-                    Intent i = new Intent(getActivity(), LoginActivity.class);
-                    startActivity(i);
-                    getActivity().finish();
-                }
+
+            btnyeuthich.setOnClickListener(v -> {
+                Intent lovepost = new Intent(getActivity(), MyLovePostActivity.class);
+                startActivity(lovepost);
             });
 
-            btnquanlyphong.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mUser != null) {
-                        Intent mypost = new Intent(getActivity(), ManagePostActivity.class);
-                        startActivity(mypost);
-                    } else {
-                        Intent intent = new Intent(getActivity(), LoginActivity.class);
-                        startActivity(intent);
-                    }
-                }
+            btnlichhen.setOnClickListener(v -> {
+                Intent schedule = new Intent(getActivity(), scheduleVisitRoomActivity.class);
+                startActivity(schedule);
             });
 
-            btnyeuthich.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent lovepost = new Intent(getActivity(), MyLovePostActivity.class);
-                    startActivity(lovepost);
-                }
-            });
-
-            btnlichhen.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent schedule = new Intent(getActivity(), scheduleVisitRoomActivity.class);
-                    startActivity(schedule);
-                }
-            });
-
-            linear_layoutProfile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent i = new Intent(getActivity(), UpdateInformationUserActivity.class);
-                    startActivity(i);
-                }
+            linear_layoutProfile.setOnClickListener(v -> {
+                Intent i = new Intent(getActivity(), UpdateInformationUserActivity.class);
+                startActivity(i);
             });
             database = FirebaseDatabase.getInstance();
 
@@ -160,11 +179,8 @@ public class ProfileFragment extends Fragment {
 
 
             if (mUser != null) {
-                // Người dùng đã đăng nhập, bạn có thể lấy thông tin người dùng từ currentUser
                 String uid = mUser.getUid();
                 String email = mUser.getEmail();
-//                String uid = mUser != null ? mUser.getUid() : (account != null ? account.getId() : "");;
-//                String email =mUser != null ? mUser.getUid() : (account != null ? account.getEmail() : "");
                 txtviewEmail.setText(email);
                 userRef = database.getReference("users/" + mUser.getUid());
                 userRef.child("name").addValueEventListener(new ValueEventListener() {
@@ -187,7 +203,6 @@ public class ProfileFragment extends Fragment {
 
             }
         }
-
 
     }
 
