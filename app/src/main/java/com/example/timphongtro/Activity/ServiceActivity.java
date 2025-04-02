@@ -2,7 +2,6 @@ package com.example.timphongtro.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -47,22 +46,14 @@ public class ServiceActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             item = bundle.getString("item");
-            back_button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finish();
-                }
-            });
+            back_button.setOnClickListener(v -> finish());
 
-            cart_button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (user != null) {
-                        openServiceActivity(item);
-                    } else {
-                        Intent intent = new Intent(ServiceActivity.this, LoginActivity.class);
-                        startActivity(intent);
-                    }
+            cart_button.setOnClickListener(v -> {
+                if (user != null) {
+                    openServiceActivity(item);
+                } else {
+                    Intent intent = new Intent(ServiceActivity.this, LoginActivity.class);
+                    startActivity(intent);
                 }
             });
 
@@ -84,7 +75,7 @@ public class ServiceActivity extends AppCompatActivity {
 
     private void fetchservicefromDB() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference databaseReference = database.getReference("service/" + item);
+        DatabaseReference databaseReference = database.getReference("Services/" + item);
 
         databaseReference.addValueEventListener(new ValueEventListener() {
             @Override

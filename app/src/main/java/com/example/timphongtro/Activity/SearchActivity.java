@@ -33,7 +33,7 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        roomRef = FirebaseDatabase.getInstance().getReference("rooms");
+        roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
         roomArrayList = new ArrayList<>();
         fetchRoomDatabase();
 
@@ -46,7 +46,7 @@ public class SearchActivity extends AppCompatActivity {
         searchView = findViewById(R.id.search_room);
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            district = bundle.getString("District");
+            district = bundle.getString("Districts");
             searchView.setQuery(district, true);
         }
         searchView.clearFocus();

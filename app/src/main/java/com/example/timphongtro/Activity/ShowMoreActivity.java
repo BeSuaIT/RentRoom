@@ -43,7 +43,7 @@ public class ShowMoreActivity extends AppCompatActivity {
         roomShimmer.startShimmer();
         roomrecyclerView = findViewById(R.id.rcv_showmore);
         roomrecyclerView.setHasFixedSize(true);
-        roomRef = FirebaseDatabase.getInstance().getReference("rooms");
+        roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
         roomrecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         roomArrayList = new ArrayList<>();
         showmoreAdapter = new ShowmoreAdapter(this, roomArrayList);

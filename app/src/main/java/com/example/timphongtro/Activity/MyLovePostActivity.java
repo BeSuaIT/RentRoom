@@ -39,12 +39,7 @@ public class MyLovePostActivity extends AppCompatActivity {
         user = FirebaseAuth.getInstance().getCurrentUser();
         database = FirebaseDatabase.getInstance();
         ImageView imageViewBack = findViewById(R.id.imageViewBack);
-        imageViewBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        imageViewBack.setOnClickListener(v -> finish());
         rcvLovePost = findViewById(R.id.rcvLovePost);
         roomsLove = new ArrayList<>();
         rooms = new ArrayList<>();
@@ -62,7 +57,7 @@ public class MyLovePostActivity extends AppCompatActivity {
                             String roomInLove = dataSnapshot.getKey();
                             roomsLove.add(roomInLove);
                         }
-                        roomRef = database.getReference("rooms");
+                        roomRef = database.getReference("Rooms");
                         roomRef.addValueEventListener(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {

@@ -43,14 +43,11 @@ public class DistrictAdapter extends RecyclerView.Adapter<DistrictAdapter.MyView
         District district = list.get(position);
         Glide.with(context).load(district.getImg_district()).centerCrop().into(holder.img_district);
         holder.name.setText(district.getName());
-        holder.cardViewDistrict.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent searchview = new Intent(context, SearchActivity.class);
-                searchview.putExtra("District",holder.name.getText());
-                context.startActivity(searchview);
+        holder.cardViewDistrict.setOnClickListener(v -> {
+            Intent searchview = new Intent(context, SearchActivity.class);
+            searchview.putExtra("District",holder.name.getText());
+            context.startActivity(searchview);
 
-            }
         });
     }
 

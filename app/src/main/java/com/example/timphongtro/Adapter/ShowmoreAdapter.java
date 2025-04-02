@@ -23,8 +23,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyViewHolder> {
-    Context context; 
-
+    Context context;
     ArrayList<Room> list;
 
     public ShowmoreAdapter(Context context, ArrayList<Room> list) {
@@ -56,13 +55,10 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         holder.city.setText(address.getCity());
         holder.district.setText(address.getDistrict());
         holder.detail.setText(address.getDetail());
-        holder.cardViewRoom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent detailRoom = new Intent(context, DetailRoomActivity.class);
-                detailRoom.putExtra("DataRoom", room.toString());
-                context.startActivity(detailRoom);
-            }
+        holder.cardViewRoom.setOnClickListener(v -> {
+            Intent detailRoom = new Intent(context, DetailRoomActivity.class);
+            detailRoom.putExtra("DataRoom", room.toString());
+            context.startActivity(detailRoom);
         });
 
     }

@@ -70,14 +70,14 @@ public class HomeFragment extends Fragment {
 
         initializeUI(view);
         setupImageSlider(view);
-        setupCitySpinner(); // This now properly initializes the spinner
+        setupCitySpinner();
         setupDistrictRecyclerView(view);
         setupRoomRecyclerView(view);
-        fetchCityData(); // This will update the spinner with data
+        fetchCityData();
         fetchRoomDatabase();
     }
 
-    // Initializes UI components and sets up click listeners for various buttons.
+    // Xử lý UI
     private void initializeUI(View view) {
         districtShimmer = view.findViewById(R.id.district_shimmer);
         roomShimmer = view.findViewById(R.id.room_shimmer);
@@ -90,7 +90,7 @@ public class HomeFragment extends Fragment {
         setupServiceClickListeners(view);
     }
 
-    // Sets up click listeners for service-related buttons.
+    // Xử lý các sự kiện click cho các dịch vụ
     private void setupServiceClickListeners(View view) {
         view.findViewById(R.id.doi_binh_ga).setOnClickListener(v -> openServiceActivity("doibinhga"));
         view.findViewById(R.id.doi_binh_nuoc).setOnClickListener(v -> openServiceActivity("doibinhnuoc"));
@@ -100,7 +100,7 @@ public class HomeFragment extends Fragment {
         view.findViewById(R.id.cho_thue_noi_that).setOnClickListener(v -> openServiceActivity("chothuenoithat"));
     }
 
-    // Sets up the image slider and loads images from Firebase Storage.
+    // Xử lý slider ảnh
     private void setupImageSlider(View view) {
         StorageReference storageReference = storage.getReference().child("HomeImageSlider");
         ImageSlider imageSlider = view.findViewById(R.id.imageSlider);
@@ -116,17 +116,14 @@ public class HomeFragment extends Fragment {
         }).addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to load images", Toast.LENGTH_SHORT).show());
     }
 
-    // Sets up the spinner for city selection and fetches data from Firebase.
+    // Xử lý spinner thành phố
     private void setupCitySpinner() {
-        // Initialize spinner from view
         spinner = requireView().findViewById(R.id.city_spinner);
 
-        // Initialize lists and database reference
         spinnerArrayList = new ArrayList<>();
         cityArrayList = new ArrayList<>();
-        spinnerRef = FirebaseDatabase.getInstance().getReference("city");
+        spinnerRef = FirebaseDatabase.getInstance().getReference("Cities");
 
-        // Set initial empty adapter to avoid null pointer
         spinnerAdapter = new ArrayAdapter<>(
                 requireContext(),
                 R.layout.spinner_style,
@@ -136,7 +133,7 @@ public class HomeFragment extends Fragment {
         spinner.setAdapter(spinnerAdapter);
     }
 
-    // Sets up the RecyclerView for displaying districts.
+    // Xử lý RecyclerView quận
     private void setupDistrictRecyclerView(View view) {
         RecyclerView rcv_district = view.findViewById(R.id.rcv_district);
         rcv_district.setHasFixedSize(true);
@@ -146,7 +143,7 @@ public class HomeFragment extends Fragment {
         rcv_district.setAdapter(districtAdapter);
     }
 
-    // Sets up the RecyclerView for displaying rooms.
+    // Xử lý RecyclerView phòng
     private void setupRoomRecyclerView(View view) {
         RecyclerView rcv_room = view.findViewById(R.id.rcv_room);
         rcv_room.setHasFixedSize(true);
@@ -156,7 +153,7 @@ public class HomeFragment extends Fragment {
         rcv_room.setAdapter(roomAdapter);
     }
 
-    // Fetches city data from Firebase and updates the spinner UI.
+    // Lấy dữ liệu thành phố từ Firebase
     private void fetchCityData() {
         spinnerRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -169,32 +166,42 @@ public class HomeFragment extends Fragment {
                         String cityName = citySnapshot.child("name").getValue(String.class);
                         String cityId = citySnapshot.child("id_city").getValue(String.class);
 
-                        if (cityName != null && cityId != null) {
+                        // Kiểm tra xem thành phố có node Districts và có quận hay không
+                        DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
+                        if (cityName != null && cityId != null &&
+                                districtsSnapshot.exists() &&
+                                districtsSnapshot.getChildrenCount() > 0) {
+
                             ArrayList<District> districts = new ArrayList<>();
-                            for (DataSnapshot ds : citySnapshot.child("district").getChildren()) {
+                            for (DataSnapshot ds : districtsSnapshot.getChildren()) {
                                 District district = ds.getValue(District.class);
                                 if (district != null) districts.add(district);
                             }
 
-                            cityArrayList.add(new City(cityId, cityName, districts));
-                            spinnerArrayList.add(cityName);
+                            // Chỉ thêm thành phố nếu có quận
+                            if (!districts.isEmpty()) {
+                                cityArrayList.add(new City(cityId, cityName, districts));
+                                spinnerArrayList.add(cityName);
+                            }
                         }
                     }
 
                     updateSpinnerUI();
                 } catch (Exception e) {
-                    Toast.makeText(getContext(), "Error loading city data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Error loading city data: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getContext(), "Failed to load city data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Failed to load city data",
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    // Updates the spinner UI with the fetched city data.
+    // Cập nhật UI cho Spinner
     private void updateSpinnerUI() {
         if (getContext() == null) return;
 
@@ -202,7 +209,6 @@ public class HomeFragment extends Fragment {
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
         spinner.setAdapter(spinnerAdapter);
 
-        // Find and set default selection to "Hà Nội"
         int defaultPosition = spinnerArrayList.indexOf("Hà Nội");
         if (defaultPosition != -1) {
             spinner.setSelection(defaultPosition);
@@ -224,7 +230,7 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // Updates the district list in the RecyclerView.
+    // Cập nhật danh sách quận
     private void updateDistrictList(ArrayList<District> districts) {
         districtArrayList.clear();
         districtArrayList.addAll(districts);
@@ -233,9 +239,9 @@ public class HomeFragment extends Fragment {
         districtAdapter.notifyDataSetChanged();
     }
 
-    // Fetches room data from Firebase and updates the RecyclerView.
+    // Lấy dữ liệu phòng từ Firebase
     private void fetchRoomDatabase() {
-        DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("rooms");
+        DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
         roomRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -262,7 +268,7 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    //Opens the ServiceActivity with the specified service type.
+    // Mở activity dịch vụ
     private void openServiceActivity(String item) {
         Intent intent = new Intent(getContext(), ServiceActivity.class);
         intent.putExtra("item", item);

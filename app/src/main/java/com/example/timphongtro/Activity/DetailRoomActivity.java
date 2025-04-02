@@ -130,13 +130,10 @@ public class DetailRoomActivity extends AppCompatActivity {
             String roomString = bundle.getString("DataRoom");
             Gson gson = new Gson();
             roomData = gson.fromJson(roomString, Room.class);
-            userPost.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
-                    intent.putExtra("id_own_post", roomData.getId_own_post());
-                    startActivity(intent);
-                }
+            userPost.setOnClickListener(v -> {
+                Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
+                intent.putExtra("id_own_post", roomData.getId_own_post());
+                startActivity(intent);
             });
             String typeRoomStr = "";
             if (roomData.getType_room() == 0) {
@@ -181,12 +178,7 @@ public class DetailRoomActivity extends AppCompatActivity {
                     .transition(DrawableTransitionOptions.withCrossFade()) // Hiệu ứng chuyển tiếp khi hiển thị ảnh
                     .into(imageViewRoom);
 
-            imageViewRoom.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showZoomImgDialog();
-                }
-            });
+            imageViewRoom.setOnClickListener(v -> showZoomImgDialog());
 
             ArrayList<FurnitureClass> furnitures = roomData.getFurniture();
 
@@ -202,14 +194,9 @@ public class DetailRoomActivity extends AppCompatActivity {
             layoutManager1.setOrientation(RecyclerView.HORIZONTAL);
             recycleviewExtension.setLayoutManager(layoutManager1);
             recycleviewExtension.setAdapter(extensionAdapter);
-            imageViewBack.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finish();
-                }
-            });
+            imageViewBack.setOnClickListener(v -> finish());
 
-            userOwnPostRef = database.getReference("users/" + roomData.getId_own_post());
+            userOwnPostRef = database.getReference("Users/" + roomData.getId_own_post());
             userOwnPostRef.child("name").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -234,114 +221,89 @@ public class DetailRoomActivity extends AppCompatActivity {
                 if (roomData.getType_room() == 0) {
                     typeRoom = "Tro/";
                 }
-                roomRef = database.getReference("rooms/" + typeRoom + roomData.getId_room());
+                roomRef = database.getReference("Rooms/" + typeRoom + roomData.getId_room());
                 //check khi vao room detail
                 isLove = false;
                 checkLoveRoom();
                 //Chua tim thi Them tim
                 //day du lieu len
-                imageViewLove.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isLove = true; //flag đánh dấu xem đã thực hiện xong chưa
-                            roomRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    if (isLove) {
-                                        if (snapshot.hasChild(user.getUid())) {
-                                            roomRef.child("userLovePost").child(user.getUid()).removeValue();
-                                            //nem room vao bang LovePost
-                                            myLovePostRef.child(roomData.getId_room()).removeValue();
-                                            isLove = false;
-                                            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-                                            Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            roomRef.child("userLovePost").child(user.getUid()).setValue(true);
+                imageViewLove.setOnClickListener(v -> {
+                    isLove = true; //flag đánh dấu xem đã thực hiện xong chưa
+                        roomRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if (isLove) {
+                                    if (snapshot.hasChild(user.getUid())) {
+                                        roomRef.child("userLovePost").child(user.getUid()).removeValue();
+                                        //nem room vao bang LovePost
+                                        myLovePostRef.child(roomData.getId_room()).removeValue();
+                                        isLove = false;
+                                        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+                                        Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        roomRef.child("userLovePost").child(user.getUid()).setValue(true);
 //                                            myLovePostRef.child(roomData.getId_room()).setValue(roomData);
-                                            myLovePostRef.child(roomData.getId_room()).setValue(true);
-                                            isLove = false;
-                                            imageViewLove.setImageResource(R.drawable.ic_love_fill);
-                                            Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
-                                        }
-                                        //nem id hien tai vao bang room
+                                        myLovePostRef.child(roomData.getId_room()).setValue(true);
+                                        isLove = false;
+                                        imageViewLove.setImageResource(R.drawable.ic_love_fill);
+                                        Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
                                     }
+                                    //nem id hien tai vao bang room
                                 }
+                            }
 
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
 
-                                }
-                            });
-                    }
+                            }
+                        });
                 });
 
-            btnCall.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
-                            != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(DetailRoomActivity.this,
-                                new String[]{android.Manifest.permission.CALL_PHONE},
-                                CALL_PHONE_PERMISSION_REQUEST_CODE);
-                    } else {
-                        makePhoneCall();
-                    }
+            btnCall.setOnClickListener(v -> {
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(DetailRoomActivity.this,
+                            new String[]{android.Manifest.permission.CALL_PHONE},
+                            CALL_PHONE_PERMISSION_REQUEST_CODE);
+                } else {
+                    makePhoneCall();
                 }
             });
 
-            btnBookRoom.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                        showBottomDialog();
-                }
+            btnBookRoom.setOnClickListener(v -> showBottomDialog());
+
+            textViewPhone.setOnClickListener(v -> {
+                Toast.makeText(getApplicationContext(), "Lưu vào số điện thoại Clipboard", Toast.LENGTH_SHORT).show();
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+
+                // Tạo một đối tượng ClipData để chứa văn bản cần sao chép
+                ClipData clip = ClipData.newPlainText("Label", textViewPhone.getText());
+
+                // Sao chép ClipData vào clipboard
+                clipboard.setPrimaryClip(clip);
             });
 
-            textViewPhone.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(getApplicationContext(), "Lưu vào số điện thoại Clip board", Toast.LENGTH_SHORT).show();
-                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            imageViewBack.setOnClickListener(v -> finish());
 
-                    // Tạo một đối tượng ClipData để chứa văn bản cần sao chép
-                    ClipData clip = ClipData.newPlainText("Label", textViewPhone.getText());
+            btnZalo.setOnClickListener(v -> {
 
-                    // Sao chép ClipData vào clipboard
-                    clipboard.setPrimaryClip(clip);
-                }
+                String url = "http://zalo.me/" + "0964259203"; // URL bạn muốn chuyển đến
+
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(url));
+                Toast.makeText(DetailRoomActivity.this, "Bạn chỉ sử dụng chức năng khi máy đã cài đặt Zalo", Toast.LENGTH_SHORT).show();
+                startActivity(intent);
             });
 
-            imageViewBack.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finish();
-                }
-            });
+            textViewCombine_address.setOnClickListener(v -> {
+                Toast.makeText(getApplicationContext(), "Lưu địa chỉ vào Clipboard", Toast.LENGTH_SHORT).show();
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 
-            btnZalo.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+                // Tạo một đối tượng ClipData để chứa văn bản cần sao chép
+                ClipData clip = ClipData.newPlainText("Label", textViewCombine_address.getText());
 
-                    String url = "http://zalo.me/" + "0964259203"; // URL bạn muốn chuyển đến
-
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(url));
-                    Toast.makeText(DetailRoomActivity.this, "Bạn chỉ sử dụng chức năng khi máy đã cài đặt Zalo", Toast.LENGTH_SHORT).show();
-                    startActivity(intent);
-                }
-            });
-
-            textViewCombine_address.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(getApplicationContext(), "Lưu địa chỉ vào Clip board", Toast.LENGTH_SHORT).show();
-                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-
-                    // Tạo một đối tượng ClipData để chứa văn bản cần sao chép
-                    ClipData clip = ClipData.newPlainText("Label", textViewCombine_address.getText());
-
-                    // Sao chép ClipData vào clipboard
-                    clipboard.setPrimaryClip(clip);
-                }
+                // Sao chép ClipData vào clipboard
+                clipboard.setPrimaryClip(clip);
             });
         }
     }
@@ -371,12 +333,7 @@ public class DetailRoomActivity extends AppCompatActivity {
                 .transition(DrawableTransitionOptions.withCrossFade()) // Hiệu ứng chuyển tiếp khi hiển thị ảnh
                 .into(imageViewZoom);
 
-        imageViewBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        imageViewBack.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -403,14 +360,11 @@ public class DetailRoomActivity extends AppCompatActivity {
         edtTime = dialog.findViewById(R.id.edtTime);
         myCalender = Calendar.getInstance();
 
-        DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                myCalender.set(Calendar.YEAR, year);
-                myCalender.set(Calendar.MONTH, month);
-                myCalender.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                updateLabel();
-            }
+        DatePickerDialog.OnDateSetListener date = (view, year, month, dayOfMonth) -> {
+            myCalender.set(Calendar.YEAR, year);
+            myCalender.set(Calendar.MONTH, month);
+            myCalender.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            updateLabel();
         };
 
         edtTime.setOnClickListener(v -> {
@@ -421,22 +375,12 @@ public class DetailRoomActivity extends AppCompatActivity {
         btnConfirm = dialog.findViewById(R.id.btnConfirm);
         scheduleVisitRoomref = null;
             uuid = UUID.randomUUID();
-            scheduleVisitRoomref = database.getReference("scheduleVisitRoom/" + uuid.toString());
+            scheduleVisitRoomref = database.getReference("MeetingSchedules/" + uuid.toString());
 
-            btnConfirm.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    scheduleVisitRoom();
-                }
-            });
+            btnConfirm.setOnClickListener(v -> scheduleVisitRoom());
 
         btnCancel = dialog.findViewById(R.id.btnCancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -483,18 +427,10 @@ public class DetailRoomActivity extends AppCompatActivity {
         if (isValid) {
             ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(roomData.getType_room(), uuid.toString(), edtYourName.getText().toString(), phone, edtNote.getText().toString(), edtTime.getText().toString(), roomData.getId_own_post(), user.getUid(), "0", roomData.getId_room()); // status create
                 if (!user.getUid().equals(roomData.getId_own_post())) {
-                    scheduleVisitRoomref.setValue(schedule).addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void unused) {
-                            dialog.dismiss();
-                            Toast.makeText(getApplicationContext(), "Đặt lịch thành công", Toast.LENGTH_LONG).show();
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(getApplicationContext(), "Đặt lịch thất bại", Toast.LENGTH_LONG).show();
-                        }
-                    });
+                    scheduleVisitRoomref.setValue(schedule).addOnSuccessListener(unused -> {
+                        dialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "Đặt lịch thành công", Toast.LENGTH_LONG).show();
+                    }).addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Đặt lịch thất bại", Toast.LENGTH_LONG).show());
                 } else {
                     Toast.makeText(getApplicationContext(), "Bạn không thể đặt lịch hẹn với chính bài đăng của mình", Toast.LENGTH_LONG).show();
                 }

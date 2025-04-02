@@ -20,7 +20,7 @@ import android.widget.Toast;
 
 import com.example.timphongtro.BroadcastReceiver.NetworkChangeReceiver;
 import com.example.timphongtro.Fragment.HomeFragment;
-import com.example.timphongtro.Fragment.NotificationFragment;
+import com.example.timphongtro.Fragment.FollowFragment;
 import com.example.timphongtro.Fragment.ProfileFragment;
 import com.example.timphongtro.Fragment.ServiceFragment;
 import com.example.timphongtro.R;
@@ -40,11 +40,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize view binding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        new GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(true)
-                .setServerClientId(getString(R.string.default_web_client_id))
-                .build();
 
         // Configure Google Sign-In
         new GetGoogleIdOption.Builder()
@@ -73,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.service) {
                 replaceFragment(new ServiceFragment());
             } else if (item.getItemId() == R.id.notification) {
-                replaceFragment(new NotificationFragment());
+                replaceFragment(new FollowFragment());
             } else if (item.getItemId() == R.id.profile) {
                 replaceFragment(new ProfileFragment());
             }

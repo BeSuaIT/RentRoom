@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.timphongtro.Entity.Cart;
 import com.example.timphongtro.Entity.Service;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,17 +26,18 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder> {
-
-    private ArrayList<Service> cartList;
+    private ArrayList<Cart> cartList;
     private Context context;
     private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     private FirebaseUser user = firebaseAuth.getCurrentUser();
     private String userID = user.getUid();
-    private DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Cart/" + userID);
+    private DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts/" + userID);
 
-    public CartAdapter(Context context, ArrayList<Service> cartList) {
+    public CartAdapter(Context context, ArrayList<Cart> cartList) {
         this.context = context;
         this.cartList = cartList;
     }
@@ -48,78 +50,74 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CartAdapter.CartViewHolder holder, int position) {
-        Service service = cartList.get(position);
-        holder.name.setText(service.getTitle());
-        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
-        decimalFormat.setDecimalSeparatorAlwaysShown(false);
-        holder.price.setText(decimalFormat.format(service.getPrice()) + " VNĐ");
-        holder.amount.setText(String.valueOf(service.getAmount()));
-        Glide.with(context).load(service.getImg1()).centerCrop().into(holder.image);
+    public void onBindViewHolder(@NonNull CartViewHolder holder, int position) {
+        Cart cart = cartList.get(position);
+        DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
 
-        holder.btn_remove.setOnClickListener(new View.OnClickListener() {
+        servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onClick(View v) {
-                removeCartItem(service);
-            }
-        });
-        holder.minus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int currentAmount = service.getAmount();
-                if (currentAmount > 1) {
-                    int updatedAmount = currentAmount - 1;
-                    service.setAmount(updatedAmount);
-                    notifyDataSetChanged();
-                    updateCartItem(service);
-                } else {
-                    removeCartItem(service);
+            public void onDataChange(@NonNull DataSnapshot servicesSnapshot) {
+                for (DataSnapshot categorySnapshot : servicesSnapshot.getChildren()) {
+                    DataSnapshot serviceSnapshot = categorySnapshot.child(cart.getServiceId());
+                    if (serviceSnapshot.exists()) {
+                        Service serviceDetails = serviceSnapshot.getValue(Service.class);
+                        if (serviceDetails != null) {
+                            DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
+                            decimalFormat.setDecimalSeparatorAlwaysShown(false);
+
+                            holder.name.setText(serviceDetails.getTitle());
+                            holder.price.setText(decimalFormat.format(serviceDetails.getPrice()) + " VNĐ");
+                            holder.amount.setText(String.valueOf(cart.getAmount()));
+
+                            // Handle images
+                            if (serviceDetails.getImages() != null) {
+                                Object imagesObj = serviceDetails.getImages();
+                                String imageUrl = "";
+
+                                if (imagesObj instanceof Map) {
+                                    Map<String, String> imagesMap = (Map<String, String>) imagesObj;
+                                    if (!imagesMap.isEmpty()) {
+                                        imageUrl = imagesMap.values().iterator().next();
+                                    }
+                                } else if (imagesObj instanceof List) {
+                                    List<String> imagesList = (List<String>) imagesObj;
+                                    if (!imagesList.isEmpty()) {
+                                        imageUrl = imagesList.get(0);
+                                    }
+                                }
+
+                                if (!imageUrl.isEmpty()) {
+                                    Glide.with(context).load(imageUrl).centerCrop().into(holder.image);
+                                }
+                            }
+
+                            holder.minus.setOnClickListener(v -> updateAmount(cart, -1));
+                            holder.plus.setOnClickListener(v -> updateAmount(cart, 1));
+                            holder.btn_remove.setOnClickListener(v -> removeItem(cart.getServiceId()));
+                            break;
+                        }
+                    }
                 }
             }
-        });
 
-        holder.plus.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                int currentAmount = service.getAmount();
-                int updatedAmount = currentAmount + 1;
-                service.setAmount(updatedAmount);
-                notifyDataSetChanged();
-                updateCartItem(service);
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
             }
         });
     }
 
-    private void removeCartItem(Service service) {
-        cartRef.orderByChild("title").equalTo(service.getTitle()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    snapshot.getRef().removeValue();
-                    break;
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
+    private void updateAmount(Cart service, int change) {
+        int newAmount = service.getAmount() + change;
+        if (newAmount > 0) {
+            cartRef.child(service.getServiceId()).setValue(newAmount);
+        } else {
+            removeItem(service.getServiceId());
+        }
     }
 
-    private void updateCartItem(Service service) {
-        cartRef.orderByChild("title").equalTo(service.getTitle()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    snapshot.getRef().child("amount").setValue(service.getAmount());
-                    break;
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
+    private void removeItem(String serviceId) {
+        cartRef.child(serviceId).removeValue();
     }
 
     @Override

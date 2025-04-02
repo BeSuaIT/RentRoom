@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -42,7 +41,6 @@ import com.example.timphongtro.Entity.Room;
 import com.example.timphongtro.Entity.FurnitureClass;
 import com.example.timphongtro.R;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -60,7 +58,9 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -101,26 +101,7 @@ public class PostRoomActivity extends AppCompatActivity {
         cities = new ArrayList<>();
         districts = new ArrayList<>();
 
-        getDataForSpinnerCity();
-        path = "city/HaNoi/district";
-        spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedspinner = cities.get(position);
-                if (selectedspinner.equals("Hà Nội")) {
-                    path = "city/HaNoi/district";
-                } else if (selectedspinner.equals("Hồ Chí Minh")) {
-                    path = "city/HoChiMinh/district";
-                }
-                getDataForSpinnerDistrict();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        getDataForSpinnerDistrict();
+        setupCitySpinner();
 
         btnBack.setOnClickListener(v -> {
             Intent main = new Intent(PostRoomActivity.this, MainActivity.class);
@@ -165,19 +146,13 @@ public class PostRoomActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(PostRoomActivity.this);
             builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
                     .setMessage("Bạn có muốn đăng bài không?")
-                    .setPositiveButton("Có", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (isUploadImg1) saveImage();
-                            else
-                                Toast.makeText(getApplicationContext(), "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
-                        }
+                    .setPositiveButton("Có", (dialog, which) -> {
+                        if (isUploadImg1) saveImage();
+                        else
+                            Toast.makeText(getApplicationContext(), "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
                     })
-                    .setNegativeButton("Không", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // Xử lý khi người dùng chọn No
-                        }
+                    .setNegativeButton("Không", (dialog, which) -> {
+                        // Xử lý khi người dùng chọn No
                     });
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
@@ -187,7 +162,6 @@ public class PostRoomActivity extends AppCompatActivity {
     }
 
     void initView() {
-
         userCurrent = FirebaseAuth.getInstance().getCurrentUser();
         if (userCurrent == null) {
             Intent intent = new Intent(this, LoginActivity.class);
@@ -244,6 +218,97 @@ public class PostRoomActivity extends AppCompatActivity {
 
         edtAddress = findViewById(R.id.edtAddress);
     }
+
+    private void setupCitySpinner() {
+        cities = new ArrayList<>();
+        districts = new ArrayList<>();
+        Map<String, String> cityKeyMap = new HashMap<>();
+
+        DatabaseReference citiesRef = FirebaseDatabase.getInstance().getReference("Cities");
+        citiesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                cities.clear();
+                cityKeyMap.clear();
+
+                for (DataSnapshot citySnapshot : snapshot.getChildren()) {
+                    String cityName = citySnapshot.child("name").getValue(String.class);
+                    String cityKey = citySnapshot.getKey();
+
+                    // Kiểm tra xem thành phố có quận hay không
+                    DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
+                    if (cityName != null && districtsSnapshot.exists() && districtsSnapshot.getChildrenCount() > 0) {
+                        cities.add(cityName);
+                        cityKeyMap.put(cityName, cityKey);
+                    }
+                }
+
+                ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(
+                        PostRoomActivity.this,
+                        android.R.layout.simple_spinner_item,
+                        cities
+                );
+                cityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerCity.setAdapter(cityAdapter);
+
+                // Set Hà Nội làm giá trị mặc định
+                int defaultPosition = cities.indexOf("Hà Nội");
+                if (defaultPosition != -1) {
+                    spinnerCity.setSelection(defaultPosition);
+                }
+
+                spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        String selectedCityName = cities.get(position);
+                        String selectedCityKey = cityKeyMap.get(selectedCityName);
+                        loadDistrictsForCity(selectedCityKey);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {}
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(PostRoomActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadDistrictsForCity(String cityName) {
+        DatabaseReference districtRef = FirebaseDatabase.getInstance().getReference("Cities")
+                .child(cityName.replace(" ", "")) // Remove spaces from city name
+                .child("Districts");
+
+        districtRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                districts.clear();
+                for (DataSnapshot districtSnapshot : snapshot.getChildren()) {
+                    String districtName = districtSnapshot.child("name").getValue(String.class);
+                    if (districtName != null) {
+                        districts.add(districtName);
+                    }
+                }
+
+                ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(
+                        PostRoomActivity.this,
+                        android.R.layout.simple_spinner_item,
+                        districts
+                );
+                districtAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerDistrict.setAdapter(districtAdapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(PostRoomActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private Uri copyImageToCache(Uri sourceUri) {
         try {
             InputStream input = getContentResolver().openInputStream(sourceUri);
@@ -267,7 +332,6 @@ public class PostRoomActivity extends AppCompatActivity {
             return sourceUri;
         }
     }
-
     public void saveImage() {
         AlertDialog.Builder builder = new AlertDialog.Builder(PostRoomActivity.this);
         builder.setCancelable(false);
@@ -277,7 +341,7 @@ public class PostRoomActivity extends AppCompatActivity {
 
         if (uri != null) {
             StorageReference storageReference = FirebaseStorage.getInstance().getReference()
-                    .child("roomImage")
+                    .child("RoomImage")
                     .child(Objects.requireNonNull(uri.getLastPathSegment()));
 
             storageReference.putFile(uri).addOnSuccessListener(taskSnapshot ->
@@ -387,18 +451,18 @@ public class PostRoomActivity extends AppCompatActivity {
         }
 
         int type_room = 0;
-        String path = "Tro";
+        String path_type = "Tro";
         if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnChungCu) {
-            path = "ChungCuMini";
+            path_type = "ChungCuMini";
             type_room = 1;
         } else if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnTro) {
-            path = "Tro";
+            path_type = "Tro";
         } else {
             isValid = false;
             Toast.makeText(this, "Vui lòng chọn loại phòng", Toast.LENGTH_SHORT).show();
         }
 
-        DatabaseReference myRef = database.getReference("rooms/" + path);
+        DatabaseReference myRef = database.getReference("Rooms/" + path_type);
         userCurrent = FirebaseAuth.getInstance().getCurrentUser();
 
         String area_room = edtArea.getText().toString();
@@ -476,7 +540,7 @@ public class PostRoomActivity extends AppCompatActivity {
         extensions_room = new ArrayList<>();
         handleDataExtensions();
 
-        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1, "");
+        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1);
 
         if (furnitures.isEmpty()) {
             isValid = false;
@@ -493,18 +557,10 @@ public class PostRoomActivity extends AppCompatActivity {
                     Long.parseLong(edtElectric.getText().toString()), Long.parseLong(edtWater.getText().toString()), Long.parseLong(edtInternet.getText().toString()));
 
             //Xu ly cho firebase
-            myRef.child(id_room).setValue(room).addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void unused) {
-                    Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show();
-                }
-            });
+            myRef.child(id_room).setValue(room).addOnSuccessListener(unused -> {
+                Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                finish();
+            }).addOnFailureListener(e -> Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show());
         } else {
             Toast.makeText(PostRoomActivity.this, "Vui lòng nhập đầy đủ các trường dữ liệu", Toast.LENGTH_SHORT).show();
         }
@@ -586,7 +642,7 @@ public class PostRoomActivity extends AppCompatActivity {
     public void getDataForSpinnerCity() {
         cities.clear();
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-        path = "city";
+        path = "Cities";
         databaseReference.child(path).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -633,14 +689,11 @@ public class PostRoomActivity extends AppCompatActivity {
         pickImgCamera = dialog.findViewById(R.id.pickImgCamera);
         cancelButton = dialog.findViewById(R.id.cancelButton);
 
-        pickImgAlbum.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checkPermissions();
-                Intent photoPicker = new Intent(Intent.ACTION_PICK);
-                photoPicker.setType("image/*");
-                activityResultLauncher.launch(photoPicker);
-            }
+        pickImgAlbum.setOnClickListener(v -> {
+            checkPermissions();
+            Intent photoPicker = new Intent(Intent.ACTION_PICK);
+            photoPicker.setType("image/*");
+            activityResultLauncher.launch(photoPicker);
         });
 
         pickImgCamera.setOnClickListener(v -> {
@@ -657,12 +710,7 @@ public class PostRoomActivity extends AppCompatActivity {
             }
         });
 
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));

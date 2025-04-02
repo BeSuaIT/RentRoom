@@ -65,18 +65,15 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         holder.city.setText(address.getCity());
         holder.district.setText(address.getDistrict());
         holder.detail.setText(address.getDetail());
-        holder.cardViewRoom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String userID = "";
-                if(user != null) {
-                    userID = user.getUid();
-                }
-                Intent detailRoom = new Intent(context, DetailRoomActivity.class);
-                detailRoom.putExtra("DataRoom", room.toString());
-                context.startActivity(detailRoom);
-                RecentlyRead(userID,holder);
+        holder.cardViewRoom.setOnClickListener(v -> {
+            String userID = "";
+            if(user != null) {
+                userID = user.getUid();
             }
+            Intent detailRoom = new Intent(context, DetailRoomActivity.class);
+            detailRoom.putExtra("DataRoom", room.toString());
+            context.startActivity(detailRoom);
+            RecentlyRead(userID,holder);
         });
     }
 
@@ -86,7 +83,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
             room = list.get(holder.getAdapterPosition());
             Date timeRead = new Date();
             long timestamp = timeRead.getTime();
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("History/" + userID);
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Histories/" + userID);
             databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {

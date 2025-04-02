@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.os.Bundle;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,12 +13,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Activity.ScheduleVisitDetailActivity;
-import com.example.timphongtro.Entity.Room;
 import com.example.timphongtro.Entity.ScheduleVisitRoomClass;
 import com.example.timphongtro.R;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -38,9 +34,6 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
     ScheduleVisitRoomClass scheduleData;
     Intent detailSchedule;
 
-    public ScheduleVisitRoomSendAdapter() {
-    }
-
     public ScheduleVisitRoomSendAdapter(Context context, ArrayList<ScheduleVisitRoomClass> schedules) {
         this.context = context;
         this.schedules = schedules;
@@ -57,7 +50,7 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
     public void onBindViewHolder(@NonNull ScheduleVisitRoomSendAdapter.ViewHolder holder, int position) {
         FirebaseUser user;
         user = FirebaseAuth.getInstance().getCurrentUser();
-        DatabaseReference scheduleRef = FirebaseDatabase.getInstance().getReference("scheduleVisitRoom");
+        DatabaseReference scheduleRef = FirebaseDatabase.getInstance().getReference("MeetingSchedules");
         ScheduleVisitRoomClass schedule = schedules.get(position);
         scheduleData = new ScheduleVisitRoomClass();
         detailSchedule = new Intent(context, ScheduleVisitDetailActivity.class);
@@ -93,57 +86,40 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
                 holder.tvStatus.setBackground(drawable);
                 holder.tvStatus.setText(R.string.confirm);
 //            set onclick trong nay
-                holder.tvStatus.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if ("0".equals(schedule.getStatus()) && user.getUid().equals(schedule.getIdTo())) {
+                holder.tvStatus.setOnClickListener(v -> {
+                    if ("0".equals(schedule.getStatus()) && user.getUid().equals(schedule.getIdTo())) {
 
-                        }
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                        builder.setTitle("Xác nhận");
-                        builder.setMessage("Bạn có xác nhận lịch hẹn này không?");
-
-                        // Thiết lập nút Có (Yes) và xử lý sự kiện khi người dùng nhấn nút Có
-                        builder.setPositiveButton("Xác nhận", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Xử lý khi người dùng chọn Có
-                                // Thêm mã xử lý ở đây
-                                scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("1").addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void unused) {
-                                        Toast.makeText(context, "Bạn xác nhận thành công", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }
-                        });
-
-                        // Thiết lập nút Không (No) và xử lý sự kiện khi người dùng nhấn nút Không
-                        builder.setNegativeButton("Từ chối", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Xử lý khi người dùng chọn Không
-                                // Thêm mã xử lý ở đây
-                                scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("2").addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void unused) {
-                                        Toast.makeText(context, "Bạn từ chối thành công", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }
-                        });
-
-                        builder.setNeutralButton("Hủy", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        });
-
-                        // Tạo và hiển thị hộp thoại
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
                     }
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder.setTitle("Xác nhận");
+                    builder.setMessage("Bạn có xác nhận lịch hẹn này không?");
+
+                    // Thiết lập nút Có (Yes) và xử lý sự kiện khi người dùng nhấn nút Có
+                    builder.setPositiveButton("Xác nhận", (dialog, which) -> {
+                        // Xử lý khi người dùng chọn Có
+                        // Thêm mã xử lý ở đây
+                        scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("1").addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                Toast.makeText(context, "Bạn xác nhận thành công", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    });
+
+                    // Thiết lập nút Không (No) và xử lý sự kiện khi người dùng nhấn nút Không
+                    builder.setNegativeButton("Từ chối", (dialog, which) -> {
+                        // Xử lý khi người dùng chọn Không
+                        // Thêm mã xử lý ở đây
+                        scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("2").addOnSuccessListener(unused -> Toast.makeText(context, "Bạn từ chối thành công", Toast.LENGTH_SHORT).show());
+                    });
+
+                    builder.setNeutralButton("Hủy", (dialog, which) -> {
+
+                    });
+
+                    // Tạo và hiển thị hộp thoại
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 });
 
             } else if ("1".equals(schedule.getStatus()) && user.getUid().equals(schedule.getIdTo())) {
@@ -175,14 +151,11 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
                     //khong lam gi ca
                 }
             }
-            holder.detail_schedule.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Gson gson = new Gson();
-                    String scheduleString = schedule.toString();
-                    detailSchedule.putExtra("scheduleData", scheduleString);
-                    context.startActivity(detailSchedule);
-                }
+            holder.detail_schedule.setOnClickListener(v -> {
+                new Gson();
+                String scheduleString = schedule.toString();
+                detailSchedule.putExtra("scheduleData", scheduleString);
+                context.startActivity(detailSchedule);
             });
         }
     }

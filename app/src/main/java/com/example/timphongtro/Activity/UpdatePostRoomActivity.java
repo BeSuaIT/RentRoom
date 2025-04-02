@@ -435,7 +435,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         handleDataExtensions();
 
 
-        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1, "");
+        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1);
 //        saveImage();
 
         if (furnitures.isEmpty()) {

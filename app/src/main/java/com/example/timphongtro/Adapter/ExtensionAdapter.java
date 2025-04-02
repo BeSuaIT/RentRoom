@@ -18,7 +18,7 @@ import com.example.timphongtro.R;
 
 import java.util.ArrayList; 
 
-public class ExtensionAdapter extends RecyclerView.Adapter<ExtensionAdapter.ViewHolderExtesion>{
+public class ExtensionAdapter extends RecyclerView.Adapter<ExtensionAdapter.ViewHolderExtension>{
     Context context;
     ArrayList<ExtensionRoom_class> list;
 
@@ -29,13 +29,13 @@ public class ExtensionAdapter extends RecyclerView.Adapter<ExtensionAdapter.View
 
     @NonNull
     @Override
-    public ExtensionAdapter.ViewHolderExtesion onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolderExtension onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(context).inflate(R.layout.extentions_view_holder,parent,false);
-        return new ViewHolderExtesion(v);
+        return new ViewHolderExtension(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ExtensionAdapter.ViewHolderExtesion holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolderExtension holder, int position) {
         holder.titleExtension.setText(list.get(holder.getAdapterPosition()).getName());
         if(!"".equals(list.get(holder.getAdapterPosition()).getImg())){
             Glide.with(context)
@@ -52,11 +52,11 @@ public class ExtensionAdapter extends RecyclerView.Adapter<ExtensionAdapter.View
         return list.size();
     }
 
-    public static class ViewHolderExtesion extends RecyclerView.ViewHolder {
+    public static class ViewHolderExtension extends RecyclerView.ViewHolder {
         ImageView imageViewExtension;
         TextView titleExtension;
 
-        public ViewHolderExtesion(@NonNull View itemView) {
+        public ViewHolderExtension(@NonNull View itemView) {
             super(itemView);
             imageViewExtension = itemView.findViewById(R.id.imageViewExtension);
             titleExtension = itemView.findViewById(R.id.titleExtension);

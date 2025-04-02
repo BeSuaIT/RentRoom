@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/darkerwhite">
+    android:background="@color/darkerwhite"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,159 +18,144 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/cardView"
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
+                android:layout_height="200dp"
                 android:background="@color/orange"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toTopOf="parent" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <LinearLayout
-                android:id="@+id/linear_layoutProfile"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/profileCard"
                 android:layout_width="match_parent"
-                android:layout_height="73dp"
-                android:layout_marginStart="30dp"
-                android:layout_marginTop="-50dp"
-                android:layout_marginEnd="30dp"
-                android:background="@drawable/search_bg"
-                android:gravity="center_vertical"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="-40dp"
+                android:layout_marginEnd="20dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="4dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/cardView">
 
                 <LinearLayout
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="10dp"
-                    android:background="@drawable/avatar"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tvprofile"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAlignment="center"
-                        android:textColor="@color/white"
-                        android:textSize="30sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
 
-                    <TextView
-                        android:id="@+id/txtviewInfo"
-                        android:layout_width="match_parent"
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_marginEnd="16dp"
+                        app:cardCornerRadius="30dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/avatar"
+                            android:gravity="center">
+
+                            <TextView
+                                android:id="@+id/profileInitialTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white"
+                                android:textSize="24sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="5dp"
-                        android:gravity="center_vertical"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        tools:ignore="MissingConstraints">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    </TextView>
+                        <TextView
+                            android:id="@+id/txtviewInfo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:textColor="@color/black"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/txtviewEmail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:textSize="16sp"
-                        tools:ignore="MissingConstraints">
+                        <TextView
+                            android:id="@+id/txtviewEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.8"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                    </TextView>
+                    <ImageView
+                        android:id="@+id/imageView9"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="8dp"
+                        app:srcCompat="@drawable/img_edit" />
                 </LinearLayout>
-
-                <ImageView
-                    android:id="@+id/imageView9"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="15dp"
-                    app:srcCompat="@drawable/ic_next" />
-
-
-            </LinearLayout>
-
+            </androidx.cardview.widget.CardView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="466dp"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="2dp">
 
-            <TextView
-                android:id="@+id/btntrangcanhan"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:drawablePadding="10dp"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:text="Trang cá nhân"
-                android:textSize="20sp"
-                app:drawableStartCompat="@drawable/ic_king" />
+                android:orientation="vertical"
+                android:padding="8dp">
 
-            <TextView
-                android:id="@+id/btnquanlyphong"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="10dp"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:text="@string/quanlyphong"
-                android:textSize="20sp"
-                app:drawableStartCompat="@drawable/ic_quanlyphong" />
+                <TextView
+                    android:id="@+id/myProfileButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="Trang cá nhân"
+                    app:drawableStartCompat="@drawable/img_profile_resized" />
 
-            <TextView
-                android:id="@+id/btnyeuthich"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="10dp"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:text="Phòng yêu thích"
-                android:textSize="20sp"
-                app:drawableStartCompat="@drawable/ic_yeuthich" />
+                <TextView
+                    android:id="@+id/manageRoomsButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="@string/quanlyphong"
+                    app:drawableStartCompat="@drawable/img_house_resized" />
 
-            <TextView
-                android:id="@+id/btnlichhen"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="10dp"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:text="@string/lichhen"
-                android:textSize="20sp"
-                app:drawableStartCompat="@drawable/ic_lichhen" />
+                <TextView
+                    android:id="@+id/billButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="Quản lý đơn thanh toán"
+                    app:drawableStartCompat="@drawable/img_bill_resized" />
 
-            <TextView
-                android:id="@+id/btnlichsu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="10dp"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:text="Lịch sử xem bài"
-                android:textSize="20sp"
-                app:drawableStartCompat="@drawable/ic_history" />
+                <TextView
+                    android:id="@+id/cartButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="Quản lý giỏ hàng"
+                    app:drawableStartCompat="@drawable/img_cart_resized" />
 
-            <TextView
-                android:id="@+id/btndangxuat"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="10dp"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:text="@string/dangxuat"
-                android:textSize="20sp"
-                app:drawableStartCompat="@drawable/ic_dangxuat" />
+                <TextView
+                    android:id="@+id/scheduleButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="@string/lichhen"
+                    app:drawableStartCompat="@drawable/img_schedule_resized" />
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/historyButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="Lịch sử xem bài"
+                    app:drawableStartCompat="@drawable/img_history_resized" />
 
+                <TextView
+                    android:id="@+id/signOutButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="@string/dangxuat"
+                    app:drawableStartCompat="@drawable/img_logout_resized" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
     </LinearLayout>
-
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

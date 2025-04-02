@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Adapter.CartAdapter;
+import com.example.timphongtro.Entity.Cart;
 import com.example.timphongtro.Entity.Service;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -32,7 +33,7 @@ public class CartActivity extends AppCompatActivity {
     private TextView textView_total;
     private RecyclerView rcvcart;
     private CartAdapter cartAdapter;
-    private ArrayList<Service> cartList;
+    private ArrayList<Cart> cartList;
     private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     private FirebaseUser user = firebaseAuth.getCurrentUser();
     private DecimalFormat decimalFormat;
@@ -49,19 +50,8 @@ public class CartActivity extends AppCompatActivity {
         Button btn_checkout = findViewById(R.id.button_checkout);
         textView_total = findViewById(R.id.Total_price);
 
-        btn_checkout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                long totalprice = calculateTotalPrice(cartList);
-                Toast.makeText(CartActivity.this, decimalFormat.format(totalprice) + " VNĐ has been paid!", Toast.LENGTH_SHORT).show();
-            }
-        });
-        imageView_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        btn_checkout.setOnClickListener(v -> Toast.makeText(CartActivity.this,  "has been paid!", Toast.LENGTH_SHORT).show());
+        imageView_back.setOnClickListener(v -> finish());
         UIproccess();
         fetchproductfromDB();
     }
@@ -79,40 +69,78 @@ public class CartActivity extends AppCompatActivity {
 
     private void fetchproductfromDB() {
         String userID = user.getUid();
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Cart/" + userID);
+        DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts/" + userID);
 
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        cartRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 cartList.clear();
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
-                    Service service = childSnapshot.getValue(Service.class);
-                    cartList.add(service);
+                    String serviceId = childSnapshot.getKey();
+                    int amount = childSnapshot.getValue(Integer.class);
+                    Cart cart = new Cart(serviceId, amount);
+                    cartList.add(cart);
                 }
                 cartAdapter.notifyDataSetChanged();
                 updateRecyclerViewVisibility(cartList, rcvcart, findViewById(R.id.nohistory));
-
-                long totalPrice = calculateTotalPrice(cartList);
-                textView_total.setText(decimalFormat.format(totalPrice) + " VNĐ");
+                calculateTotalPrice(cartList);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(CartActivity.this, "Error fetching cart data", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private long calculateTotalPrice(ArrayList<Service> cartList) {
-        long totalPrice = 0;
-
-        for (Service service : cartList) {
-            totalPrice += (long) service.getAmount() * service.getPrice();
+    private void calculateTotalPrice(ArrayList<Cart> cartList) {
+        if (cartList.isEmpty()) {
+            textView_total.setText("0 VNĐ");
+            return;
         }
 
-        return totalPrice;
+        final long[] totalPrice = {0};
+        final int[] itemsProcessed = {0};
+
+        DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
+        servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot servicesSnapshot) {
+                for (Cart cartItem : cartList) {
+                    boolean found = false;
+                    for (DataSnapshot categorySnapshot : servicesSnapshot.getChildren()) {
+                        DataSnapshot serviceSnapshot = categorySnapshot.child(cartItem.getServiceId());
+                        if (serviceSnapshot.exists()) {
+                            Service serviceDetails = serviceSnapshot.getValue(Service.class);
+                            if (serviceDetails != null) {
+                                totalPrice[0] += serviceDetails.getPrice() * cartItem.getAmount();
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    itemsProcessed[0]++;
+                    if (!found) {
+                        // Service not found in any category
+                        itemsProcessed[0]--;
+                    }
+
+                    if (itemsProcessed[0] == cartList.size()) {
+                        // All items processed, update UI
+                        textView_total.setText(decimalFormat.format(totalPrice[0]) + " VNĐ");
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(CartActivity.this, "Error calculating total price", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void updateRecyclerViewVisibility(ArrayList<Service> cartList, RecyclerView rcvcart, View noHistoryView) {
+    private void updateRecyclerViewVisibility(ArrayList<Cart> cartList, RecyclerView rcvcart, View noHistoryView) {
         if (cartList.isEmpty()) {
             rcvcart.setVisibility(View.GONE);
             noHistoryView.setVisibility(View.VISIBLE);

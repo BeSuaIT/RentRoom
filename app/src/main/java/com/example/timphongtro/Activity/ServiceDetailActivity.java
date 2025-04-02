@@ -2,7 +2,6 @@ package com.example.timphongtro.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -10,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
@@ -35,7 +33,6 @@ public class ServiceDetailActivity extends AppCompatActivity {
     private Button btn_add_to_cart;
     private ImageView button_cart, imageView_back;
     private Service service;
-    private ArrayList<Service> cartItemList = new ArrayList<>();;
     private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     private FirebaseUser user = firebaseAuth.getCurrentUser();
 
@@ -43,6 +40,7 @@ public class ServiceDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service_detail);
+
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
         Bundle bundle = getIntent().getExtras();
@@ -56,74 +54,44 @@ public class ServiceDetailActivity extends AppCompatActivity {
         button_cart = findViewById(R.id.button_cart);
         imageView_back = findViewById(R.id.imageView_back);
 
-        imageView_back.setColorFilter(ContextCompat.getColor(this, R.color.white));
-        button_cart.setColorFilter(ContextCompat.getColor(this, R.color.white));
+        button_cart.setOnClickListener(v -> {
+            Intent intent;
+            if (user != null) {
+                intent = new Intent(ServiceDetailActivity.this, CartActivity.class);
+            } else {
+                intent = new Intent(ServiceDetailActivity.this, LoginActivity.class);
+            }
+            startActivity(intent);
+        });
+        imageView_back.setOnClickListener(v -> finish());
 
-        button_cart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent;
-                if (user != null) {
-                    intent = new Intent(ServiceDetailActivity.this, CartActivity.class);
-                } else {
-                    intent = new Intent(ServiceDetailActivity.this, LoginActivity.class);
-                }
+        btn_add_to_cart.setOnClickListener(v -> {
+            if (user != null) {
+                String userID = user.getUid();
+                DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts/" + userID);
+
+                cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            // If serviceId exists, increase amount by 1
+                            int currentAmount = dataSnapshot.getValue(Integer.class);
+                            cartRef.child(service.getServiceId()).setValue(currentAmount + 1);
+                        } else {
+                            // If serviceId doesn't exist, add new with amount = 1
+                            cartRef.child(service.getServiceId()).setValue(1);
+                        }
+                        Toast.makeText(ServiceDetailActivity.this, service.getTitle() + " added!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        Toast.makeText(ServiceDetailActivity.this, "Failed to add item", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                Intent intent = new Intent(ServiceDetailActivity.this, LoginActivity.class);
                 startActivity(intent);
-            }
-        });
-        imageView_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        btn_add_to_cart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (user != null) {
-                    String userID = user.getUid();
-                    cartItemList.add(service);
-                    DatabaseReference serviceRef = FirebaseDatabase.getInstance().getInstance().getReference("Cart/" + userID);
-
-                    //Truy vấn Firebase theo tilte, so sánh với title tại thời điểm get
-                    serviceRef.orderByChild("title").equalTo(service.getTitle()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            //mặc định false, coi như là đã tồn tại.
-                            boolean serviceExists = false;
-                            //chạy vòng lặp duyệt qua các nút con
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                int currentAmount = snapshot.getValue(Service.class).getAmount();
-                                int updatedAmount = currentAmount + 1;
-
-                                Service updatedService = snapshot.getValue(Service.class);
-                                updatedService.setAmount(updatedAmount);
-
-                                snapshot.getRef().setValue(updatedService);
-                                serviceExists = true;
-                                break;
-                            }
-
-                            //nếu dịch vụ chưa tồn tại, push dữ liệu lên
-                            if (!serviceExists) {
-                                DatabaseReference newServiceRef = serviceRef.push();
-                                service.setAmount(1);
-                                newServiceRef.setValue(service);
-                            }
-
-                            Toast.makeText(ServiceDetailActivity.this, service.getTitle() + " added!", Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                        }
-                    });
-                } else {
-                    Intent intent = new Intent(ServiceDetailActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                }
             }
         });
 
@@ -138,8 +106,11 @@ public class ServiceDetailActivity extends AppCompatActivity {
             service_sold_count.setText(String.valueOf(service.getSold()));
             service_description.setText(service.getDescription());
 
-            slideModels.add(new SlideModel(service.getImg1(), ScaleTypes.FIT));
-            slideModels.add(new SlideModel(service.getImg2(), ScaleTypes.FIT));
+            if (service.getImages() != null && !service.getImages().isEmpty()) {
+                for (String imageUrl : service.getImages()) {
+                    slideModels.add(new SlideModel(imageUrl, ScaleTypes.FIT));
+                }
+            }
             imageSlider.setImageList(slideModels, ScaleTypes.FIT);
         }
     }

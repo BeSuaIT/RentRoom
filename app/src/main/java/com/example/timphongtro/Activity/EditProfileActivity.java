@@ -2,7 +2,6 @@ package com.example.timphongtro.Activity;
 
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -14,8 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.timphongtro.Entity.User;
 import com.example.timphongtro.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -27,7 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class UpdateInformationUserActivity extends AppCompatActivity {
+public class EditProfileActivity extends AppCompatActivity {
 
     FirebaseDatabase database;
     private FirebaseUser mUser;

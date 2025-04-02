@@ -1,6 +1,5 @@
 package com.example.timphongtro.Fragment;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,14 +12,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
-import com.example.timphongtro.Activity.LoginActivity;
-import com.example.timphongtro.Activity.MyLovePostActivity;
 import com.example.timphongtro.Adapter.RoomAdapter;
 import com.example.timphongtro.Entity.Room;
 import com.example.timphongtro.R;
-import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,7 +26,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class NotificationFragment extends Fragment {
+public class FollowFragment extends Fragment {
     FirebaseUser user;
     FirebaseDatabase database;
     DatabaseReference myLovePostRef, roomRef, myLovePostRemoveRef;
@@ -43,7 +38,7 @@ public class NotificationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_notification, container, false);
+        return inflater.inflate(R.layout.fragment_follow, container, false);
     }
 
     @Override

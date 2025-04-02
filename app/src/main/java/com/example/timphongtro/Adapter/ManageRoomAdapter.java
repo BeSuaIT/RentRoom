@@ -71,94 +71,37 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             holder.city.setText(address.getCity());
             holder.district.setText(address.getDistrict());
             holder.detail.setText(address.getDetail());
-            holder.constraintViewDetail.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent detailRoom = new Intent(context, DetailRoomActivity.class);
-                    detailRoom.putExtra("DataRoom", room.toString());
-                    context.startActivity(detailRoom);
-                }
+            holder.constraintViewDetail.setOnClickListener(v -> {
+                Intent detailRoom = new Intent(context, DetailRoomActivity.class);
+                detailRoom.putExtra("DataRoom", room.toString());
+                context.startActivity(detailRoom);
             });
 
-            holder.imageViewDelete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                    builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
-                            .setMessage("Bạn chắc chắn muốn xóa không?")
-                            .setPositiveButton("Có", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    String path = "Tro";
-                                    int type_room = room.getType_room();
-                                    if (type_room == 1) {
-                                        path = "ChungCuMini";
-                                    }
-                                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                                    DatabaseReference myRef = database.getReference("rooms/" + path + "/" + room.getId_room());
-                                    DatabaseReference myLovePostRef = null;
-                                    FirebaseUser userCurrent = FirebaseAuth.getInstance().getCurrentUser();
-//                                    DatabaseReference myPostRef = null;
-//
-//                                    myPostRef = database.getReference("myRooms/" + userCurrent.getUid() + "/" + room.getId_room());
-//                                    myPostRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-//                                        @Override
-//                                        public void onComplete(@NonNull Task<Void> task) {
-////                                                Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show();
-//                                        }
-//                                    });
-                                    myRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
-
-//                                    myLovePostRef = database.getReference("LovePost");
-//                                    myLovePostRef.addValueEventListener(new ValueEventListener() {
-//                                        @Override
-//                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                                            if (snapshot.exists()) {
-//                                                for (DataSnapshot userInRef : snapshot.getChildren()) {
-//                                                    if (userInRef.exists()) {
-//                                                        if (userInRef.hasChild(room.getId_room())) {
-//                                                            User userInfor = userInRef.getValue(User.class);
-//                                                            if (userInfor != null) {
-//                                                                database.getReference("LovePost").child(userInfor.getUid()).child(room.getId_room()).removeValue();
-//                                                            }
-//                                                        }
-//                                                    }
-//                                                }
-//                                            }
-//                                        }
-//
-//                                        @Override
-//                                        public void onCancelled(@NonNull DatabaseError error) {
-//
-//                                        }
-//                                    });
-                                }
-                            })
-                                    .
-
-                            setNegativeButton("Không", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                }
-                            });
-                    AlertDialog alertDialog = builder.create();
-                    alertDialog.show();
-                }
+            holder.imageViewDelete.setOnClickListener(v -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
+                        .setMessage("Bạn chắc chắn muốn xóa không?")
+                        .setPositiveButton("Có", (dialog, which) -> {
+                            String path = "Tro";
+                            int type_room = room.getType_room();
+                            if (type_room == 1) {
+                                path = "ChungCuMini";
+                            }
+                            FirebaseDatabase database = FirebaseDatabase.getInstance();
+                            DatabaseReference myRef = database.getReference("Rooms/" + path + "/" + room.getId_room());
+                            DatabaseReference myLovePostRef = null;
+                            FirebaseUser userCurrent = FirebaseAuth.getInstance().getCurrentUser();
+                            myRef.removeValue().addOnCompleteListener(task -> Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show());
+                        }).setNegativeButton("Không", (dialog, which) -> {
+                        });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
             });
 
-            holder.imageViewEdit.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent updateRoom = new Intent(context, UpdatePostRoomActivity.class);
-                    updateRoom.putExtra("DataRoom", room.toString());
-                    context.startActivity(updateRoom);
-                }
+            holder.imageViewEdit.setOnClickListener(v -> {
+                Intent updateRoom = new Intent(context, UpdatePostRoomActivity.class);
+                updateRoom.putExtra("DataRoom", room.toString());
+                context.startActivity(updateRoom);
             });
         }
     }

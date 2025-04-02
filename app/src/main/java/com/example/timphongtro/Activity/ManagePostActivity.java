@@ -50,19 +50,11 @@ public class ManagePostActivity extends AppCompatActivity {
         rcvMyPost = findViewById(R.id.rcvMyPost);
         tabLayout = findViewById(R.id.tabLayout);
 
-        imageViewBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        imageViewBack.setOnClickListener(v -> finish());
 
-        imageViewPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent post = new Intent(ManagePostActivity.this, PostRoomActivity.class);
-                startActivity(post);
-            }
+        imageViewPost.setOnClickListener(v -> {
+            Intent post = new Intent(ManagePostActivity.this, PostRoomActivity.class);
+            startActivity(post);
         });
         userCurrent = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -76,7 +68,7 @@ public class ManagePostActivity extends AppCompatActivity {
 
         if (userCurrent != null) {
             roomlist = new ArrayList<>();
-            roomdatabase = FirebaseDatabase.getInstance().getReference("rooms/");
+            roomdatabase = FirebaseDatabase.getInstance().getReference("Rooms/");
             rcvMyPost.setLayoutManager(new LinearLayoutManager(ManagePostActivity.this, LinearLayoutManager.VERTICAL, false));
             manageRoomAdapter = new ManageRoomAdapter(roomlist, ManagePostActivity.this);
             rcvMyPost.setAdapter(manageRoomAdapter);

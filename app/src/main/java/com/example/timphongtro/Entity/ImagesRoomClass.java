@@ -1,12 +1,10 @@
 package com.example.timphongtro.Entity;
 
- 
 public class ImagesRoomClass {
     private String img1;
     private String img2;
     private String img3;
     private String img4;
-    private String video;
 
     public String getImg1() {
         return img1;
@@ -40,22 +38,13 @@ public class ImagesRoomClass {
         this.img4 = img4;
     }
 
-    public String getVideo() {
-        return video;
-    }
-
-    public void setVideo(String video) {
-        this.video = video;
-    }
-
     public ImagesRoomClass() {
     }
 
-    public ImagesRoomClass(String img1, String img2, String img3, String img4, String video) {
+    public ImagesRoomClass(String img1, String img2, String img3, String img4) {
         this.img1 = img1;
         this.img2 = img2;
         this.img3 = img3;
         this.img4 = img4;
-        this.video = video;
     }
 }

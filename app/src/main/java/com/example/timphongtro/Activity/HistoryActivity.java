@@ -44,48 +44,28 @@ public class HistoryActivity extends AppCompatActivity {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         database = FirebaseDatabase.getInstance();
-        DatabaseReference myHistoryRef = database.getReference("History/" + user.getUid());
+        DatabaseReference myHistoryRef = database.getReference("Histories/" + user.getUid());
 
         ImageView imageViewBack = findViewById(R.id.imageView_back);
         ImageView button_clear = findViewById(R.id.button_clear);
 
-        imageViewBack.setColorFilter(ContextCompat.getColor(this, R.color.white));
-        button_clear.setColorFilter(ContextCompat.getColor(this, R.color.white));
-
-        button_clear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(HistoryActivity.this);
-                builder.setTitle("Delete history").setMessage("Are you sure want to delete all?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        FirebaseDatabase database = FirebaseDatabase.getInstance();
-                        myHistoryRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                roomArrayList.clear();
-                                roomAdapter.notifyDataSetChanged();
-                                updateRecyclerViewVisibility(roomArrayList, rcvHistory, findViewById(R.id.nohistory));
-                                Toast.makeText(HistoryActivity.this, "Successful", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
+        button_clear.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(HistoryActivity.this);
+            builder.setTitle("Delete history").setMessage("Are you sure want to delete all?").setPositiveButton("Yes", (dialog, which) -> {
+                FirebaseDatabase.getInstance();
+                myHistoryRef.removeValue().addOnCompleteListener(task -> {
+                    roomArrayList.clear();
+                    roomAdapter.notifyDataSetChanged();
+                    updateRecyclerViewVisibility(roomArrayList, rcvHistory, findViewById(R.id.nohistory));
+                    Toast.makeText(HistoryActivity.this, "Successful", Toast.LENGTH_SHORT).show();
                 });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
-            }
+            }).setNegativeButton("No", (dialog, which) -> {
+
+            });
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
         });
-        imageViewBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        imageViewBack.setOnClickListener(v -> finish());
 
         rcvHistory = findViewById(R.id.rcv_history);
         roomArrayList = new ArrayList<>();
@@ -110,7 +90,7 @@ public class HistoryActivity extends AppCompatActivity {
                     roomTimeMap.put(roomId, timestamp);
                 }
 
-                DatabaseReference roomsRef = database.getReference("rooms");
+                DatabaseReference roomsRef = database.getReference("Rooms");
                 roomsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot roomsSnapshot) {
@@ -127,20 +107,17 @@ public class HistoryActivity extends AppCompatActivity {
                                 }
                             }
                         }
-                        roomArrayList.sort(new Comparator<Room>() {
-                            @Override
-                            public int compare(Room o1, Room o2) {
-                                Long timestamp1 = roomTimeMap.get(o1.getId_room());
-                                Long timestamp2 = roomTimeMap.get(o2.getId_room());
-                                if (timestamp1 != null && timestamp2 != null) {
-                                    return Long.compare(timestamp2, timestamp1);
-                                } else if (timestamp1 != null) {
-                                    return -1; // timestamp2 is null, consider timestamp1 smaller
-                                } else if (timestamp2 != null) {
-                                    return 1; // timestamp1 is null, consider timestamp2 smaller
-                                } else {
-                                    return 0; // both timestamps are null, consider them equal
-                                }
+                        roomArrayList.sort((o1, o2) -> {
+                            Long timestamp1 = roomTimeMap.get(o1.getId_room());
+                            Long timestamp2 = roomTimeMap.get(o2.getId_room());
+                            if (timestamp1 != null && timestamp2 != null) {
+                                return Long.compare(timestamp2, timestamp1);
+                            } else if (timestamp1 != null) {
+                                return -1; // timestamp2 is null, consider timestamp1 smaller
+                            } else if (timestamp2 != null) {
+                                return 1; // timestamp1 is null, consider timestamp2 smaller
+                            } else {
+                                return 0; // both timestamps are null, consider them equal
                             }
                         });
 

@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.cardview.widget.CardView;
 import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
@@ -17,14 +18,14 @@ import android.os.CancellationSignal;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.example.timphongtro.Activity.UpdateInformationUserActivity;
+import com.example.timphongtro.Activity.BillActivity;
+import com.example.timphongtro.Activity.CartActivity;
+import com.example.timphongtro.Activity.EditProfileActivity;
 import com.example.timphongtro.Activity.HistoryActivity;
 import com.example.timphongtro.Activity.LoginActivity;
 import com.example.timphongtro.Activity.ManagePostActivity;
-import com.example.timphongtro.Activity.MyLovePostActivity;
 import com.example.timphongtro.Activity.UserActivity;
 import com.example.timphongtro.Activity.scheduleVisitRoomActivity;
 import com.example.timphongtro.R;
@@ -38,55 +39,86 @@ import com.google.firebase.database.ValueEventListener;
 
 public class ProfileFragment extends Fragment {
 
-    private FirebaseAuth mAuth;
-    private FirebaseUser mUser;
-    FirebaseDatabase database;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
+    private FirebaseDatabase firebaseDatabase;
     private String name;
-    DatabaseReference userRef;
-    private TextView txtViewInfo, tvprofile;
-    private LinearLayout linear_layoutProfile;
+    private DatabaseReference databaseReference;
+    private TextView nameTextView, profileInitialTextView, emailTextView,
+            signOutButton, manageRoomsButton, scheduleButton,
+            historyButton, myProfileButton, billButton, cartButton;
+    private CardView profileCard;
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_profile, container, false);
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mAuth = FirebaseAuth.getInstance();
-        mUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        TextView btndangxuat, btnquanlyphong, btnlichhen, btnyeuthich, btnlichsu, txtviewEmail,btntrangcanhan;
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        txtViewInfo = view.findViewById(R.id.txtviewInfo);
-        txtviewEmail = view.findViewById(R.id.txtviewEmail);
+        nameTextView = view.findViewById(R.id.txtviewInfo);
+        emailTextView = view.findViewById(R.id.txtviewEmail);
 
-        btndangxuat = view.findViewById(R.id.btndangxuat);
-        btnquanlyphong = view.findViewById(R.id.btnquanlyphong);
-        btnlichhen = view.findViewById(R.id.btnlichhen);
-        btnlichsu = view.findViewById(R.id.btnlichsu);
-        btnyeuthich = view.findViewById(R.id.btnyeuthich);
-        tvprofile = view.findViewById(R.id.tvprofile);
-        linear_layoutProfile = view.findViewById(R.id.linear_layoutProfile);
-        btntrangcanhan = view.findViewById(R.id.btntrangcanhan);
+        signOutButton = view.findViewById(R.id.signOutButton);
+        manageRoomsButton = view.findViewById(R.id.manageRoomsButton);
+        scheduleButton = view.findViewById(R.id.scheduleButton);
+        historyButton = view.findViewById(R.id.historyButton);
+        billButton = view.findViewById(R.id.billButton);
+        cartButton = view.findViewById(R.id.cartButton);
+        profileInitialTextView = view.findViewById(R.id.profileInitialTextView);
+        profileCard = view.findViewById(R.id.profileCard);
+        myProfileButton = view.findViewById(R.id.myProfileButton);
 
-        if(mUser != null){
-            btntrangcanhan.setOnClickListener(v -> {
-                Intent myprofile = new Intent(getActivity().getApplicationContext(), UserActivity.class);
-                myprofile.putExtra("id_own_post",mUser.getUid());
-                startActivity(myprofile);
+        if(firebaseUser != null){
+            myProfileButton.setOnClickListener(v -> {
+                Intent userProfileIntent = new Intent(getActivity().getApplicationContext(), UserActivity.class);
+                userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
+                startActivity(userProfileIntent);
             });
-            btnlichsu.setOnClickListener(v -> {
-                Intent intent = new Intent(getActivity(), HistoryActivity.class);
-                startActivity(intent);
+            historyButton.setOnClickListener(v -> {
+                Intent historyIntent = new Intent(getActivity(), HistoryActivity.class);
+                startActivity(historyIntent);
             });
-            btndangxuat.setOnClickListener(v -> {
-                // Clear credentials first
+
+            manageRoomsButton.setOnClickListener(v -> {
+                if (firebaseUser != null) {
+                    Intent managePostIntent = new Intent(getActivity(), ManagePostActivity.class);
+                    startActivity(managePostIntent);
+                } else {
+                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                    startActivity(intent);
+                }
+            });
+
+            cartButton.setOnClickListener(v -> {
+                Intent cartActivityIntent = new Intent(getActivity(), CartActivity.class);
+                startActivity(cartActivityIntent);
+            });
+
+            billButton.setOnClickListener(v -> {
+                Intent billActivityIntent = new Intent(getActivity(), BillActivity.class);
+                startActivity(billActivityIntent);
+            });
+
+            scheduleButton.setOnClickListener(v -> {
+                Intent scheduleIntent = new Intent(getActivity(), scheduleVisitRoomActivity.class);
+                startActivity(scheduleIntent);
+            });
+
+            profileCard.setOnClickListener(v -> {
+                Intent editProfileIntent = new Intent(getActivity(), EditProfileActivity.class);
+                startActivity(editProfileIntent);
+            });
+
+            signOutButton.setOnClickListener(v -> {
                 CredentialManager credentialManager = CredentialManager.create(requireContext());
                 ClearCredentialStateRequest request = new ClearCredentialStateRequest();
                 CancellationSignal cancellationSignal = new CancellationSignal();
@@ -98,19 +130,15 @@ public class ProfileFragment extends Fragment {
                         new CredentialManagerCallback<Void, ClearCredentialException>() {
                             @Override
                             public void onResult(Void unused) {
-                                // Only logout after credentials are cleared
-                                // Sign out from Facebook if logged in
                                 if (com.facebook.AccessToken.getCurrentAccessToken() != null) {
                                     com.facebook.login.LoginManager.getInstance().logOut();
                                 }
 
-                                // Sign out from Firebase
-                                mAuth.signOut();
+                                firebaseAuth.signOut();
 
-                                // Redirect to login screen
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
+                                Intent loginActivityIntent = new Intent(getActivity(), LoginActivity.class);
+                                loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(loginActivityIntent);
                                 if (getActivity() != null) {
                                     getActivity().finish();
                                 }
@@ -118,15 +146,14 @@ public class ProfileFragment extends Fragment {
 
                             @Override
                             public void onError(@NonNull ClearCredentialException e) {
-                                // Still proceed with logout even if clearing credentials fails
                                 if (com.facebook.AccessToken.getCurrentAccessToken() != null) {
                                     com.facebook.login.LoginManager.getInstance().logOut();
                                 }
-                                mAuth.signOut();
+                                firebaseAuth.signOut();
 
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
+                                Intent loginActivityIntent = new Intent(getActivity(), LoginActivity.class);
+                                loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(loginActivityIntent);
                                 if (getActivity() != null) {
                                     getActivity().finish();
                                 }
@@ -135,39 +162,15 @@ public class ProfileFragment extends Fragment {
                 );
             });
 
-            btnquanlyphong.setOnClickListener(v -> {
-                if (mUser != null) {
-                    Intent mypost = new Intent(getActivity(), ManagePostActivity.class);
-                    startActivity(mypost);
-                } else {
-                    Intent intent = new Intent(getActivity(), LoginActivity.class);
-                    startActivity(intent);
-                }
-            });
+            firebaseDatabase = FirebaseDatabase.getInstance();
 
-            btnyeuthich.setOnClickListener(v -> {
-                Intent lovepost = new Intent(getActivity(), MyLovePostActivity.class);
-                startActivity(lovepost);
-            });
-
-            btnlichhen.setOnClickListener(v -> {
-                Intent schedule = new Intent(getActivity(), scheduleVisitRoomActivity.class);
-                startActivity(schedule);
-            });
-
-            linear_layoutProfile.setOnClickListener(v -> {
-                Intent i = new Intent(getActivity(), UpdateInformationUserActivity.class);
-                startActivity(i);
-            });
-            database = FirebaseDatabase.getInstance();
-
-            userRef = database.getReference("Users/" + mUser.getUid());
-            userRef.child("name").addValueEventListener(new ValueEventListener() {
+            databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
+            databaseReference.child("name").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists()) {
                         name = snapshot.getValue(String.class);
-                        txtViewInfo.setText(name);
+                        nameTextView.setText(name);
                     }
                 }
 
@@ -178,19 +181,18 @@ public class ProfileFragment extends Fragment {
             });
 
 
-            if (mUser != null) {
-                String uid = mUser.getUid();
-                String email = mUser.getEmail();
-                txtviewEmail.setText(email);
-                userRef = database.getReference("users/" + mUser.getUid());
-                userRef.child("name").addValueEventListener(new ValueEventListener() {
+            if (firebaseUser != null) {
+                String email = firebaseUser.getEmail();
+                emailTextView.setText(email);
+                databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
+                databaseReference.child("name").addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
                             name = snapshot.getValue(String.class);
                             if (!"".equals(name)) {
-                                txtViewInfo.setText(name);
-                                tvprofile.setText(getFirstLetter(name));
+                                nameTextView.setText(name);
+                                profileInitialTextView.setText(getFirstLetter(name));
                             }
                         }
                     }
@@ -211,10 +213,8 @@ public class ProfileFragment extends Fragment {
         StringBuilder result = new StringBuilder();
 
         if (words.length == 1) {
-            // Nếu chuỗi chỉ có 1 từ, lấy chữ đầu từ đó
             result.append(words[0].charAt(0));
         } else {
-            // Nếu chuỗi có nhiều từ, lấy chữ cái đầu của từ thứ 1 và 2
             for (int i = 0; i < 2; i++) {
                 result.append(words[i].charAt(0));
             }

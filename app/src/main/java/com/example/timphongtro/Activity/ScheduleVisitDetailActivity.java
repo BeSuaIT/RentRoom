@@ -85,34 +85,24 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
                 btnAccept.setVisibility(View.INVISIBLE);
             }
 
-            DatabaseReference scheduleRef = FirebaseDatabase.getInstance().getReference("scheduleVisitRoom/");
-            btnRefuse.setOnClickListener(new View.OnClickListener() {
+            DatabaseReference scheduleRef = FirebaseDatabase.getInstance().getReference("MeetingSchedules/");
+            btnRefuse.setOnClickListener(v -> scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("2").addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
-                public void onClick(View v) {
-                    scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("2").addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void unused) {
-                            Toast.makeText(ScheduleVisitDetailActivity.this, "Bạn từ chối thành công", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    });
+                public void onSuccess(Void unused) {
+                    Toast.makeText(ScheduleVisitDetailActivity.this, "Bạn từ chối thành công", Toast.LENGTH_SHORT).show();
+                    finish();
                 }
-            });
+            }));
 
-            btnAccept.setOnClickListener(new View.OnClickListener() {
+            btnAccept.setOnClickListener(v -> scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("1").addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
-                public void onClick(View v) {
-                    scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("1").addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void unused) {
-                            Toast.makeText(ScheduleVisitDetailActivity.this, "Bạn xác nhận thành công", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    });
+                public void onSuccess(Void unused) {
+                    Toast.makeText(ScheduleVisitDetailActivity.this, "Bạn xác nhận thành công", Toast.LENGTH_SHORT).show();
+                    finish();
                 }
-            });
+            }));
 
-            DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("rooms/" + typeRoom + "/" + schedule.getIdRoom());
+            DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Rooms/" + typeRoom + "/" + schedule.getIdRoom());
             roomRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -139,7 +129,7 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
                 }
             });
 
-            DatabaseReference userOwnPostRef = FirebaseDatabase.getInstance().getReference("users/" + schedule.getIdFrom());
+            DatabaseReference userOwnPostRef = FirebaseDatabase.getInstance().getReference("Users/" + schedule.getIdFrom());
             userOwnPostRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -158,34 +148,23 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
                 }
             });
 
-            userPost.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent userDetail = new Intent(ScheduleVisitDetailActivity.this, UserActivity.class);
-                    userDetail.putExtra("id_own_post", schedule.getIdFrom());
-                    startActivity(userDetail);
-                }
+            userPost.setOnClickListener(v -> {
+                Intent userDetail = new Intent(ScheduleVisitDetailActivity.this, UserActivity.class);
+                userDetail.putExtra("id_own_post", schedule.getIdFrom());
+                startActivity(userDetail);
             });
 
 
-            cardViewRoom.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (room != null) {
-                        String roomString = room.toString();
-                        Intent roomDetail = new Intent(ScheduleVisitDetailActivity.this, DetailRoomActivity.class);
-                        roomDetail.putExtra("DataRoom", roomString);
-                        startActivity(roomDetail);
-                    }
+            cardViewRoom.setOnClickListener(v -> {
+                if (room != null) {
+                    String roomString = room.toString();
+                    Intent roomDetail = new Intent(ScheduleVisitDetailActivity.this, DetailRoomActivity.class);
+                    roomDetail.putExtra("DataRoom", roomString);
+                    startActivity(roomDetail);
                 }
             });
 
-            imageViewBack.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finish();
-                }
-            });
+            imageViewBack.setOnClickListener(v -> finish());
         }
     }
 

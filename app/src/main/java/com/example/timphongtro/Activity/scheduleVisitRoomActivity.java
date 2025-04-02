@@ -42,21 +42,16 @@ public class scheduleVisitRoomActivity extends AppCompatActivity {
 
         user = FirebaseAuth.getInstance().getCurrentUser();
         database = FirebaseDatabase.getInstance();
-        scheduleRef = database.getReference("scheduleVisitRoom");
+        scheduleRef = database.getReference("MeetingSchedules");
         schedules = new ArrayList<>();
         imageViewBack = findViewById(R.id.imageViewBack);
         rcvScheduleVisit = findViewById(R.id.rcvScheduleVisit);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(scheduleVisitRoomActivity.this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         rcvScheduleVisit.setLayoutManager(linearLayoutManager);
-        imageViewBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        imageViewBack.setOnClickListener(v -> finish());
         roomlist = new ArrayList<>();
-        roomRef = database.getReference("rooms");
+        roomRef = database.getReference("Rooms");
 
         roomRef.addValueEventListener(new ValueEventListener() {
             @Override

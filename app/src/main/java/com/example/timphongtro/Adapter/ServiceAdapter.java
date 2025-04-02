@@ -15,7 +15,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activity.DetailRoomActivity;
 import com.example.timphongtro.Activity.LoginActivity;
 import com.example.timphongtro.Activity.ServiceDetailActivity;
 import com.example.timphongtro.Entity.Service;
@@ -33,7 +32,7 @@ import java.util.ArrayList;
 
 public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceViewHolder> {
 
-    private ArrayList<Service> serviceList, cartItemList;
+    private ArrayList<Service> serviceList;
     private Context context;
     private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     private FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -41,7 +40,6 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
     public ServiceAdapter(Context context, ArrayList<Service> serviceList) {
         this.context = context;
         this.serviceList = serviceList;
-        this.cartItemList = new ArrayList<>();
 
     }
 
@@ -56,65 +54,49 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
     public void onBindViewHolder(@NonNull ServiceAdapter.ServiceViewHolder holder, int position) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
+
         Service service = serviceList.get(position);
         holder.name.setText(service.getTitle());
         holder.price.setText(decimalFormat.format(service.getPrice()) + " VNĐ");
-        Glide.with(context).load(service.getImg1()).centerCrop().into(holder.image);
 
-        holder.btn_add.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (user != null) {
-                    cartItemList.add(service);
+        Glide.with(context).load(service.getImages().get(0)).centerCrop().into(holder.image);
+
+        holder.btn_add.setOnClickListener(v -> {
+            if (user != null) {
                 String userID = user.getUid();
-                DatabaseReference serviceRef = FirebaseDatabase.getInstance().getReference("Cart/" + userID);
+                DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts/" + userID);
 
-                serviceRef.orderByChild("title").equalTo(service.getTitle()).addListenerForSingleValueEvent(new ValueEventListener() {
+                cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        boolean serviceExists = false;
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            int currentAmount = snapshot.getValue(Service.class).getAmount();
-                            int updatedAmount = currentAmount + 1;
-
-                            Service updatedService = snapshot.getValue(Service.class);
-                            updatedService.setAmount(updatedAmount);
-
-                            snapshot.getRef().setValue(updatedService);
-                            serviceExists = true;
-                            break;
+                        if (dataSnapshot.exists()) {
+                            // Nếu serviceId đã tồn tại, tăng amount lên 1
+                            int currentAmount = dataSnapshot.getValue(Integer.class);
+                            cartRef.child(service.getServiceId()).setValue(currentAmount + 1);
+                        } else {
+                            // Nếu serviceId chưa tồn tại, thêm mới với amount = 1
+                            cartRef.child(service.getServiceId()).setValue(1);
                         }
-
-                        if (!serviceExists) {
-                            DatabaseReference newServiceRef = serviceRef.push();
-
-                            service.setAmount(1);
-                            newServiceRef.setValue(service);
-                        }
-
                         Toast.makeText(context, service.getTitle() + " added!", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
+                        Toast.makeText(context, "Failed to add item", Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
-                    Intent intent = new Intent(context, LoginActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                }
-        }
-        });
-
-        holder.cardService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, ServiceDetailActivity.class);
-                intent.putExtra("ServiceData", service.toString());
+                Intent intent = new Intent(context, LoginActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
             }
+        });
+
+        holder.cardService.setOnClickListener(v -> {
+            Intent intent = new Intent(context, ServiceDetailActivity.class);
+            intent.putExtra("ServiceData", service.toString());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         });
     }
 
