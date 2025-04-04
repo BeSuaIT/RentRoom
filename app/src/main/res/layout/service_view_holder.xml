@@ -38,6 +38,15 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/service_seller"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Người bán"
+                android:textColor="@color/gray"
+                android:textSize="14sp" />
+
+            <TextView
                 android:id="@+id/service_price"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

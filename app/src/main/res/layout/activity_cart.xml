@@ -6,9 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5"
-    tools:context=".Activity.CartActivity">
+    tools:context=".Activities.CartActivity">
 
-    <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -46,7 +45,6 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <!-- Empty Cart View -->
     <LinearLayout
         android:id="@+id/nohistory"
         android:layout_width="match_parent"
@@ -73,13 +71,12 @@
 
     </LinearLayout>
 
-    <!-- Cart Content -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingBottom="90dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/cardView3"
         app:layout_constraintTop_toBottomOf="@id/toolbar">
 
         <androidx.recyclerview.widget.RecyclerView
@@ -91,8 +88,8 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Panel -->
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardView3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="8dp"

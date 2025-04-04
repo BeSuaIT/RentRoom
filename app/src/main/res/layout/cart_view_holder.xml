@@ -14,10 +14,11 @@
         android:padding="12dp">
 
         <ImageView
-            android:id="@+id/Cartimage"
+            android:id="@+id/cartItemImage"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/image1"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -27,20 +28,31 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/Cartname"
+                android:id="@+id/cartItemName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="2"
+                android:text="Item Name"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/Price"
+                android:id="@+id/cartItemSeller"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Người bán"
+                android:textColor="@color/gray"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/itemPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:text="20000"
                 android:textColor="#FF0000"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -53,7 +65,7 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/textView_minus"
+                    android:id="@+id/decreaseButton"
                     android:layout_width="40dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -61,16 +73,17 @@
                     android:textSize="20sp" />
 
                 <TextView
-                    android:id="@+id/editText_amount"
+                    android:id="@+id/quantity"
                     android:layout_width="40dp"
                     android:layout_height="match_parent"
                     android:background="@android:color/white"
                     android:gravity="center"
+                    android:text="20"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/textView_plus"
+                    android:id="@+id/increaseButton"
                     android:layout_width="40dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -80,7 +93,7 @@
         </LinearLayout>
 
         <Button
-            android:id="@+id/button_remove"
+            android:id="@+id/removeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
