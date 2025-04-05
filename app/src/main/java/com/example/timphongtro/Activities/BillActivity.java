@@ -1,4 +1,4 @@
-package com.example.timphongtro.Activity;
+package com.example.timphongtro.Activities;
 
 import android.os.Bundle;
 import android.view.View;
@@ -10,7 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.timphongtro.Entity.Bill;
+import com.example.timphongtro.Adapters.BillAdapter;
+import com.example.timphongtro.Models.Bill;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -23,9 +24,8 @@ import java.util.ArrayList;
 
 public class BillActivity extends AppCompatActivity {
     private RecyclerView rcvBills;
+    private BillAdapter billAdapter;
     private ArrayList<Bill> billList;
-    private FirebaseAuth firebaseAuth;
-    private String userID;
     private View emptyView;
 
     @Override
@@ -34,37 +34,28 @@ public class BillActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bill);
 
         initializeViews();
-        setupFirebase();
         setupRecyclerView();
         fetchBills();
     }
 
     private void initializeViews() {
-        ImageView imageView_back = findViewById(R.id.imageView_back);
-        imageView_back.setOnClickListener(v -> finish());
-
+        findViewById(R.id.imageView_back).setOnClickListener(v -> finish());
         rcvBills = findViewById(R.id.rcvBills);
         emptyView = findViewById(R.id.emptyView);
     }
 
-    private void setupFirebase() {
-        firebaseAuth = FirebaseAuth.getInstance();
-        userID = firebaseAuth.getCurrentUser().getUid();
-    }
-
     private void setupRecyclerView() {
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setOrientation(RecyclerView.VERTICAL);
-        rcvBills.setLayoutManager(layoutManager);
-
         billList = new ArrayList<>();
+        billAdapter = new BillAdapter(this, this);
+        rcvBills.setLayoutManager(new LinearLayoutManager(this));
+        rcvBills.setAdapter(billAdapter);
     }
 
     private void fetchBills() {
-        DatabaseReference billsRef = FirebaseDatabase.getInstance()
-                .getReference("Bills");
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference billsRef = FirebaseDatabase.getInstance().getReference("Bills");
 
-        billsRef.orderByChild("userId").equalTo(userID)
+        billsRef.orderByChild("userId").equalTo(userId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -72,13 +63,15 @@ public class BillActivity extends AppCompatActivity {
                         for (DataSnapshot billSnapshot : snapshot.getChildren()) {
                             Bill bill = billSnapshot.getValue(Bill.class);
                             if (bill != null) {
+                                bill.setId(billSnapshot.getKey());
                                 billList.add(bill);
                             }
                         }
 
-                        // Sort by timestamp descending (newest first)
                         billList.sort((b1, b2) ->
-                                Long.compare(b2.getTimestamp(), b1.getTimestamp()));
+                                Long.compare(b2.getOrderDate(), b1.getOrderDate()));
+
+                        billAdapter.updateData(billList);
                         updateEmptyView();
                     }
 
@@ -92,12 +85,7 @@ public class BillActivity extends AppCompatActivity {
     }
 
     private void updateEmptyView() {
-        if (billList.isEmpty()) {
-            rcvBills.setVisibility(View.GONE);
-            emptyView.setVisibility(View.VISIBLE);
-        } else {
-            rcvBills.setVisibility(View.VISIBLE);
-            emptyView.setVisibility(View.GONE);
-        }
+        emptyView.setVisibility(billList.isEmpty() ? View.VISIBLE : View.GONE);
+        rcvBills.setVisibility(billList.isEmpty() ? View.GONE : View.VISIBLE);
     }
 }

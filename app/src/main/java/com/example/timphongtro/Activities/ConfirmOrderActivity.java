@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -155,9 +156,15 @@ public class ConfirmOrderActivity extends AppCompatActivity {
     private boolean validateOrder() {
         String selectedCity = spinnerCity.getSelectedItem().toString();
         String selectedDistrict = spinnerDistrict.getSelectedItem().toString();
+        String detailAddress = ((EditText) findViewById(R.id.editText_address)).getText().toString().trim();
 
         if (selectedCity.isEmpty() || selectedDistrict.isEmpty()) {
             Toast.makeText(this, "Vui lòng chọn địa chỉ giao hàng", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (detailAddress.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập địa chỉ chi tiết", Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -215,6 +222,9 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
+        EditText editTextAddress = findViewById(R.id.editText_address);
+        String detailAddress = editTextAddress.getText().toString().trim();
+
         DatabaseReference cartRef = FirebaseDatabase.getInstance()
                 .getReference("Carts")
                 .child(user.getUid());
@@ -239,6 +249,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                     orderData.put("status", status);
                     orderData.put("city", spinnerCity.getSelectedItem().toString());
                     orderData.put("district", spinnerDistrict.getSelectedItem().toString());
+                    orderData.put("detailAddress", detailAddress);
                     orderData.put("paymentMethod", selectedPaymentMethod);
 
                     // Lưu items với cấu trúc tối giản
