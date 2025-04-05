@@ -68,7 +68,11 @@ public class ServiceDetailActivity extends AppCompatActivity {
         btn_add_to_cart.setOnClickListener(v -> {
             if (user != null) {
                 String userID = user.getUid();
-                DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts/" + userID);
+                String sellerId = service.getId_seller();
+                DatabaseReference cartRef = FirebaseDatabase.getInstance()
+                        .getReference("Carts")
+                        .child(userID)
+                        .child(sellerId);
 
                 cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override

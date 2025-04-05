@@ -12,6 +12,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,9 +26,11 @@ import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -37,6 +40,7 @@ import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import vn.zalopay.sdk.Environment;
@@ -56,7 +60,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
     private ArrayList<String> districtNames;
     private long totalPriceValue;
     private DecimalFormat decimalFormat;
-    private String selectedPaymentMethod = "cod"; // Default value
+    private String selectedPaymentMethod = "cod";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,11 +144,9 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         btnConfirm.setOnClickListener(v -> {
             if (validateOrder()) {
                 if (selectedPaymentMethod.equals("zalopay")) {
-                    // Only execute ZaloPay payment
                     executeZaloPayPayment();
                 } else {
-                    // For COD, directly create order
-                    createOrder();
+                    createOrder(0);
                 }
             }
         });
@@ -179,12 +181,11 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                 ZaloPaySDK.getInstance().payOrder(ConfirmOrderActivity.this, token, "demozpdk://app", new PayOrderListener() {
                     @Override
                     public void onPaymentSucceeded(String s, String s1, String s2) {
-                        // Create order after successful payment
-                        createOrder();
+                        createOrder(1);
                         Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
                         intent1.putExtra("result", "Thanh toán thành công");
                         startActivity(intent1);
-                        finish(); // Close ConfirmOrderActivity
+                        finish();
                     }
 
                     @Override
@@ -210,42 +211,83 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         }
     }
 
-    private void createOrder() {
+    private void createOrder(int status) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        String orderId = FirebaseDatabase.getInstance().getReference("Orders").push().getKey();
-        if (orderId == null) return;
+        DatabaseReference cartRef = FirebaseDatabase.getInstance()
+                .getReference("Carts")
+                .child(user.getUid());
 
-        DatabaseReference orderRef = FirebaseDatabase.getInstance()
-                .getReference("Orders")
-                .child(orderId);
+        cartRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
+                DatabaseReference ordersRef = FirebaseDatabase.getInstance().getReference("Bills");
 
-        Map<String, Object> orderData = new HashMap<>();
-        orderData.put("userId", user.getUid());
-        orderData.put("orderDate", ServerValue.TIMESTAMP);
-        orderData.put("status", 0);
-        orderData.put("city", spinnerCity.getSelectedItem().toString());
-        orderData.put("district", spinnerDistrict.getSelectedItem().toString());
-        orderData.put("totalAmount", totalPriceValue);
-        orderData.put("items", cartList);
-        orderData.put("paymentMethod", selectedPaymentMethod);
+                // Duyệt qua từng seller trong cart
+                for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
+                    String sellerId = sellerSnapshot.getKey();
+                    if (sellerId == null) continue;
 
-        orderRef.setValue(orderData)
-                .addOnSuccessListener(aVoid -> {
-                    FirebaseDatabase.getInstance()
-                            .getReference("Carts")
-                            .child(user.getUid())
-                            .removeValue();
+                    // Tạo key mới cho mỗi order của seller
+                    String orderId = ordersRef.push().getKey();
+                    if (orderId == null) continue;
 
+                    // Tính tổng tiền cho seller này
+                    long sellerTotal = 0;
+                    List<Cart> sellerItems = new ArrayList<>();
+
+                    // Lấy các items của seller này từ cart
+                    for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
+                        String serviceId = itemSnapshot.getKey();
+                        Integer amount = itemSnapshot.getValue(Integer.class);
+                        if (serviceId == null || amount == null) continue;
+
+                        // Tìm item tương ứng trong cartList
+                        for (Cart cartItem : cartList) {
+                            if (cartItem.getServiceId().equals(serviceId)) {
+                                sellerTotal += (long) cartItem.getPrice() * amount;
+                                sellerItems.add(cartItem);
+                                break;
+                            }
+                        }
+                    }
+
+                    // Tạo order data cho seller này
+                    Map<String, Object> orderData = new HashMap<>();
+                    orderData.put("userId", user.getUid());
+                    orderData.put("sellerId", sellerId);
+                    orderData.put("orderDate", ServerValue.TIMESTAMP);
+                    orderData.put("status", status);
+                    orderData.put("city", spinnerCity.getSelectedItem().toString());
+                    orderData.put("district", spinnerDistrict.getSelectedItem().toString());
+                    orderData.put("totalAmount", sellerTotal);
+                    orderData.put("items", sellerItems);
+                    orderData.put("paymentMethod", selectedPaymentMethod);
+
+                    // Lưu order vào database
+                    ordersRef.child(orderId).setValue(orderData);
+                }
+
+                // Xóa cart sau khi tạo xong orders
+                cartRef.removeValue().addOnSuccessListener(aVoid -> {
                     if (selectedPaymentMethod.equals("cod")) {
-                        Toast.makeText(this, "Đặt hàng thành công!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ConfirmOrderActivity.this,
+                                "Đặt hàng thành công!", Toast.LENGTH_SHORT).show();
                         finish();
                     }
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                }).addOnFailureListener(e ->
+                        Toast.makeText(ConfirmOrderActivity.this,
+                                "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(ConfirmOrderActivity.this,
+                        "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void loadUserInfo() {

@@ -18,6 +18,7 @@ public class SplashScreen extends AppCompatActivity {
         setContentView(R.layout.activity_splash_screen);
 
         firebaseAuth = FirebaseAuth.getInstance();
+        firebaseAuth.signOut(); // Force sign out
 
         new Handler().postDelayed(() -> {
             checkUserAndNavigate();

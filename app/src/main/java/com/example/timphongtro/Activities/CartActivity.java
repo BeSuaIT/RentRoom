@@ -39,40 +39,49 @@ public class CartActivity extends AppCompatActivity {
     private RecyclerView rcvcart;
     private CartAdapter cartAdapter;
     private ArrayList<Cart> cartList;
-    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    private FirebaseUser user = firebaseAuth.getCurrentUser();
     private DecimalFormat decimalFormat;
+    private FirebaseUser user;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        decimalFormat = new DecimalFormat("#,###.###");
-        decimalFormat.setDecimalSeparatorAlwaysShown(false);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart);
 
-        ImageView imageView_back = findViewById(R.id.imageView_back);
-        Button btn_checkout = findViewById(R.id.button_checkout);
-        textView_total = findViewById(R.id.Total_price);
-
-        btn_checkout.setOnClickListener(v -> openConfirmOrder());
-        imageView_back.setOnClickListener(v -> finish());
-        initializeCartUI();
+        // Initialize
+        initializeViews();
+        initializeData();
+        setupListeners();
         retrieveCartItems();
     }
 
-    private void initializeCartUI() {
+    private void initializeViews() {
+        textView_total = findViewById(R.id.Total_price);
         rcvcart = findViewById(R.id.rcvcart);
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        rcvcart.setLayoutManager(linearLayoutManager);
-        linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
+        rcvcart.setLayoutManager(new LinearLayoutManager(this));
+        rcvcart.setHasFixedSize(true);
+    }
+
+    private void initializeData() {
+        decimalFormat = new DecimalFormat("#,###.###");
+        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+
+        user = FirebaseAuth.getInstance().getCurrentUser();
         cartList = new ArrayList<>();
-        cartAdapter = new CartAdapter(getApplicationContext(), cartList);
+        cartAdapter = new CartAdapter(this, cartList); // Changed from getApplicationContext() to this
         rcvcart.setAdapter(cartAdapter);
     }
 
+    private void setupListeners() {
+        findViewById(R.id.imageView_back).setOnClickListener(v -> finish());
+        findViewById(R.id.button_checkout).setOnClickListener(v -> openConfirmOrder());
+    }
+
     private void retrieveCartItems() {
+        if (user == null) return;
+
         DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
-        DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts/" + user.getUid());
+        DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts").child(user.getUid());
 
         servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -82,98 +91,64 @@ public class CartActivity extends AppCompatActivity {
                     public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
                         List<Cart> newCartList = new ArrayList<>();
 
-                        for (DataSnapshot cartItem : cartSnapshot.getChildren()) {
-                            String serviceId = cartItem.getKey();
-                            int amount = cartItem.getValue(Integer.class);
+                        // Lặp qua các sellerId
+                        for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
+                            String sellerId = sellerSnapshot.getKey();
 
-                            for (DataSnapshot category : servicesSnapshot.getChildren()) {
-                                DataSnapshot serviceSnap = category.child(serviceId);
-                                if (serviceSnap.exists()) {
-                                    Service service = serviceSnap.getValue(Service.class);
-                                    if (service != null) {
-                                        Cart cart = new Cart(
-                                                serviceId,
-                                                service.getTitle(),
-                                                service.getId_seller(),
-                                                amount,
-                                                service.getPrice(),
-                                                service.getImages()
-                                        );
-                                        newCartList.add(cart);
-                                        break;
+                            // Lặp qua các serviceId của mỗi seller
+                            for (DataSnapshot serviceSnapshot : sellerSnapshot.getChildren()) {
+                                String serviceId = serviceSnapshot.getKey();
+                                Integer amount = serviceSnapshot.getValue(Integer.class);
+
+                                if (serviceId == null || amount == null) continue;
+
+                                // Tìm thông tin service từ Services
+                                for (DataSnapshot category : servicesSnapshot.getChildren()) {
+                                    DataSnapshot serviceSnap = category.child(serviceId);
+                                    if (serviceSnap.exists()) {
+                                        Service service = serviceSnap.getValue(Service.class);
+                                        if (service != null) {
+                                            Cart cart = new Cart(
+                                                    serviceId,
+                                                    service.getTitle(),
+                                                    sellerId, // Sử dụng sellerId từ cart
+                                                    amount,
+                                                    service.getPrice(),
+                                                    service.getImages()
+                                            );
+                                            newCartList.add(cart);
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                                new CartDiffCallback(cartList, newCartList));
-
-                        cartList.clear();
-                        cartList.addAll(newCartList);
-                        diffResult.dispatchUpdatesTo(cartAdapter);
-                        updateRecyclerViewVisibility(cartList, rcvcart, findViewById(R.id.nohistory));
-                        calculateTotalPrice(cartList);
+                        runOnUiThread(() -> {
+                            cartList.clear();
+                            cartList.addAll(newCartList);
+                            cartAdapter.updateData(cartList);
+                            updateRecyclerViewVisibility();
+                            calculateTotalPrice();
+                        });
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) { }
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(CartActivity.this, "Lỗi tải giỏ hàng", Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
-        });
-    }
-
-    private void calculateTotalPrice(ArrayList<Cart> cartList) {
-        if (cartList.isEmpty()) {
-            textView_total.setText("0 VNĐ");
-            totalPriceValue = 0;
-            return;
-        }
-
-        final long[] totalPrice = {0};
-        final int[] itemsProcessed = {0};
-
-        DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
-        servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot servicesSnapshot) {
-                for (Cart cartItem : cartList) {
-                    boolean found = false;
-                    for (DataSnapshot categorySnapshot : servicesSnapshot.getChildren()) {
-                        DataSnapshot serviceSnapshot = categorySnapshot.child(cartItem.getServiceId());
-                        if (serviceSnapshot.exists()) {
-                            Service serviceDetails = serviceSnapshot.getValue(Service.class);
-                            if (serviceDetails != null) {
-                                totalPrice[0] += (long) serviceDetails.getPrice() * cartItem.getAmount();
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    itemsProcessed[0]++;
-                    if (!found) {
-                        itemsProcessed[0]--;
-                    }
-
-                    if (itemsProcessed[0] == cartList.size()) {
-                        totalPriceValue = totalPrice[0];
-                        textView_total.setText(decimalFormat.format(totalPrice[0]) + " VNĐ");
-                    }
-                }
-            }
-
-            @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(CartActivity.this, "Error calculating total price", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CartActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void updateRecyclerViewVisibility(ArrayList<Cart> cartList, RecyclerView rcvcart, View noHistoryView) {
+    private void updateRecyclerViewVisibility() {
+        View noHistoryView = findViewById(R.id.nohistory);
         if (cartList.isEmpty()) {
             rcvcart.setVisibility(View.GONE);
             noHistoryView.setVisibility(View.VISIBLE);
@@ -183,11 +158,24 @@ public class CartActivity extends AppCompatActivity {
         }
     }
 
+    private void calculateTotalPrice() {
+        totalPriceValue = 0;
+        for (Cart cart : cartList) {
+            totalPriceValue += (long) cart.getPrice() * cart.getAmount();
+        }
+        textView_total.setText(decimalFormat.format(totalPriceValue) + " VNĐ");
+    }
+
     private void openConfirmOrder() {
+        if (cartList.isEmpty()) {
+            Toast.makeText(this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Gson gson = new Gson();
         String cartJson = gson.toJson(cartList);
 
-        Intent intent = new Intent(CartActivity.this, ConfirmOrderActivity.class);
+        Intent intent = new Intent(this, ConfirmOrderActivity.class);
         intent.putExtra("cartList", cartJson);
         intent.putExtra("totalPrice", totalPriceValue);
         startActivity(intent);

@@ -308,7 +308,7 @@ public class LoginActivity extends AppCompatActivity {
                             // Get database reference
                             DatabaseReference userRef = FirebaseDatabase.getInstance()
                                     .getReference()
-                                    .child("users")
+                                    .child("Users")
                                     .child(firebaseUser.getUid());
 
                             // Set value instead of update to ensure all data is written

@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -20,79 +21,133 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.OrderItemViewHolder> {
-    private Context context;
-    private List<Cart> orderItems;
-    private DecimalFormat decimalFormat;
+public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.SellerViewHolder> {
+    private final Context context;
+    private final Map<String, List<Cart>> sellerItemsMap;
+    private final List<String> sellerIds;
+    private final DecimalFormat decimalFormat;
 
     public OrderItemAdapter(Context context, List<Cart> orderItems) {
         this.context = context;
-        this.orderItems = orderItems;
         this.decimalFormat = new DecimalFormat("#,###.###");
         this.decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        this.sellerItemsMap = new HashMap<>();
+        this.sellerIds = new ArrayList<>();
+
+        orderItems.forEach(item -> {
+            String sellerId = item.getId_seller();
+            sellerItemsMap.computeIfAbsent(sellerId, k -> new ArrayList<>()).add(item);
+            if (!sellerIds.contains(sellerId)) {
+                sellerIds.add(sellerId);
+            }
+        });
     }
 
     @NonNull
     @Override
-    public OrderItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.activity_order_item_view_holder, parent, false);
-        return new OrderItemViewHolder(view);
+    public SellerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.seller_items_layout, parent, false);
+        return new SellerViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull OrderItemViewHolder holder, int position) {
-        Cart item = orderItems.get(position);
+    public void onBindViewHolder(@NonNull SellerViewHolder holder, int position) {
+        String sellerId = sellerIds.get(position);
+        List<Cart> sellerItems = sellerItemsMap.get(sellerId);
 
-        holder.serviceName.setText(item.getTitle());
-        holder.amount.setText(String.format("Số lượng: %d x %s VNĐ",
-                item.getAmount(),
-                decimalFormat.format(item.getPrice())
-        ));
-        holder.price.setText("Thành tiền: " + decimalFormat.format(item.getPrice() * item.getAmount()) + " VNĐ");
-
-        DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users/" + item.getId_seller());
+        DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users").child(sellerId);
         sellerRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String sellerName = snapshot.getValue(String.class);
-                    holder.seller.setText(sellerName);
-                }
+                String sellerName = snapshot.exists() ? snapshot.getValue(String.class) : "Người bán không xác định";
+                holder.sellerName.setText("Người bán: " + sellerName);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                holder.seller.setText("Unknown Seller");
+                holder.sellerName.setText("Người bán không xác định");
             }
         });
 
-        if (item.getImages() != null && !item.getImages().isEmpty()) {
-            Glide.with(context)
-                    .load(item.getImages().get(0))
-                    .placeholder(R.drawable.image1)
-                    .error(R.drawable.image1)
-                    .into(holder.serviceImage);
-        }
+        SellerItemsAdapter itemsAdapter = new SellerItemsAdapter(sellerItems);
+        holder.itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        holder.itemsRecyclerView.setAdapter(itemsAdapter);
     }
 
     @Override
     public int getItemCount() {
-        return orderItems.size();
+        return sellerIds.size();
     }
 
-    public static class OrderItemViewHolder extends RecyclerView.ViewHolder {
-        ImageView serviceImage;
-        TextView serviceName, amount, price, seller;
+    private class SellerItemsAdapter extends RecyclerView.Adapter<SellerItemsAdapter.ItemViewHolder> {
+        private final List<Cart> items;
 
-        public OrderItemViewHolder(@NonNull View itemView) {
+        SellerItemsAdapter(List<Cart> items) {
+            this.items = items;
+        }
+
+        @NonNull
+        @Override
+        public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(context).inflate(R.layout.activity_order_item_view_holder, parent, false);
+            return new ItemViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
+            Cart item = items.get(position);
+            holder.bindData(item);
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class ItemViewHolder extends RecyclerView.ViewHolder {
+            final ImageView serviceImage;
+            final TextView serviceName, amount, price;
+
+            ItemViewHolder(@NonNull View itemView) {
+                super(itemView);
+                serviceImage = itemView.findViewById(R.id.imageView_service);
+                serviceName = itemView.findViewById(R.id.textView_serviceName);
+                amount = itemView.findViewById(R.id.textView_amount);
+                price = itemView.findViewById(R.id.textView_price);
+            }
+
+            void bindData(Cart item) {
+                serviceName.setText(item.getTitle());
+                amount.setText(String.format("Số lượng: %d x %s VNĐ",
+                        item.getAmount(),
+                        decimalFormat.format(item.getPrice())));
+                price.setText(String.format("Thành tiền: %s VNĐ",
+                        decimalFormat.format(item.getPrice() * item.getAmount())));
+
+                if (item.getImages() != null && !item.getImages().isEmpty()) {
+                    Glide.with(context)
+                            .load(item.getImages().get(0))
+                            .placeholder(R.drawable.image1)
+                            .error(R.drawable.image1)
+                            .into(serviceImage);
+                }
+            }
+        }
+    }
+
+    static class SellerViewHolder extends RecyclerView.ViewHolder {
+        final TextView sellerName;
+        final RecyclerView itemsRecyclerView;
+
+        SellerViewHolder(@NonNull View itemView) {
             super(itemView);
-            serviceImage = itemView.findViewById(R.id.imageView_service);
-            serviceName = itemView.findViewById(R.id.textView_serviceName);
-            seller = itemView.findViewById(R.id.textView_seller);
-            amount = itemView.findViewById(R.id.textView_amount);
-            price = itemView.findViewById(R.id.textView_price);
+            sellerName = itemView.findViewById(R.id.textView_sellerName);
+            itemsRecyclerView = itemView.findViewById(R.id.recyclerView_sellerItems);
         }
     }
 }

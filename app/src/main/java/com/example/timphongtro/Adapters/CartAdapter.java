@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -24,110 +25,209 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder> {
-    private ArrayList<Cart> cartList;
-    private Context context;
-    private DatabaseReference cartRef;
+public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHolder> {
+    private final Context context;
+    private final Map<String, List<Cart>> sellerItemsMap;
+    private final List<String> sellerIds;
+    private final DatabaseReference cartRef;
+    private final DecimalFormat decimalFormat;
 
     public CartAdapter(Context context, ArrayList<Cart> cartList) {
         this.context = context;
-        this.cartList = cartList;
+        this.decimalFormat = new DecimalFormat("#,###.###");
+        this.decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        this.sellerItemsMap = new HashMap<>();
+        this.sellerIds = new ArrayList<>();
+
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            this.cartRef = FirebaseDatabase.getInstance()
-                    .getReference("Carts")
-                    .child(user.getUid());
+        this.cartRef = FirebaseDatabase.getInstance()
+                .getReference("Carts")
+                .child(user.getUid());
+
+        groupItemsBySeller(cartList);
+    }
+
+    public void updateData(List<Cart> newCartList) {
+        sellerItemsMap.clear();
+        sellerIds.clear();
+        groupItemsBySeller(newCartList);
+        notifyDataSetChanged();
+    }
+
+    private void groupItemsBySeller(List<Cart> cartList) {
+        for (Cart item : cartList) {
+            if (item.getId_seller() != null) {
+                String sellerId = item.getId_seller();
+                if (!sellerIds.contains(sellerId)) {
+                    sellerIds.add(sellerId);
+                }
+                sellerItemsMap.computeIfAbsent(sellerId, k -> new ArrayList<>()).add(item);
+            }
+        }
+    }
+
+    private void updateOrRemoveItem(Cart cart, int delta) {
+        String sellerId = cart.getId_seller();
+        String serviceId = cart.getServiceId();
+
+        if (delta == 0) { // Remove item
+            cartRef.child(sellerId)
+                    .child(serviceId)
+                    .removeValue()
+                    .addOnSuccessListener(aVoid -> {
+                        List<Cart> sellerItems = sellerItemsMap.get(sellerId);
+                        if (sellerItems != null) {
+                            sellerItems.remove(cart);
+                            if (sellerItems.isEmpty()) {
+                                sellerItemsMap.remove(sellerId);
+                                sellerIds.remove(sellerId);
+                            }
+                        }
+                        notifyDataSetChanged();
+                    });
+        } else { // Update quantity
+            int newAmount = cart.getAmount() + delta;
+            if (newAmount > 0) {
+                cartRef.child(sellerId)
+                        .child(serviceId)
+                        .setValue(newAmount)
+                        .addOnSuccessListener(aVoid -> {
+                            cart.setAmount(newAmount);
+                            notifyDataSetChanged();
+                        });
+            } else {
+                updateOrRemoveItem(cart, 0);
+            }
         }
     }
 
     @NonNull
     @Override
-    public CartViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.cart_view_holder, parent, false);
-        return new CartViewHolder(view);
+    public SellerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.seller_cart_group, parent, false);
+        return new SellerViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CartViewHolder holder, int position) {
-        Cart cart = cartList.get(position);
-        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
-        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+    public void onBindViewHolder(@NonNull SellerViewHolder holder, int position) {
+        String sellerId = sellerIds.get(position);
+        List<Cart> sellerItems = sellerItemsMap.get(sellerId);
 
-        // Bind data directly from Cart object
-        holder.cartItemName.setText(cart.getTitle());
-        holder.itemPrice.setText(decimalFormat.format(cart.getPrice()) + " VNĐ");
-        holder.quantity.setText(String.valueOf(cart.getAmount()));
-
-        DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users/" + cart.getId_seller());
+        DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users")
+                .child(sellerId);
         sellerRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String sellerName = snapshot.getValue(String.class);
-                    holder.cartItemSeller.setText(sellerName);
-                }
+                String sellerName = snapshot.exists() ? snapshot.getValue(String.class) : "Người bán không xác định";
+                holder.sellerName.setText("Người bán: " + sellerName);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                holder.cartItemSeller.setText("Unknown Seller");
+                holder.sellerName.setText("Người bán không xác định");
             }
         });
 
-        if (cart.getImages() != null) {
-            Glide.with(context)
-                    .load(cart.getImages().get(0))
-                    .centerCrop()
-                    .into(holder.cartItemImage);
-        }
-
-        holder.decreaseButton.setOnClickListener(v -> {
-            int newAmount = cart.getAmount() - 1;
-            if (newAmount > 0) {
-                cart.setAmount(newAmount);
-                holder.quantity.setText(String.valueOf(newAmount));
-                cartRef.child(cart.getServiceId()).setValue(newAmount);
-            } else {
-                removeItem(cart.getServiceId());
-            }
-        });
-
-        holder.increaseButton.setOnClickListener(v -> {
-            int newAmount = cart.getAmount() + 1;
-            cart.setAmount(newAmount);
-            holder.quantity.setText(String.valueOf(newAmount));
-            cartRef.child(cart.getServiceId()).setValue(newAmount);
-        });
-
-        holder.removeButton.setOnClickListener(v -> removeItem(cart.getServiceId()));
-    }
-
-    private void removeItem(String serviceId) {
-        cartRef.child(serviceId).removeValue();
+        CartItemsAdapter itemsAdapter = new CartItemsAdapter(sellerItems);
+        holder.itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        holder.itemsRecyclerView.setAdapter(itemsAdapter);
     }
 
     @Override
     public int getItemCount() {
-        return cartList.size();
+        return sellerIds.size();
     }
 
-    public static class CartViewHolder extends RecyclerView.ViewHolder {
+    private void removeItem(String sellerId, String serviceId) {
+        cartRef.child(sellerId).child(serviceId).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    // Item removed successfully
+                })
+                .addOnFailureListener(e -> {
+                    // Handle error
+                });
+    }
 
-        TextView cartItemName, itemPrice, increaseButton, decreaseButton, quantity, cartItemSeller;
-        ImageView cartItemImage;
-        Button removeButton;
+    static class SellerViewHolder extends RecyclerView.ViewHolder {
+        final TextView sellerName;
+        final RecyclerView itemsRecyclerView;
 
-        public CartViewHolder(View itemview) {
-            super(itemview);
-            increaseButton = itemview.findViewById(R.id.increaseButton);
-            decreaseButton = itemview.findViewById(R.id.decreaseButton);
-            cartItemName = itemview.findViewById(R.id.cartItemName);
-            cartItemSeller = itemview.findViewById(R.id.cartItemSeller);
-            itemPrice = itemview.findViewById(R.id.itemPrice);
-            cartItemImage = itemview.findViewById(R.id.cartItemImage);
-            removeButton = itemview.findViewById(R.id.removeButton);
-            quantity = itemview.findViewById(R.id.quantity);
+        SellerViewHolder(@NonNull View itemView) {
+            super(itemView);
+            sellerName = itemView.findViewById(R.id.textView_sellerName);
+            itemsRecyclerView = itemView.findViewById(R.id.recyclerView_sellerItems);
+        }
+    }
+
+    private class CartItemsAdapter extends RecyclerView.Adapter<CartItemsAdapter.ItemViewHolder> {
+        private final List<Cart> items;
+
+        CartItemsAdapter(List<Cart> items) {
+            this.items = items;
+        }
+
+        @NonNull
+        @Override
+        public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(context).inflate(R.layout.cart_view_holder, parent, false);
+            return new ItemViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
+            Cart cart = items.get(position);
+            holder.bindData(cart);
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class ItemViewHolder extends RecyclerView.ViewHolder {
+            final ImageView cartItemImage;
+            final TextView cartItemName, itemPrice, quantity;
+            final TextView increaseButton, decreaseButton;
+            final Button removeButton;
+
+            ItemViewHolder(@NonNull View itemView) {
+                super(itemView);
+                cartItemImage = itemView.findViewById(R.id.cartItemImage);
+                cartItemName = itemView.findViewById(R.id.cartItemName);
+                itemPrice = itemView.findViewById(R.id.itemPrice);
+                quantity = itemView.findViewById(R.id.quantity);
+                increaseButton = itemView.findViewById(R.id.increaseButton);
+                decreaseButton = itemView.findViewById(R.id.decreaseButton);
+                removeButton = itemView.findViewById(R.id.removeButton);
+            }
+
+            private void setupClickListeners(Cart cart) {
+                decreaseButton.setOnClickListener(v -> updateOrRemoveItem(cart, -1));
+                increaseButton.setOnClickListener(v -> updateOrRemoveItem(cart, 1));
+                removeButton.setOnClickListener(v -> updateOrRemoveItem(cart, 0));
+            }
+
+            void bindData(Cart cart) {
+                cartItemName.setText(cart.getTitle());
+                itemPrice.setText(String.format("%s VNĐ", decimalFormat.format(cart.getPrice())));
+                quantity.setText(String.valueOf(cart.getAmount()));
+
+                // Load image
+                if (cart.getImages() != null && !cart.getImages().isEmpty()) {
+                    Glide.with(context)
+                            .load(cart.getImages().get(0))
+                            .placeholder(R.drawable.image1)
+                            .error(R.drawable.image1)
+                            .centerCrop()
+                            .into(cartItemImage);
+                }
+
+                setupClickListeners(cart);
+            }
         }
     }
 }
