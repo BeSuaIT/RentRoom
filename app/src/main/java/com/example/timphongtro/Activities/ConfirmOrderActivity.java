@@ -224,36 +224,14 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
                 DatabaseReference ordersRef = FirebaseDatabase.getInstance().getReference("Bills");
 
-                // Duyệt qua từng seller trong cart
                 for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
                     String sellerId = sellerSnapshot.getKey();
                     if (sellerId == null) continue;
 
-                    // Tạo key mới cho mỗi order của seller
-                    String orderId = ordersRef.push().getKey();
+                    String orderId = generateOrderId();
                     if (orderId == null) continue;
 
-                    // Tính tổng tiền cho seller này
-                    long sellerTotal = 0;
-                    List<Cart> sellerItems = new ArrayList<>();
-
-                    // Lấy các items của seller này từ cart
-                    for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
-                        String serviceId = itemSnapshot.getKey();
-                        Integer amount = itemSnapshot.getValue(Integer.class);
-                        if (serviceId == null || amount == null) continue;
-
-                        // Tìm item tương ứng trong cartList
-                        for (Cart cartItem : cartList) {
-                            if (cartItem.getServiceId().equals(serviceId)) {
-                                sellerTotal += (long) cartItem.getPrice() * amount;
-                                sellerItems.add(cartItem);
-                                break;
-                            }
-                        }
-                    }
-
-                    // Tạo order data cho seller này
+                    // Tạo order data tối giản
                     Map<String, Object> orderData = new HashMap<>();
                     orderData.put("userId", user.getUid());
                     orderData.put("sellerId", sellerId);
@@ -261,25 +239,44 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                     orderData.put("status", status);
                     orderData.put("city", spinnerCity.getSelectedItem().toString());
                     orderData.put("district", spinnerDistrict.getSelectedItem().toString());
-                    orderData.put("totalAmount", sellerTotal);
-                    orderData.put("items", sellerItems);
                     orderData.put("paymentMethod", selectedPaymentMethod);
+
+                    // Lưu items với cấu trúc tối giản
+                    Map<String, Integer> items = new HashMap<>();
+                    long totalAmount = 0;
+
+                    for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
+                        String serviceId = itemSnapshot.getKey();
+                        Integer amount = itemSnapshot.getValue(Integer.class);
+                        if (serviceId == null || amount == null) continue;
+
+                        // Chỉ lưu serviceId và amount
+                        items.put(serviceId, amount);
+
+                        // Tính tổng tiền
+                        for (Cart cartItem : cartList) {
+                            if (cartItem.getServiceId().equals(serviceId)) {
+                                totalAmount += (long) cartItem.getPrice() * amount;
+                                break;
+                            }
+                        }
+                    }
+
+                    orderData.put("items", items);
+                    orderData.put("totalAmount", totalAmount);
 
                     // Lưu order vào database
                     ordersRef.child(orderId).setValue(orderData);
                 }
 
-                // Xóa cart sau khi tạo xong orders
+                // Xóa cart sau khi tạo orders
                 cartRef.removeValue().addOnSuccessListener(aVoid -> {
                     if (selectedPaymentMethod.equals("cod")) {
                         Toast.makeText(ConfirmOrderActivity.this,
                                 "Đặt hàng thành công!", Toast.LENGTH_SHORT).show();
                         finish();
                     }
-                }).addOnFailureListener(e ->
-                        Toast.makeText(ConfirmOrderActivity.this,
-                                "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                });
             }
 
             @Override
@@ -288,6 +285,18 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                         "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private String generateOrderId() {
+        // Get current date in format YYYYMMDD
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyyMMdd");
+        String currentDate = dateFormat.format(new java.util.Date());
+
+        // Generate random 5-digit number
+        int randomNum = (int) ((Math.random() * 90000) + 10000);
+
+        // Combine to create order ID: ORD-YYYYMMDD-XXXXX
+        return String.format("ORD-%s-%05d", currentDate, randomNum);
     }
 
     private void loadUserInfo() {
