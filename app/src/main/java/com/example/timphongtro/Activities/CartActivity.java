@@ -35,6 +35,7 @@ import java.util.List;
 public class CartActivity extends AppCompatActivity {
 
     private TextView textView_total;
+    private long totalPriceValue = 0;
     private RecyclerView rcvcart;
     private CartAdapter cartAdapter;
     private ArrayList<Cart> cartList;
@@ -128,6 +129,7 @@ public class CartActivity extends AppCompatActivity {
     private void calculateTotalPrice(ArrayList<Cart> cartList) {
         if (cartList.isEmpty()) {
             textView_total.setText("0 VNĐ");
+            totalPriceValue = 0;
             return;
         }
 
@@ -145,7 +147,7 @@ public class CartActivity extends AppCompatActivity {
                         if (serviceSnapshot.exists()) {
                             Service serviceDetails = serviceSnapshot.getValue(Service.class);
                             if (serviceDetails != null) {
-                                totalPrice[0] += serviceDetails.getPrice() * cartItem.getAmount();
+                                totalPrice[0] += (long) serviceDetails.getPrice() * cartItem.getAmount();
                                 found = true;
                                 break;
                             }
@@ -158,6 +160,7 @@ public class CartActivity extends AppCompatActivity {
                     }
 
                     if (itemsProcessed[0] == cartList.size()) {
+                        totalPriceValue = totalPrice[0];
                         textView_total.setText(decimalFormat.format(totalPrice[0]) + " VNĐ");
                     }
                 }
@@ -186,7 +189,7 @@ public class CartActivity extends AppCompatActivity {
 
         Intent intent = new Intent(CartActivity.this, ConfirmOrderActivity.class);
         intent.putExtra("cartList", cartJson);
-        intent.putExtra("totalPrice", textView_total.getText().toString());
+        intent.putExtra("totalPrice", totalPriceValue);
         startActivity(intent);
     }
 }

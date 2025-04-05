@@ -82,7 +82,7 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Orde
         return orderItems.size();
     }
 
-    static class OrderItemViewHolder extends RecyclerView.ViewHolder {
+    public static class OrderItemViewHolder extends RecyclerView.ViewHolder {
         ImageView serviceImage;
         TextView serviceName, amount, price, seller;
 

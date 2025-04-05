@@ -1,7 +1,8 @@
 package com.example.timphongtro.Activities;
 
-import android.media.Image;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Adapters.OrderItemAdapter;
+import com.example.timphongtro.Api.CreateOrder;
 import com.example.timphongtro.Models.Cart;
 import com.example.timphongtro.Models.City;
 import com.example.timphongtro.Models.District;
@@ -29,26 +31,48 @@ import com.google.firebase.database.ServerValue;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONObject;
+
 import java.lang.reflect.Type;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import vn.zalopay.sdk.Environment;
+import vn.zalopay.sdk.ZaloPayError;
+import vn.zalopay.sdk.ZaloPaySDK;
+import vn.zalopay.sdk.listeners.PayOrderListener;
+
 public class ConfirmOrderActivity extends AppCompatActivity {
-    private Spinner spinnerCity, spinnerDistrict;
+    private Spinner spinnerCity, spinnerDistrict, spinnerPayment;
     private ImageView imageView_back;
     private ArrayList<City> cityArrayList;
     private ArrayList<String> spinnerArrayList;
-    private ArrayAdapter<String> spinnerAdapter, districtAdapter;
+    private ArrayAdapter<String> spinnerAdapter, districtAdapter, paymentAdapter;
     private RecyclerView rcvOrderItems;
     private ArrayList<Cart> cartList;
     private TextView totalAmount;
     private ArrayList<String> districtNames;
+    private long totalPriceValue;
+    private DecimalFormat decimalFormat;
+    private String selectedPaymentMethod = "cod"; // Default value
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_order);
+
+        StrictMode.ThreadPolicy policy = new
+                StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        // ZaloPay SDK Init
+        ZaloPaySDK.init(2553, Environment.SANDBOX);
+
+        decimalFormat = new DecimalFormat("#,###.###");
+        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        totalPriceValue = getIntent().getLongExtra("totalPrice", 0);
 
         String cartJson = getIntent().getStringExtra("cartList");
         if (cartJson != null) {
@@ -63,14 +87,19 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         loadUserInfo();
         fetchCityData();
         setupConfirmButton();
+        setupPaymentSpinner();
     }
 
     private void initViews() {
         spinnerCity = findViewById(R.id.spinner_city);
         spinnerDistrict = findViewById(R.id.spinner_district);
+        spinnerPayment = findViewById(R.id.spinner_payment);
         rcvOrderItems = findViewById(R.id.rcv_orderItems);
         totalAmount = findViewById(R.id.textView_totalAmount);
         imageView_back = findViewById(R.id.imageView_back);
+
+        // Set total amount once with proper formatting
+        totalAmount.setText(decimalFormat.format(totalPriceValue) + " VNĐ");
 
         imageView_back.setOnClickListener(v -> finish());
 
@@ -91,9 +120,6 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         OrderItemAdapter orderItemAdapter = new OrderItemAdapter(this, cartList);
         rcvOrderItems.setAdapter(orderItemAdapter);
 
-        String totalPrice = getIntent().getStringExtra("totalPrice");
-        totalAmount.setText(totalPrice);
-
         // Setup spinner listener
         spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -113,7 +139,13 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         Button btnConfirm = findViewById(R.id.button_confirmOrder);
         btnConfirm.setOnClickListener(v -> {
             if (validateOrder()) {
-                createOrder();
+                if (selectedPaymentMethod.equals("zalopay")) {
+                    // Only execute ZaloPay payment
+                    executeZaloPayPayment();
+                } else {
+                    // For COD, directly create order
+                    createOrder();
+                }
             }
         });
     }
@@ -135,6 +167,49 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         return true;
     }
 
+    private void executeZaloPayPayment() {
+        CreateOrder orderApi = new CreateOrder();
+
+        try {
+            JSONObject data = orderApi.createOrder(String.valueOf(totalPriceValue));
+            String code = data.getString("return_code");
+
+            if (code.equals("1")) {
+                String token = data.getString("zp_trans_token");
+                ZaloPaySDK.getInstance().payOrder(ConfirmOrderActivity.this, token, "demozpdk://app", new PayOrderListener() {
+                    @Override
+                    public void onPaymentSucceeded(String s, String s1, String s2) {
+                        // Create order after successful payment
+                        createOrder();
+                        Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
+                        intent1.putExtra("result", "Thanh toán thành công");
+                        startActivity(intent1);
+                        finish(); // Close ConfirmOrderActivity
+                    }
+
+                    @Override
+                    public void onPaymentCanceled(String s, String s1) {
+                        Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
+                        intent1.putExtra("result", "Thanh toán bị hủy");
+                        startActivity(intent1);
+                        finish();
+                    }
+
+                    @Override
+                    public void onPaymentError(ZaloPayError zaloPayError, String s, String s1) {
+                        Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
+                        intent1.putExtra("result", "Lỗi thanh toán: " + zaloPayError.toString());
+                        startActivity(intent1);
+                        finish();
+                    }
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void createOrder() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
@@ -149,11 +224,12 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         Map<String, Object> orderData = new HashMap<>();
         orderData.put("userId", user.getUid());
         orderData.put("orderDate", ServerValue.TIMESTAMP);
-        orderData.put("status", "pending");
+        orderData.put("status", 0);
         orderData.put("city", spinnerCity.getSelectedItem().toString());
         orderData.put("district", spinnerDistrict.getSelectedItem().toString());
-        orderData.put("totalAmount", totalAmount.getText().toString());
+        orderData.put("totalAmount", totalPriceValue);
         orderData.put("items", cartList);
+        orderData.put("paymentMethod", selectedPaymentMethod);
 
         orderRef.setValue(orderData)
                 .addOnSuccessListener(aVoid -> {
@@ -162,8 +238,10 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                             .child(user.getUid())
                             .removeValue();
 
-                    Toast.makeText(this, "Đặt hàng thành công!", Toast.LENGTH_SHORT).show();
-                    finish();
+                    if (selectedPaymentMethod.equals("cod")) {
+                        Toast.makeText(this, "Đặt hàng thành công!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
@@ -221,5 +299,36 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             districtNames.add(district.getName());
         }
         districtAdapter.notifyDataSetChanged();
+    }
+
+    private void setupPaymentSpinner() {
+        ArrayList<String> paymentMethods = new ArrayList<>();
+        paymentMethods.add("Thanh toán khi nhận hàng");
+        paymentMethods.add("Thanh toán ZaloPay");
+
+        paymentAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                paymentMethods);
+        paymentAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item);
+        spinnerPayment.setAdapter(paymentAdapter);
+
+        spinnerPayment.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedPaymentMethod = position == 0 ? "cod" : "zalopay";
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedPaymentMethod = "cod";
+            }
+        });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        ZaloPaySDK.getInstance().onResult(intent);
     }
 }
