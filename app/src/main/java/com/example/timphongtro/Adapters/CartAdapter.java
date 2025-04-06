@@ -173,7 +173,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
         @NonNull
         @Override
         public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(context).inflate(R.layout.cart_view_holder, parent, false);
+            View view = LayoutInflater.from(context).inflate(R.layout.view_holder_cart, parent, false);
             return new ItemViewHolder(view);
         }
 

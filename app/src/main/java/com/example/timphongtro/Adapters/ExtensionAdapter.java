@@ -30,7 +30,7 @@ public class ExtensionAdapter extends RecyclerView.Adapter<ExtensionAdapter.View
     @NonNull
     @Override
     public ViewHolderExtension onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.extentions_view_holder,parent,false);
+        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_extension,parent,false);
         return new ViewHolderExtension(v);
     }
 

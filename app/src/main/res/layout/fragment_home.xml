@@ -338,11 +338,11 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <include layout="@layout/district_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_district_shimmer" />
 
-                    <include layout="@layout/district_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_district_shimmer" />
 
-                    <include layout="@layout/district_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_district_shimmer" />
 
                 </LinearLayout>
             </com.facebook.shimmer.ShimmerFrameLayout>
@@ -403,13 +403,13 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <include layout="@layout/room_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_room_shimmer" />
 
-                    <include layout="@layout/room_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_room_shimmer" />
 
-                    <include layout="@layout/room_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_room_shimmer" />
 
-                    <include layout="@layout/room_view_holder_shimmer" />
+                    <include layout="@layout/view_holder_room_shimmer" />
 
                 </LinearLayout>
             </com.facebook.shimmer.ShimmerFrameLayout>

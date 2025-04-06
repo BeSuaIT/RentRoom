@@ -30,7 +30,7 @@ public class FurnitureAdapter extends RecyclerView.Adapter<FurnitureAdapter.View
     @NonNull
     @Override
     public ViewHolderFurniture onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.funiture_view_holder, parent, false);
+        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_furniture, parent, false);
         return new FurnitureAdapter.ViewHolderFurniture(v);
     }
 

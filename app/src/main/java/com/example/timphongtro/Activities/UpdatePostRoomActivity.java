@@ -791,7 +791,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     private void showBottomDialog() {
         dialog = new BottomSheetDialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_choose_uploadimg);
+        dialog.setContentView(R.layout.dialog_choose_uploading);
 
         ImageView cancelButton;
         pickImgAlbum = dialog.findViewById(R.id.pickImgAlbum);

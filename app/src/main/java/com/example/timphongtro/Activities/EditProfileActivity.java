@@ -39,7 +39,7 @@ public class EditProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_updateinformationuser);
+        setContentView(R.layout.activity_edit_profile);
 
         txtname = findViewById(R.id.txtname);
         txtemail = findViewById(R.id.txtemail);
