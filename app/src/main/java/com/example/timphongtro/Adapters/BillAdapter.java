@@ -90,6 +90,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
         TextView tvBillId = view.findViewById(R.id.tv_billId);
         TextView tvBillDate = view.findViewById(R.id.tv_billDate);
         TextView tvBillAddress = view.findViewById(R.id.tv_billAddress);
+        TextView tvPayMethod = view.findViewById(R.id.tv_payMethod);
         TextView tvBillTotal = view.findViewById(R.id.tv_billTotal);
         RecyclerView rcvBillItems = view.findViewById(R.id.rcv_billItems);
 
@@ -99,6 +100,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
                 bill.getDistrict() + ", " +
                 bill.getCity();
         tvBillAddress.setText("Địa chỉ: " + fullAddress);
+        tvPayMethod.setText("Phương thức thanh toán: " + bill.getPaymentMethod());
         tvBillTotal.setText(String.format("Tổng tiền: %,d đ", bill.getTotalAmount()));
 
         DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import android.text.TextUtils;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -17,24 +16,18 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
-    private FirebaseAuth auth;
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forgot_password);
 
-        auth = FirebaseAuth.getInstance();
         EditText emailEditText = findViewById(R.id.emailEditText);
-        Button forgotPasswordButton = findViewById(R.id.forgotPasswordButton);
-        Button backButton = findViewById(R.id.backButton);
 
-        backButton.setOnClickListener(v -> {
-            Intent i = new Intent(ForgotPasswordActivity.this, LoginActivity.class);
-            startActivity(i);
-        });
+        findViewById(R.id.backButton).setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
 
-        forgotPasswordButton.setOnClickListener(v -> {
+        findViewById(R.id.forgotPasswordButton).setOnClickListener(v -> {
             String email = emailEditText.getText().toString().trim();
             if (validateEmail(email)) {
                 checkEmailAndSendReset(email);
@@ -44,7 +37,6 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     }
 
     private void checkEmailAndSendReset(String email) {
-        // First check if user exists
         auth.signInWithEmailAndPassword(email, "dummy_password")
                 .addOnFailureListener(e -> {
                     if (e instanceof FirebaseAuthInvalidUserException) {
@@ -78,5 +70,4 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         }
         return true;
     }
-
 }

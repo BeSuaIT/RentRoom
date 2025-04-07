@@ -189,26 +189,14 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                     @Override
                     public void onPaymentSucceeded(String s, String s1, String s2) {
                         createOrder(1);
-                        Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
-                        intent1.putExtra("result", "Thanh toán thành công");
-                        startActivity(intent1);
-                        finish();
                     }
 
                     @Override
                     public void onPaymentCanceled(String s, String s1) {
-                        Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
-                        intent1.putExtra("result", "Thanh toán bị hủy");
-                        startActivity(intent1);
-                        finish();
                     }
 
                     @Override
                     public void onPaymentError(ZaloPayError zaloPayError, String s, String s1) {
-                        Intent intent1 = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
-                        intent1.putExtra("result", "Lỗi thanh toán: " + zaloPayError.toString());
-                        startActivity(intent1);
-                        finish();
                     }
                 });
             }
@@ -278,6 +266,13 @@ public class ConfirmOrderActivity extends AppCompatActivity {
 
                     // Lưu order vào database
                     ordersRef.child(orderId).setValue(orderData);
+
+                    ordersRef.child(orderId).setValue(orderData).addOnSuccessListener(aVoid -> {
+                        Intent intent = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
+                        intent.putExtra("orderId", orderId);
+                        startActivity(intent);
+                        finish();
+                    });
                 }
 
                 // Xóa cart sau khi tạo orders

@@ -1,11 +1,12 @@
 package com.example.timphongtro.Models;
 
 public class User {
-    private String email, uid, phone, name, permission, createdAt;
+    private String email, uid, phone, name, permission;
+    private long createdAt;
     public User() {
     }
 
-    public User(String email, String uid, String name, String phone, String permission, String createdAt) {
+    public User(String email, String uid, String name, String phone, String permission, Long createdAt) {
         this.email = email;
         this.uid = uid;
         this.name = name;
@@ -13,10 +14,10 @@ public class User {
         this.permission = permission;
         this.createdAt = createdAt;
     }
-    public String getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
     public String getPermission() {

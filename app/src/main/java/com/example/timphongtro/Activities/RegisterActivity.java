@@ -6,9 +6,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.timphongtro.Models.User;
@@ -19,111 +17,131 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class RegisterActivity extends AppCompatActivity {
-
     private EditText nameEditText, emailEditText, passwordEditText;
-    private TextView loginTextView;
-    private Button registerButton;
     private AlertDialog loadingDialog;
     private FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // Initialize views
+        if (firebaseAuth.getCurrentUser() != null) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
+
+        initFirebase();
+        initViews();
+    }
+
+    private void initFirebase() {
+        firebaseAuth = FirebaseAuth.getInstance();
+        databaseReference = FirebaseDatabase.getInstance().getReference("Users");
+    }
+
+    private void initViews() {
         nameEditText = findViewById(R.id.nameEditText);
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
-        registerButton = findViewById(R.id.registerButton);
-        loginTextView = findViewById(R.id.loginTextView);
-        firebaseAuth = FirebaseAuth.getInstance();
-
-        loginTextView.setOnClickListener(v -> {
-            Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
-            startActivity(i);
-        });
-
-        registerButton.setOnClickListener(v -> {
-            String name = nameEditText.getText().toString();
-            String email = emailEditText.getText().toString();
-            String password = passwordEditText.getText().toString();
-
-            if (TextUtils.isEmpty(name)) {
-                nameEditText.setError("Vui lòng nhập tên");
-                nameEditText.requestFocus();
-            }
-            if (TextUtils.isEmpty(email)) {
-                emailEditText.setError("Vui lòng nhập email");
-                emailEditText.requestFocus();
-            }
-            if (TextUtils.isEmpty(password)) {
-                passwordEditText.setError("Vui lòng nhập mật khẩu");
-                passwordEditText.requestFocus();
-            }
-            if (password.length() < 6) {
-                passwordEditText.setError("Mật khẩu phải có ít nhất 6 ký tự");
-                passwordEditText.requestFocus();
-            }
-            showLoadingDialog();
-            firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    FirebaseUser user = firebaseAuth.getCurrentUser();
-                    if (user != null) {
-                        user.sendEmailVerification().addOnCompleteListener(verificationTask -> {
-                            if (verificationTask.isSuccessful()) {
-                                saveUserData(user);
-                            } else {
-                                hideLoadingDialog();
-                                Toast.makeText(getApplicationContext(), "Gửi email xác minh thất bại.", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                } else {
-                    hideLoadingDialog();
-                    Toast.makeText(getApplicationContext(), "Đăng ký thất bại.", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
+        findViewById(R.id.loginTextView).setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
+        findViewById(R.id.registerButton).setOnClickListener(v -> handleRegister());
     }
 
-    // Save user data to Firebase Realtime Database
-    private void saveUserData(FirebaseUser user) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        databaseReference = database.getReference();
-        String uid = user.getUid();
-        String email = user.getEmail();
+    private void handleRegister() {
         String name = nameEditText.getText().toString();
-        String phone = "";
-        String permission = "user";
-        String createdAt = String.valueOf(System.currentTimeMillis());
+        String email = emailEditText.getText().toString();
+        String password = passwordEditText.getText().toString();
 
+        if (!validateInput(name, email, password)) return;
 
-        User userData = new User(email, uid, name, phone, permission, createdAt);
-        databaseReference.child("Users").child(uid).setValue(userData).addOnSuccessListener(unused -> {
-            hideLoadingDialog();
-            Toast.makeText(RegisterActivity.this,
-                    "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.",
-                    Toast.LENGTH_LONG).show();
+        showLoadingDialog();
+        createUser(email, password);
+    }
 
-            // Sign out user so they have to sign in again after verification
-            firebaseAuth.signOut();
+    private boolean validateInput(String name, String email, String password) {
+        if (TextUtils.isEmpty(name)) {
+            setError(nameEditText, "Vui lòng nhập tên");
+            return false;
+        }
+        if (TextUtils.isEmpty(email)) {
+            setError(emailEditText, "Vui lòng nhập email");
+            return false;
+        }
+        if (TextUtils.isEmpty(password) || password.length() < 6) {
+            setError(passwordEditText, "Mật khẩu phải có ít nhất 6 ký tự");
+            return false;
+        }
+        return true;
+    }
 
-            // Return to login screen
-            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
-        });
+    private void setError(EditText editText, String error) {
+        editText.setError(error);
+        editText.requestFocus();
+    }
+
+    private void createUser(String email, String password) {
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult().getUser() != null) {
+                        sendVerificationEmail(task.getResult().getUser());
+                    } else {
+                        hideLoadingDialog();
+                        showToast("Đăng ký thất bại");
+                    }
+                });
+    }
+
+    private void sendVerificationEmail(FirebaseUser user) {
+        user.sendEmailVerification()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        saveUserData(user);
+                    } else {
+                        hideLoadingDialog();
+                        showToast("Gửi email xác minh thất bại");
+                    }
+                });
+    }
+
+    private void saveUserData(FirebaseUser user) {
+        User userData = new User(
+                user.getEmail(),
+                user.getUid(),
+                nameEditText.getText().toString(),
+                "",
+                "user",
+                System.currentTimeMillis()
+        );
+
+        databaseReference.child(user.getUid()).setValue(userData)
+                .addOnSuccessListener(unused -> {
+                    hideLoadingDialog();
+                    showToast("Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản");
+                    firebaseAuth.signOut();
+                    navigateToLogin();
+                });
+    }
+
+    private void navigateToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void showLoadingDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(R.layout.progress_layout);
-        builder.setCancelable(false);
-        loadingDialog = builder.create();
+        if (loadingDialog == null) {
+            loadingDialog = new AlertDialog.Builder(this)
+                    .setView(R.layout.progress_layout)
+                    .setCancelable(false)
+                    .create();
+        }
         loadingDialog.show();
     }
 
