@@ -13,16 +13,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.example.timphongtro.Models.ExtensionRoom_class;
+import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.R;
 
 import java.util.ArrayList; 
 
-public class ExtensionAdapter extends RecyclerView.Adapter<ExtensionAdapter.ViewHolderExtension>{
+public class UtilityAdapter extends RecyclerView.Adapter<UtilityAdapter.ViewHolderExtension>{
     Context context;
-    ArrayList<ExtensionRoom_class> list;
+    ArrayList<Utility> list;
 
-    public ExtensionAdapter(Context context, ArrayList<ExtensionRoom_class> list) {
+    public UtilityAdapter(Context context, ArrayList<Utility> list) {
         this.context = context;
         this.list = list;
     }

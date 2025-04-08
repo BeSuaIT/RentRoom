@@ -1,15 +1,15 @@
 package com.example.timphongtro.Models;
  
-public class ExtensionRoom_class {
+public class Utility {
     private String name;
     private String img;
 
     private String id;
 
-    public ExtensionRoom_class() {
+    public Utility() {
     }
 
-    public ExtensionRoom_class(String id,String name, String img) {
+    public Utility(String id, String name, String img) {
         this.id = id;
         this.name = name;
         this.img = img;

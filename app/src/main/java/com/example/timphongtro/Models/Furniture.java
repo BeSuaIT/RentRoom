@@ -1,15 +1,15 @@
 package com.example.timphongtro.Models;
 
 
-public class FurnitureClass {
+public class Furniture {
     private String name;
     private String img;
     private String id;
 
-    public FurnitureClass() {
+    public Furniture() {
     }
 
-    public FurnitureClass(String id, String name, String img) {
+    public Furniture(String id, String name, String img) {
         this.id = id;
         this.name = name;
         this.img = img;

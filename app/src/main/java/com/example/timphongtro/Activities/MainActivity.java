@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private void showBottomDialog() {
         final BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.bottom_dialog);
+        dialog.setContentView(R.layout.dialog_bottom_fab);
 
         LinearLayout house = dialog.findViewById(R.id.house);
         LinearLayout groupusers = dialog.findViewById(R.id.pickImgAlbum);

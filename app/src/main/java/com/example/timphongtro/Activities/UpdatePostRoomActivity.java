@@ -35,10 +35,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ExtensionRoom_class;
+import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
-import com.example.timphongtro.Models.FurnitureClass;
+import com.example.timphongtro.Models.Furniture;
 import com.example.timphongtro.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -87,9 +87,9 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     List<String> cities, districts, wards;
 
     String path;
-    ArrayList<FurnitureClass> furnitures;
+    ArrayList<Furniture> furnitures;
 
-    ArrayList<ExtensionRoom_class> extensions_room;
+    ArrayList<Utility> extensions_room;
     Address address;
 
     Room roomData;
@@ -538,52 +538,52 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
 
     private void handleDataFurniture() {
         if (checkbox_air_condition.isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_air_condition", checkbox_air_condition.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-air-condittion.png?alt=media&token=85d235e6-f4f4-44b1-89f4-05bed51050a6"));
+            furnitures.add(new Furniture("checkbox_air_condition", checkbox_air_condition.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-air-condittion.png?alt=media&token=85d235e6-f4f4-44b1-89f4-05bed51050a6"));
         }
         if (checkbox_heater.isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_heater", checkbox_heater.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-heater.png?alt=media&token=4c4871ff-ef6f-42bc-a480-3b60336b802c"));
+            furnitures.add(new Furniture("checkbox_heater", checkbox_heater.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-heater.png?alt=media&token=4c4871ff-ef6f-42bc-a480-3b60336b802c"));
         }
         if (checkbox_curtain.isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_curtain", checkbox_curtain.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-curtain.png?alt=media&token=400eb929-952b-4051-acc2-a26db74251ac"));
+            furnitures.add(new Furniture("checkbox_curtain", checkbox_curtain.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-curtain.png?alt=media&token=400eb929-952b-4051-acc2-a26db74251ac"));
         }
         if (checkboxfridge.isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxfridge", checkboxfridge.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-fridge.png?alt=media&token=deb2cded-5a02-464e-8e93-2672d7bc9b89"));
+            furnitures.add(new Furniture("checkboxfridge", checkboxfridge.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-fridge.png?alt=media&token=deb2cded-5a02-464e-8e93-2672d7bc9b89"));
         }
         if (checkboxbed.isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxbed", checkboxbed.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-bed.png?alt=media&token=9ed19798-ba14-4604-87d6-5f0224584f42"));
+            furnitures.add(new Furniture("checkboxbed", checkboxbed.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-bed.png?alt=media&token=9ed19798-ba14-4604-87d6-5f0224584f42"));
         }
         if (checkboxwardrobe.isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxwardrobe", checkboxwardrobe.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-Wardrobe.png?alt=media&token=944da04f-03dd-4b8f-b627-27f1f8f11c9a"));
+            furnitures.add(new Furniture("checkboxwardrobe", checkboxwardrobe.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-Wardrobe.png?alt=media&token=944da04f-03dd-4b8f-b627-27f1f8f11c9a"));
         }
         if (checkbox_washing_machine.isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_washing_machine", checkbox_washing_machine.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-washing-machine.png?alt=media&token=ee166ffd-2cb6-4d76-85a8-0a587effb2af"));
+            furnitures.add(new Furniture("checkbox_washing_machine", checkbox_washing_machine.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-washing-machine.png?alt=media&token=ee166ffd-2cb6-4d76-85a8-0a587effb2af"));
         }
         if (checkboxsofa.isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxsofa", checkboxsofa.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-sofa.png?alt=media&token=f9bba804-271b-4740-b28c-d7d89d083d6f"));
+            furnitures.add(new Furniture("checkboxsofa", checkboxsofa.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-sofa.png?alt=media&token=f9bba804-271b-4740-b28c-d7d89d083d6f"));
         }
     }
 
     private void handleDataExtensions() {
         if (checkboxtoilet.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxtoilet", checkboxtoilet.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-toilet.png?alt=media&token=426b6597-5dc4-4182-887e-fbeb37d5acc0"));
+            extensions_room.add(new Utility("checkboxtoilet", checkboxtoilet.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-toilet.png?alt=media&token=426b6597-5dc4-4182-887e-fbeb37d5acc0"));
         }
         if (checkboxfloor.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxfloor", checkboxfloor.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
+            extensions_room.add(new Utility("checkboxfloor", checkboxfloor.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
         }
         if (checkbox_time_flex.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkbox_time_flex", checkbox_time_flex.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-time-flex.png?alt=media&token=c3d87c64-086b-43c8-b896-4d2777c2e7e5"));
+            extensions_room.add(new Utility("checkbox_time_flex", checkbox_time_flex.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-time-flex.png?alt=media&token=c3d87c64-086b-43c8-b896-4d2777c2e7e5"));
         }
         if (checkboxfingerprint.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxfingerprint", checkboxfingerprint.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-finger-print.png?alt=media&token=8dccd0ac-ff93-4d1d-9f44-6db70a315853"));
+            extensions_room.add(new Utility("checkboxfingerprint", checkboxfingerprint.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-finger-print.png?alt=media&token=8dccd0ac-ff93-4d1d-9f44-6db70a315853"));
         }
         if (checkboxbacony.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxbacony", checkboxbacony.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
+            extensions_room.add(new Utility("checkboxbacony", checkboxbacony.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
         }
         if (checkboxpet.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxpet", checkboxpet.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-paw-pet.png?alt=media&token=8a649047-04d9-4421-a064-fca84b7f8f0d"));
+            extensions_room.add(new Utility("checkboxpet", checkboxpet.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-paw-pet.png?alt=media&token=8a649047-04d9-4421-a064-fca84b7f8f0d"));
         }
         if (checkbox_w_owner.isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkbox_w_owner", checkbox_w_owner.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-user.png?alt=media&token=db7d94aa-1a03-42f3-834a-4a3aec4c3866"));
+            extensions_room.add(new Utility("checkbox_w_owner", checkbox_w_owner.getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-user.png?alt=media&token=db7d94aa-1a03-42f3-834a-4a3aec4c3866"));
         }
     }
 
@@ -690,7 +690,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
             furnitures = roomData.getFurniture();
             extensions_room = roomData.getExtension_room();
 
-            for (FurnitureClass furniture : furnitures) {
+            for (Furniture furniture : furnitures) {
                 if (furniture != null) {
                     if ("checkbox_air_condition".equals(furniture.getId())) {
                         checkbox_air_condition.setChecked(true);
@@ -719,7 +719,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                 }
             }
 
-            for (ExtensionRoom_class extensionRoom : extensions_room) {
+            for (Utility extensionRoom : extensions_room) {
                 if (extensionRoom != null) {
                     if ("checkboxtoilet".equals(extensionRoom.getId())) {
                         checkboxtoilet.setChecked(true);

@@ -13,16 +13,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.example.timphongtro.Models.FurnitureClass;
+import com.example.timphongtro.Models.Furniture;
 import com.example.timphongtro.R;
 
 import java.util.ArrayList; 
 
 public class FurnitureAdapter extends RecyclerView.Adapter<FurnitureAdapter.ViewHolderFurniture> {
     Context context;
-    ArrayList<FurnitureClass> list;
+    ArrayList<Furniture> list;
 
-    public FurnitureAdapter(Context context, ArrayList<FurnitureClass> list) {
+    public FurnitureAdapter(Context context, ArrayList<Furniture> list) {
         this.context = context;
         this.list = list;
     }

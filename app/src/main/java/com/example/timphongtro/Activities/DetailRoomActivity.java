@@ -34,10 +34,10 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
-import com.example.timphongtro.Adapters.ExtensionAdapter;
-import com.example.timphongtro.Models.ExtensionRoom_class;
+import com.example.timphongtro.Adapters.UtilityAdapter;
+import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Adapters.FurnitureAdapter;
-import com.example.timphongtro.Models.FurnitureClass;
+import com.example.timphongtro.Models.Furniture;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.R;
@@ -69,7 +69,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     private RecyclerView recycleviewFuniture;
     private RecyclerView recycleviewExtension;
     private FurnitureAdapter furnitureAdapter;
-    private ExtensionAdapter extensionAdapter;
+    private UtilityAdapter extensionAdapter;
     private ImageView imageViewBack, imageViewLove, imageViewRoom;
     private Button btnCall, btnBookRoom;
     private LinearLayout userPost;
@@ -176,7 +176,7 @@ public class DetailRoomActivity extends AppCompatActivity {
 
             imageViewRoom.setOnClickListener(v -> showZoomImgDialog());
 
-            ArrayList<FurnitureClass> furnitures = roomData.getFurniture();
+            ArrayList<Furniture> furnitures = roomData.getFurniture();
 
             furnitureAdapter = new FurnitureAdapter(DetailRoomActivity.this, furnitures);
             LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -184,8 +184,8 @@ public class DetailRoomActivity extends AppCompatActivity {
             recycleviewFuniture.setLayoutManager(layoutManager);
             recycleviewFuniture.setAdapter(furnitureAdapter);
 
-            ArrayList<ExtensionRoom_class> extensions = roomData.getExtension_room();
-            extensionAdapter = new ExtensionAdapter(DetailRoomActivity.this, extensions);
+            ArrayList<Utility> extensions = roomData.getExtension_room();
+            extensionAdapter = new UtilityAdapter(DetailRoomActivity.this, extensions);
             LinearLayoutManager layoutManager1 = new LinearLayoutManager(this);
             layoutManager1.setOrientation(RecyclerView.HORIZONTAL);
             recycleviewExtension.setLayoutManager(layoutManager1);

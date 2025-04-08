@@ -10,13 +10,13 @@ public class Room {
     private Address address;
     private int park_slot, person_in_room, status_room, type_room, floor;
     private ImagesRoomClass images;
-    private ArrayList<FurnitureClass> furniture;
-    private ArrayList<ExtensionRoom_class> extension_room;
+    private ArrayList<Furniture> furniture;
+    private ArrayList<Utility> extension_room;
 
     public Room() {
     }
 
-    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room, String description_room, String gender_room, int park_slot, int person_in_room, int status_room, int type_room, String phone, int floor, ImagesRoomClass images, ArrayList<FurnitureClass> furniture, ArrayList<ExtensionRoom_class> extension_room, long price_electric, long price_water, long price_internet) {
+    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room, String description_room, String gender_room, int park_slot, int person_in_room, int status_room, int type_room, String phone, int floor, ImagesRoomClass images, ArrayList<Furniture> furniture, ArrayList<Utility> extension_room, long price_electric, long price_water, long price_internet) {
         this.id_own_post = id_own_post;
         this.id_room = id_room;
         this.title_room = title_room;
@@ -176,11 +176,11 @@ public class Room {
         this.images = images;
     }
 
-    public ArrayList<FurnitureClass> getFurniture() {
+    public ArrayList<Furniture> getFurniture() {
         return furniture;
     }
 
-    public void setFurniture(ArrayList<FurnitureClass> furniture) {
+    public void setFurniture(ArrayList<Furniture> furniture) {
         this.furniture = furniture;
     }
 
@@ -192,11 +192,11 @@ public class Room {
         this.floor = floor;
     }
 
-    public ArrayList<ExtensionRoom_class> getExtension_room() {
+    public ArrayList<Utility> getExtension_room() {
         return extension_room;
     }
 
-    public void setExtension_room(ArrayList<ExtensionRoom_class> extension_room) {
+    public void setExtension_room(ArrayList<Utility> extension_room) {
         this.extension_room = extension_room;
     }
 

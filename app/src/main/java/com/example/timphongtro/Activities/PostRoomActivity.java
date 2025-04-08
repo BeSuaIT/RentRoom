@@ -35,10 +35,10 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ExtensionRoom_class;
+import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
-import com.example.timphongtro.Models.FurnitureClass;
+import com.example.timphongtro.Models.Furniture;
 import com.example.timphongtro.R;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
@@ -85,10 +85,9 @@ public class PostRoomActivity extends AppCompatActivity {
 
     // Data holders
     private List<String> cities, districts;
-    private ArrayList<FurnitureClass> furnitures;
-    private ArrayList<ExtensionRoom_class> extensions_room;
+    private ArrayList<Furniture> furnitures;
+    private ArrayList<Utility> extensions_room;
     private Address address;
-    private String path;
     private Uri uri;
     private Bitmap photo;
     private String imageURL1;
@@ -110,7 +109,7 @@ public class PostRoomActivity extends AppCompatActivity {
         initializeViews();
         setupActivityResultLaunchers();
         setupClickListeners();
-        setupSpinners();
+        setupCitySpinner();
     }
 
     private void initializeFirebase() {
@@ -181,52 +180,12 @@ public class PostRoomActivity extends AppCompatActivity {
         districts = new ArrayList<>();
     }
 
-    private void setupActivityResultLaunchers() {
-        activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            try {
-                if (result.getResultCode() == Activity.RESULT_OK) {
-                    Intent data = result.getData();
-                    if (data != null && data.getData() != null) {
-                        uri = data.getData();
-                        uri = copyImageToCache(uri);
-                        uploadPicture1.setImageURI(uri);
-                        isUploadImg1 = true;
-                        dialog.dismiss();
-                    }
-                } else {
-                    isUploadImg1 = false;
-                    Toast.makeText(PostRoomActivity.this, "Không có ảnh nào được chọn", Toast.LENGTH_LONG).show();
-                }
-            } catch (Exception e) {
-                Log.e("ImagePicker", "Error handling image pick result", e);
-                Toast.makeText(PostRoomActivity.this, "Error processing image", Toast.LENGTH_LONG).show();
-            }
-        });
-
-        cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            if (result.getResultCode() == RESULT_OK) {
-                Intent data = result.getData();
-                photo = (Bitmap) data.getExtras().get("data");
-                uploadPicture1.setImageBitmap(photo);
-                isUploadImg1 = true;
-                dialog.dismiss();
-            } else {
-                isUploadImg1 = false;
-                Toast.makeText(PostRoomActivity.this, "No image selected", Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
     private void setupClickListeners() {
         btnBack.setOnClickListener(v -> finish());
 
         uploadPicture1.setOnClickListener(v -> showBottomDialog());
 
         btn_create_room.setOnClickListener(v -> showConfirmationDialog());
-    }
-
-    private void setupSpinners() {
-        setupCitySpinner();
     }
 
     private void setupCitySpinner() {
@@ -314,16 +273,40 @@ public class PostRoomActivity extends AppCompatActivity {
         });
     }
 
-    private void showConfirmationDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle("Xác nhận")
-            .setMessage("Bạn có muốn đăng bài không?")
-            .setPositiveButton("Có", (dialog, which) -> {
-                if (isUploadImg1) saveImage();
-                else Toast.makeText(this, "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
-            })
-            .setNegativeButton("Không", null)
-            .show();
+    private void setupActivityResultLaunchers() {
+        activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            try {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null && data.getData() != null) {
+                        uri = data.getData();
+                        uri = copyImageToCache(uri);
+                        uploadPicture1.setImageURI(uri);
+                        isUploadImg1 = true;
+                        dialog.dismiss();
+                    }
+                } else {
+                    isUploadImg1 = false;
+                    Toast.makeText(PostRoomActivity.this, "Không có ảnh nào được chọn", Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e("ImagePicker", "Error handling image pick result", e);
+                Toast.makeText(PostRoomActivity.this, "Error processing image", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK) {
+                Intent data = result.getData();
+                photo = (Bitmap) data.getExtras().get("data");
+                uploadPicture1.setImageBitmap(photo);
+                isUploadImg1 = true;
+                dialog.dismiss();
+            } else {
+                isUploadImg1 = false;
+                Toast.makeText(PostRoomActivity.this, "No image selected", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void saveImage() {
@@ -340,6 +323,29 @@ public class PostRoomActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Không có ảnh để tải lên", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
+        }
+    }
+
+    private Uri copyImageToCache(Uri sourceUri) {
+        try {
+            InputStream input = getContentResolver().openInputStream(sourceUri);
+            File cacheDir = getCacheDir();
+            File outputFile = new File(cacheDir, "temp_image_" + System.currentTimeMillis() + ".jpg");
+            OutputStream output = new FileOutputStream(outputFile);
+
+            byte[] buffer = new byte[4 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+
+            output.flush();
+            output.close();
+            input.close();
+
+            return Uri.fromFile(outputFile);
+        } catch (Exception e) {
+            return sourceUri;
         }
     }
 
@@ -391,6 +397,131 @@ public class PostRoomActivity extends AppCompatActivity {
 
         Room room = createRoomObject();
         uploadRoomToFirebase(room);
+    }
+
+    private Room createRoomObject() {
+        String id_room = UUID.randomUUID().toString();
+        String city = spinnerCity.getSelectedItem().toString();
+        String district = spinnerDistrict.getSelectedItem().toString();
+        String detail = edtAddress.getText().toString();
+        String ward = "";
+        String address_combine = detail + ", " + district + ", " + city;
+        int status_room = 0;
+        String id_own_post = userCurrent.getUid();
+
+        if ("".equals(detail)) {
+            address = new Address(city, district);
+        } else {
+            address = new Address(city, district, detail, ward, address_combine);
+        }
+
+        String gender_room;
+        if (genderCheckboxes[0].isChecked()) {
+            if (!genderCheckboxes[1].isChecked()) {
+                gender_room = "Nam";
+            } else {
+                gender_room = "Nam/Nữ";
+            }
+        } else {
+            if (!genderCheckboxes[0].isChecked()) {
+                gender_room = "Nữ";
+            } else {
+                gender_room = "Nam/Nữ";
+            }
+        }
+
+        String title_room = edtTitleRoom.getText().toString();
+        long deposit_room = Long.parseLong(edtDeposit.getText().toString());
+        long price_room = Long.parseLong(edtPrice.getText().toString());
+
+        int type_room = 0;
+        if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnChungCu) {
+            type_room = 1;
+        }
+
+        String area_room = edtArea.getText().toString();
+        String phone = edtPhone.getText().toString();
+        int floor = Integer.parseInt(edtFloor.getText().toString());
+        int person_in_room = Integer.parseInt(edtPerson.getText().toString());
+        String description_room = edtDescriptionRoom.getText().toString();
+        int park_slot = Integer.parseInt(edtPark.getText().toString());
+
+        furnitures = new ArrayList<>();
+        handleDataFurniture();
+
+        extensions_room = new ArrayList<>();
+        handleDataExtensions();
+
+        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1);
+
+        return new Room(id_own_post, id_room, title_room, price_room, address, area_room, deposit_room, description_room, gender_room, park_slot,
+                person_in_room, status_room, type_room, phone, floor, images, furnitures, extensions_room,
+                Long.parseLong(edtElectric.getText().toString()), Long.parseLong(edtWater.getText().toString()), Long.parseLong(edtInternet.getText().toString()));
+    }
+
+    private void uploadRoomToFirebase(Room room) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        String path_type = room.getType_room() == 1 ? "ChungCuMini" : "Tro";
+        DatabaseReference myRef = database.getReference("Rooms/" + path_type);
+        myRef.child(room.getId_room()).setValue(room)
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
+                );
+    }
+
+    private void handleDataFurniture() {
+        if (furnitureCheckboxes[0].isChecked()) {
+            furnitures.add(new Furniture("checkbox_air_condition", furnitureCheckboxes[0].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-air-condittion.png?alt=media&token=85d235e6-f4f4-44b1-89f4-05bed51050a6"));
+        }
+        if (furnitureCheckboxes[1].isChecked()) {
+            furnitures.add(new Furniture("checkbox_heater", furnitureCheckboxes[1].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-heater.png?alt=media&token=4c4871ff-ef6f-42bc-a480-3b60336b802c"));
+        }
+        if (furnitureCheckboxes[2].isChecked()) {
+            furnitures.add(new Furniture("checkbox_curtain", furnitureCheckboxes[2].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-curtain.png?alt=media&token=400eb929-952b-4051-acc2-a26db74251ac"));
+        }
+        if (furnitureCheckboxes[3].isChecked()) {
+            furnitures.add(new Furniture("checkboxfridge", furnitureCheckboxes[3].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-fridge.png?alt=media&token=deb2cded-5a02-464e-8e93-2672d7bc9b89"));
+        }
+        if (furnitureCheckboxes[4].isChecked()) {
+            furnitures.add(new Furniture("checkboxbed", furnitureCheckboxes[4].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-bed.png?alt=media&token=9ed19798-ba14-4604-87d6-5f0224584f42"));
+        }
+        if (furnitureCheckboxes[5].isChecked()) {
+            furnitures.add(new Furniture("checkboxwardrobe", furnitureCheckboxes[5].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-Wardrobe.png?alt=media&token=944da04f-03dd-4b8f-b627-27f1f8f11c9a"));
+        }
+        if (furnitureCheckboxes[6].isChecked()) {
+            furnitures.add(new Furniture("checkbox_washing_machine", furnitureCheckboxes[6].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-washing-machine.png?alt=media&token=ee166ffd-2cb6-4d76-85a8-0a587effb2af"));
+        }
+        if (furnitureCheckboxes[7].isChecked()) {
+            furnitures.add(new Furniture("checkboxsofa", furnitureCheckboxes[7].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-sofa.png?alt=media&token=f9bba804-271b-4740-b28c-d7d89d083d6f"));
+        }
+    }
+
+    private void handleDataExtensions() {
+        if (utilityCheckboxes[0].isChecked()) {
+            extensions_room.add(new Utility("checkboxtoilet", utilityCheckboxes[0].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-toilet.png?alt=media&token=426b6597-5dc4-4182-887e-fbeb37d5acc0"));
+        }
+        if (utilityCheckboxes[1].isChecked()) {
+            extensions_room.add(new Utility("checkboxfloor", utilityCheckboxes[1].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
+        }
+        if (utilityCheckboxes[2].isChecked()) {
+            extensions_room.add(new Utility("checkbox_time_flex", utilityCheckboxes[2].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-time-flex.png?alt=media&token=c3d87c64-086b-43c8-b896-4d2777c2e7e5"));
+        }
+        if (utilityCheckboxes[3].isChecked()) {
+            extensions_room.add(new Utility("checkboxfingerprint", utilityCheckboxes[3].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-finger-print.png?alt=media&token=8dccd0ac-ff93-4d1d-9f44-6db70a315853"));
+        }
+        if (utilityCheckboxes[4].isChecked()) {
+            extensions_room.add(new Utility("checkboxbacony", utilityCheckboxes[4].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
+        }
+        if (utilityCheckboxes[5].isChecked()) {
+            extensions_room.add(new Utility("checkboxpet", utilityCheckboxes[5].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-paw-pet.png?alt=media&token=8a649047-04d9-4421-a064-fca84b7f8f0d"));
+        }
+        if (utilityCheckboxes[6].isChecked()) {
+            extensions_room.add(new Utility("checkbox_w_owner", utilityCheckboxes[6].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-user.png?alt=media&token=db7d94aa-1a03-42f3-834a-4a3aec4c3866"));
+        }
     }
 
     private boolean validateInputs() {
@@ -470,159 +601,6 @@ public class PostRoomActivity extends AppCompatActivity {
         return isValid;
     }
 
-    private Room createRoomObject() {
-        String id_room = UUID.randomUUID().toString();
-        String city = spinnerCity.getSelectedItem().toString();
-        String district = spinnerDistrict.getSelectedItem().toString();
-        String detail = edtAddress.getText().toString();
-        String ward = "";
-        String address_combine = detail + ", " + district + ", " + city;
-        int status_room = 0;
-        String id_own_post = userCurrent.getUid();
-
-        if ("".equals(detail)) {
-            address = new Address(city, district);
-        } else {
-            address = new Address(city, district, detail, ward, address_combine);
-        }
-
-        String gender_room;
-        if (genderCheckboxes[0].isChecked()) {
-            if (!genderCheckboxes[1].isChecked()) {
-                gender_room = "Nam";
-            } else {
-                gender_room = "Nam/Nữ";
-            }
-        } else {
-            if (!genderCheckboxes[0].isChecked()) {
-                gender_room = "Nữ";
-            } else {
-                gender_room = "Nam/Nữ";
-            }
-        }
-
-        String title_room = edtTitleRoom.getText().toString();
-        long deposit_room = Long.parseLong(edtDeposit.getText().toString());
-        long price_room = Long.parseLong(edtPrice.getText().toString());
-
-        int type_room = 0;
-        String path_type = "Tro";
-        if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnChungCu) {
-            path_type = "ChungCuMini";
-            type_room = 1;
-        }
-
-        String area_room = edtArea.getText().toString();
-        String phone = edtPhone.getText().toString();
-        int floor = Integer.parseInt(edtFloor.getText().toString());
-        int person_in_room = Integer.parseInt(edtPerson.getText().toString());
-        String description_room = edtDescriptionRoom.getText().toString();
-        int park_slot = Integer.parseInt(edtPark.getText().toString());
-
-        furnitures = new ArrayList<>();
-        handleDataFurniture();
-
-        extensions_room = new ArrayList<>();
-        handleDataExtensions();
-
-        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1);
-
-        return new Room(id_own_post, id_room, title_room, price_room, address, area_room, deposit_room, description_room, gender_room, park_slot,
-                person_in_room, status_room, type_room, phone, floor, images, furnitures, extensions_room,
-                Long.parseLong(edtElectric.getText().toString()), Long.parseLong(edtWater.getText().toString()), Long.parseLong(edtInternet.getText().toString()));
-    }
-
-    private void uploadRoomToFirebase(Room room) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        String path_type = room.getType_room() == 1 ? "ChungCuMini" : "Tro";
-        DatabaseReference myRef = database.getReference("Rooms/" + path_type);
-
-        // Sử dụng getId_room() thay vì setId_room()
-        myRef.child(room.getId_room()).setValue(room)
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
-                );
-    }
-
-    private void handleDataFurniture() {
-        if (furnitureCheckboxes[0].isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_air_condition", furnitureCheckboxes[0].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-air-condittion.png?alt=media&token=85d235e6-f4f4-44b1-89f4-05bed51050a6"));
-        }
-        if (furnitureCheckboxes[1].isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_heater", furnitureCheckboxes[1].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-heater.png?alt=media&token=4c4871ff-ef6f-42bc-a480-3b60336b802c"));
-        }
-        if (furnitureCheckboxes[2].isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_curtain", furnitureCheckboxes[2].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-curtain.png?alt=media&token=400eb929-952b-4051-acc2-a26db74251ac"));
-        }
-        if (furnitureCheckboxes[3].isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxfridge", furnitureCheckboxes[3].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-fridge.png?alt=media&token=deb2cded-5a02-464e-8e93-2672d7bc9b89"));
-        }
-        if (furnitureCheckboxes[4].isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxbed", furnitureCheckboxes[4].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-bed.png?alt=media&token=9ed19798-ba14-4604-87d6-5f0224584f42"));
-        }
-        if (furnitureCheckboxes[5].isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxwardrobe", furnitureCheckboxes[5].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-Wardrobe.png?alt=media&token=944da04f-03dd-4b8f-b627-27f1f8f11c9a"));
-        }
-        if (furnitureCheckboxes[6].isChecked()) {
-            furnitures.add(new FurnitureClass("checkbox_washing_machine", furnitureCheckboxes[6].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-washing-machine.png?alt=media&token=ee166ffd-2cb6-4d76-85a8-0a587effb2af"));
-        }
-        if (furnitureCheckboxes[7].isChecked()) {
-            furnitures.add(new FurnitureClass("checkboxsofa", furnitureCheckboxes[7].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-sofa.png?alt=media&token=f9bba804-271b-4740-b28c-d7d89d083d6f"));
-        }
-    }
-
-    private void handleDataExtensions() {
-        if (utilityCheckboxes[0].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxtoilet", utilityCheckboxes[0].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-toilet.png?alt=media&token=426b6597-5dc4-4182-887e-fbeb37d5acc0"));
-        }
-        if (utilityCheckboxes[1].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxfloor", utilityCheckboxes[1].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
-        }
-        if (utilityCheckboxes[2].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkbox_time_flex", utilityCheckboxes[2].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-time-flex.png?alt=media&token=c3d87c64-086b-43c8-b896-4d2777c2e7e5"));
-        }
-        if (utilityCheckboxes[3].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxfingerprint", utilityCheckboxes[3].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-finger-print.png?alt=media&token=8dccd0ac-ff93-4d1d-9f44-6db70a315853"));
-        }
-        if (utilityCheckboxes[4].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxbacony", utilityCheckboxes[4].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-ladder.png?alt=media&token=96975838-2519-4637-87ef-1c966b0f5308"));
-        }
-        if (utilityCheckboxes[5].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkboxpet", utilityCheckboxes[5].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-paw-pet.png?alt=media&token=8a649047-04d9-4421-a064-fca84b7f8f0d"));
-        }
-        if (utilityCheckboxes[6].isChecked()) {
-            extensions_room.add(new ExtensionRoom_class("checkbox_w_owner", utilityCheckboxes[6].getText().toString(), "https://firebasestorage.googleapis.com/v0/b/my-application-67ef3.appspot.com/o/icon_png%2Fic-user.png?alt=media&token=db7d94aa-1a03-42f3-834a-4a3aec4c3866"));
-        }
-    }
-
-    private Uri copyImageToCache(Uri sourceUri) {
-        try {
-            InputStream input = getContentResolver().openInputStream(sourceUri);
-            File cacheDir = getCacheDir();
-            File outputFile = new File(cacheDir, "temp_image_" + System.currentTimeMillis() + ".jpg");
-            OutputStream output = new FileOutputStream(outputFile);
-
-            byte[] buffer = new byte[4 * 1024];
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                output.write(buffer, 0, read);
-            }
-
-            output.flush();
-            output.close();
-            input.close();
-
-            return Uri.fromFile(outputFile);
-        } catch (Exception e) {
-            Log.e("ImageCopy", "Error copying image", e);
-            return sourceUri;
-        }
-    }
-
     private boolean isEmpty(EditText text) {
         return TextUtils.isEmpty(text.getText().toString());
     }
@@ -677,5 +655,17 @@ public class PostRoomActivity extends AppCompatActivity {
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         dialog.getWindow().setGravity(Gravity.BOTTOM);
         dialog.setCancelable(true);
+    }
+
+    private void showConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Xác nhận")
+                .setMessage("Bạn có muốn đăng bài không?")
+                .setPositiveButton("Có", (dialog, which) -> {
+                    if (isUploadImg1) saveImage();
+                    else Toast.makeText(this, "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton("Không", null)
+                .show();
     }
 }
