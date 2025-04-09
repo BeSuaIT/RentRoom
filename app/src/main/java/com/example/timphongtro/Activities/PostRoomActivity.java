@@ -4,6 +4,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.app.Activity;
@@ -34,6 +36,7 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.example.timphongtro.Adapters.ImageAdapter;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Models.ImagesRoomClass;
@@ -51,16 +54,15 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,7 +77,7 @@ public class PostRoomActivity extends AppCompatActivity {
     private DatabaseReference citiesRef;
 
     // UI Components
-    private ImageView btnBack, uploadPicture1;
+    private ImageView btnBack;
     private EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
             edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
     private Button btn_create_room;
@@ -88,16 +90,15 @@ public class PostRoomActivity extends AppCompatActivity {
     private ArrayList<Furniture> furnitures;
     private ArrayList<Utility> extensions_room;
     private Address address;
-    private Uri uri;
-    private Bitmap photo;
-    private String imageURL1;
-    private boolean isUploadImg1;
+    private ArrayList<Uri> selectedImages;
+    private ArrayList<String> uploadedImageUrls;
+    private RecyclerView recyclerViewImages;
+    private ImageAdapter imageAdapter;
+    private int uploadCount = 0;
 
     // Dialog
     private BottomSheetDialog dialog;
     private LinearLayout pickImgAlbum, pickImgCamera;
-
-    // Activity Result Launchers
     private ActivityResultLauncher<Intent> activityResultLauncher, cameraLauncher;
 
     @Override
@@ -143,14 +144,22 @@ public class PostRoomActivity extends AppCompatActivity {
         edtDescriptionRoom = this.findViewById(R.id.edtDescriptionRoom);
         edtPark = this.findViewById(R.id.edtPark);
 
-        uploadPicture1 = findViewById(R.id.imageViewP1);
-
         spinnerCity = findViewById(R.id.spinnerCity);
         spinnerDistrict = findViewById(R.id.spinnerDistrict);
 
         edtAddress = findViewById(R.id.edtAddress);
 
         btn_create_room = this.findViewById(R.id.btn_create_room);
+
+        selectedImages = new ArrayList<>();
+        uploadedImageUrls = new ArrayList<>();
+        recyclerViewImages = findViewById(R.id.recyclerViewImages);
+        recyclerViewImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageAdapter = new ImageAdapter(this, selectedImages);
+        recyclerViewImages.setAdapter(imageAdapter);
+    
+        Button btnAddImage = findViewById(R.id.btnAddImage);
+        btnAddImage.setOnClickListener(v -> showBottomDialog());
 
         genderCheckboxes = new CheckBox[2];
         genderCheckboxes[0] = findViewById(R.id.checkboxNam);
@@ -175,16 +184,12 @@ public class PostRoomActivity extends AppCompatActivity {
         utilityCheckboxes[5] = findViewById(R.id.checkboxpet);
         utilityCheckboxes[6] = findViewById(R.id.checkbox_w_owner);
 
-        isUploadImg1 = false;
         cities = new ArrayList<>();
         districts = new ArrayList<>();
     }
 
     private void setupClickListeners() {
         btnBack.setOnClickListener(v -> finish());
-
-        uploadPicture1.setOnClickListener(v -> showBottomDialog());
-
         btn_create_room.setOnClickListener(v -> showConfirmationDialog());
     }
 
@@ -274,55 +279,55 @@ public class PostRoomActivity extends AppCompatActivity {
     }
 
     private void setupActivityResultLaunchers() {
-        activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            try {
-                if (result.getResultCode() == Activity.RESULT_OK) {
-                    Intent data = result.getData();
-                    if (data != null && data.getData() != null) {
-                        uri = data.getData();
-                        uri = copyImageToCache(uri);
-                        uploadPicture1.setImageURI(uri);
-                        isUploadImg1 = true;
+        activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent data = result.getData();
+                        if (data != null) {
+                            if (data.getClipData() != null) {
+                                int count = data.getClipData().getItemCount();
+                                for (int i = 0; i < count; i++) {
+                                    Uri imageUri = data.getClipData().getItemAt(i).getUri();
+                                    Uri cachedUri = copyImageToCache(imageUri);
+                                    selectedImages.add(cachedUri);
+                                }
+                            } else if (data.getData() != null) {
+                                Uri imageUri = data.getData();
+                                Uri cachedUri = copyImageToCache(imageUri);
+                                selectedImages.add(cachedUri);
+                            }
+                            imageAdapter.notifyDataSetChanged();
+                        }
                         dialog.dismiss();
                     }
-                } else {
-                    isUploadImg1 = false;
-                    Toast.makeText(PostRoomActivity.this, "Không có ảnh nào được chọn", Toast.LENGTH_LONG).show();
-                }
-            } catch (Exception e) {
-                Log.e("ImagePicker", "Error handling image pick result", e);
-                Toast.makeText(PostRoomActivity.this, "Error processing image", Toast.LENGTH_LONG).show();
-            }
-        });
+                });
 
-        cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            if (result.getResultCode() == RESULT_OK) {
-                Intent data = result.getData();
-                photo = (Bitmap) data.getExtras().get("data");
-                uploadPicture1.setImageBitmap(photo);
-                isUploadImg1 = true;
-                dialog.dismiss();
-            } else {
-                isUploadImg1 = false;
-                Toast.makeText(PostRoomActivity.this, "No image selected", Toast.LENGTH_LONG).show();
-            }
-        });
+        cameraLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), 
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Bundle extras = result.getData().getExtras();
+                    Bitmap imageBitmap = (Bitmap) extras.get("data");
+                    Uri imageUri = saveImageToCache(imageBitmap);
+                    selectedImages.add(imageUri);
+                    imageAdapter.notifyDataSetChanged();
+                    dialog.dismiss();
+                }
+            });
     }
 
-    private void saveImage() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(PostRoomActivity.this);
-        builder.setCancelable(false);
-        builder.setView(R.layout.progress_layout);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
-        if (uri != null) {
-            uploadImageFromUri(dialog);
-        } else if (photo != null) {
-            uploadImageFromBitmap(dialog);
-        } else {
-            Toast.makeText(this, "Không có ảnh để tải lên", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
+    private Uri saveImageToCache(Bitmap bitmap) {
+        try {
+            File cacheDir = getCacheDir();
+            File imageFile = new File(cacheDir, "image_" + System.currentTimeMillis() + ".jpg");
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.close();
+            return Uri.fromFile(imageFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -349,47 +354,39 @@ public class PostRoomActivity extends AppCompatActivity {
         }
     }
 
-    private void uploadImageFromUri(AlertDialog dialog) {
-        StorageReference storageReference = storage.getReference()
-                .child("RoomImage")
-                .child(Objects.requireNonNull(uri.getLastPathSegment()));
+    private void uploadImages(AlertDialog progressDialog) {
+        if (selectedImages.isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        storageReference.putFile(uri).addOnSuccessListener(taskSnapshot ->
-                storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
-                    imageURL1 = uri.toString();
-                    onClickPushData();
-                    dialog.dismiss();
-                }).addOnFailureListener(e -> {
-                    Log.e("Firebase", "Lỗi khi lấy URL ảnh", e);
-                    dialog.dismiss();
-                })
-        ).addOnFailureListener(e -> {
-            Log.e("Firebase", "Lỗi khi upload ảnh", e);
-            dialog.dismiss();
-        });
-    }
+        uploadCount = 0;
+        uploadedImageUrls.clear();
 
-    private void uploadImageFromBitmap(AlertDialog dialog) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        photo.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] imageData = baos.toByteArray();
+        for (Uri imageUri : selectedImages) {
+            String fileName = "room_" + System.currentTimeMillis() + "_" + uploadCount + ".jpg";
+            StorageReference imageRef = storage.getReference()
+                    .child("RoomImages")
+                    .child(fileName);
 
-        String uniqueImageName = "image_" + System.currentTimeMillis() + ".jpg";
-        StorageReference storageRef = storage.getReference("roomImgage").child(uniqueImageName);
+            imageRef.putFile(imageUri)
+                    .addOnSuccessListener(taskSnapshot -> {
+                        imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                            uploadedImageUrls.add(uri.toString());
+                            uploadCount++;
 
-        storageRef.putBytes(imageData).addOnSuccessListener(taskSnapshot ->
-                storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                    imageURL1 = uri.toString();
-                    onClickPushData();
-                    dialog.dismiss();
-                }).addOnFailureListener(e -> {
-                    Log.e("Firebase", "Lỗi khi lấy URL ảnh", e);
-                    dialog.dismiss();
-                })
-        ).addOnFailureListener(e -> {
-            Log.e("Firebase", "Lỗi khi upload ảnh", e);
-            dialog.dismiss();
-        });
+                            if (uploadCount == selectedImages.size()) {
+                                onClickPushData();
+                                progressDialog.dismiss();
+                            }
+                        });
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(PostRoomActivity.this,
+                                "Lỗi khi tải ảnh lên", Toast.LENGTH_SHORT).show();
+                        progressDialog.dismiss();
+                    });
+        }
     }
 
     private void onClickPushData() {
@@ -452,11 +449,15 @@ public class PostRoomActivity extends AppCompatActivity {
         extensions_room = new ArrayList<>();
         handleDataExtensions();
 
-        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1);
+        ImagesRoomClass images = new ImagesRoomClass(uploadedImageUrls);
 
-        return new Room(id_own_post, id_room, title_room, price_room, address, area_room, deposit_room, description_room, gender_room, park_slot,
-                person_in_room, status_room, type_room, phone, floor, images, furnitures, extensions_room,
-                Long.parseLong(edtElectric.getText().toString()), Long.parseLong(edtWater.getText().toString()), Long.parseLong(edtInternet.getText().toString()));
+        return new Room(id_own_post, id_room, title_room, price_room, address, area_room,
+                deposit_room, description_room, gender_room, park_slot,
+                person_in_room, status_room, type_room, phone, floor, images,
+                furnitures, extensions_room,
+                Long.parseLong(edtElectric.getText().toString()),
+                Long.parseLong(edtWater.getText().toString()),
+                Long.parseLong(edtInternet.getText().toString()));
     }
 
     private void uploadRoomToFirebase(Room room) {
@@ -631,6 +632,8 @@ public class PostRoomActivity extends AppCompatActivity {
             checkPermissions();
             Intent photoPicker = new Intent(Intent.ACTION_PICK);
             photoPicker.setType("image/*");
+            photoPicker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            photoPicker.setAction(Intent.ACTION_GET_CONTENT);
             activityResultLauncher.launch(photoPicker);
         });
 
@@ -662,8 +665,16 @@ public class PostRoomActivity extends AppCompatActivity {
                 .setTitle("Xác nhận")
                 .setMessage("Bạn có muốn đăng bài không?")
                 .setPositiveButton("Có", (dialog, which) -> {
-                    if (isUploadImg1) saveImage();
-                    else Toast.makeText(this, "Vui lòng chọn 1 tấm ảnh", Toast.LENGTH_LONG).show();
+                    if (!selectedImages.isEmpty()) {
+                        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                                .setView(R.layout.progress_layout)
+                                .setCancelable(false)
+                                .create();
+                        progressDialog.show();
+                        uploadImages(progressDialog);
+                    } else {
+                        Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_LONG).show();
+                    }
                 })
                 .setNegativeButton("Không", null)
                 .show();

@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
+import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Adapters.UtilityAdapter;
@@ -43,6 +44,7 @@ import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.R;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -70,9 +72,9 @@ public class DetailRoomActivity extends AppCompatActivity {
     private RecyclerView recycleviewExtension;
     private FurnitureAdapter furnitureAdapter;
     private UtilityAdapter extensionAdapter;
-    private ImageView imageViewBack, imageViewLove, imageViewRoom;
+    private ImageView imageViewBack, imageViewLove;
     private Button btnCall, btnBookRoom;
-    private LinearLayout userPost;
+    private MaterialCardView userPost;
     private FirebaseUser user;
     private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
     FirebaseDatabase database;
@@ -92,12 +94,11 @@ public class DetailRoomActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_room);
+
         Bundle bundle = getIntent().getExtras();
-//        ImageSlider imageSlider = (ImageSlider) findViewById(R.id.ImageRoomPrd);
-        ArrayList<SlideModel> slideModels = new ArrayList<>();
         database = FirebaseDatabase.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
-
+        ImageSlider imageSlider = findViewById(R.id.ImageRoomPrd);
         textViewTypeRoom = findViewById(R.id.textViewTypeRoom);
         textViewTitle = findViewById(R.id.textViewTitle);
         textViewPrice = findViewById(R.id.textViewPrice);
@@ -156,28 +157,19 @@ public class DetailRoomActivity extends AppCompatActivity {
             textViewElectric.setText(decimalFormat.format(roomData.getPrice_electric()));
             textviewDescriptionRoom.setText(roomData.getDescription_room());
 
-
-            slideModels.add(new SlideModel(roomData.getImages().getImg1(), ScaleTypes.FIT));
-            // slideModels.add(new SlideModel(roomData.getImages().getImg2(), ScaleTypes.FIT));
-            // slideModels.add(new SlideModel(roomData.getImages().getImg3(), ScaleTypes.FIT));
-            // slideModels.add(new SlideModel(roomData.getImages().getImg4(), ScaleTypes.FIT));
-
-//            imageSlider.setImageList(slideModels, ScaleTypes.CENTER_CROP);
-            imageViewRoom = findViewById(R.id.imageViewRoom);
-
-            Glide.with(DetailRoomActivity.this)
-                    .load(roomData.getImages().getImg1())
-                    .apply(new RequestOptions()
-                            .centerCrop()
-                            .placeholder(R.drawable.loading) // Ảnh thay thế khi đang tải
-                            .error(R.drawable.a)) // Ảnh thay thế khi xảy ra lỗi
-                    .transition(DrawableTransitionOptions.withCrossFade()) // Hiệu ứng chuyển tiếp khi hiển thị ảnh
-                    .into(imageViewRoom);
-
-            imageViewRoom.setOnClickListener(v -> showZoomImgDialog());
+            ArrayList<SlideModel> slideModels = new ArrayList<>();
+            ArrayList<String> allImages = roomData.getImages().getImages();
+            if (allImages != null && !allImages.isEmpty()) {
+                for (String imageUrl : allImages) {
+                    if (imageUrl != null && !imageUrl.isEmpty()) {
+                        slideModels.add(new SlideModel(imageUrl, ScaleTypes.CENTER_CROP));
+                    }
+                }
+                imageSlider.setImageList(slideModels);
+                imageSlider.setOnClickListener(v -> showZoomImgDialog());
+            }
 
             ArrayList<Furniture> furnitures = roomData.getFurniture();
-
             furnitureAdapter = new FurnitureAdapter(DetailRoomActivity.this, furnitures);
             LinearLayoutManager layoutManager = new LinearLayoutManager(this);
             layoutManager.setOrientation(RecyclerView.HORIZONTAL);
@@ -224,7 +216,7 @@ public class DetailRoomActivity extends AppCompatActivity {
                 //Chua tim thi Them tim
                 //day du lieu len
                 imageViewLove.setOnClickListener(v -> {
-                    isLove = true; //flag đánh dấu xem đã thực hiện xong chưa
+                    isLove = true;
                         roomRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -238,13 +230,11 @@ public class DetailRoomActivity extends AppCompatActivity {
                                         Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
                                     } else {
                                         roomRef.child("userLovePost").child(user.getUid()).setValue(true);
-//                                            myLovePostRef.child(roomData.getId_room()).setValue(roomData);
                                         myLovePostRef.child(roomData.getId_room()).setValue(true);
                                         isLove = false;
                                         imageViewLove.setImageResource(R.drawable.ic_love_fill);
                                         Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
                                     }
-                                    //nem id hien tai vao bang room
                                 }
                             }
 
@@ -314,20 +304,24 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void showZoomImgDialog() {
-
         final Dialog dialog = new Dialog(DetailRoomActivity.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
         dialog.setContentView(R.layout.dialog_zoom_img);
+
         ImageView imageViewBack = dialog.findViewById(R.id.imageViewBack);
-        ImageView imageViewZoom = dialog.findViewById(R.id.imageViewZoom);
-        Glide.with(DetailRoomActivity.this)
-                .load(roomData.getImages().getImg1())
-                .apply(new RequestOptions()
-                        .placeholder(R.drawable.loading) // Ảnh thay thế khi đang tải
-                        .error(R.drawable.a)) // Ảnh thay thế khi xảy ra lỗi
-                .transition(DrawableTransitionOptions.withCrossFade()) // Hiệu ứng chuyển tiếp khi hiển thị ảnh
-                .into(imageViewZoom);
+        ImageSlider zoomImageSlider = dialog.findViewById(R.id.imageViewZoom);
+
+        ArrayList<String> allImages = roomData.getImages().getImages();
+        if (allImages != null && !allImages.isEmpty()) {
+            ArrayList<SlideModel> zoomSlideModels = new ArrayList<>();
+            for (String imageUrl : allImages) {
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    zoomSlideModels.add(new SlideModel(imageUrl, ScaleTypes.CENTER_INSIDE));
+                }
+            }
+
+            zoomImageSlider.setImageList(zoomSlideModels);
+        }
 
         imageViewBack.setOnClickListener(v -> dialog.dismiss());
 
@@ -335,12 +329,10 @@ public class DetailRoomActivity extends AppCompatActivity {
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.TOP);
-        dialog.setCancelable(true);
+        dialog.getWindow().setGravity(Gravity.CENTER);
     }
 
     private void showBottomDialog() {
-
         dialog = new BottomSheetDialog(DetailRoomActivity.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -366,7 +358,6 @@ public class DetailRoomActivity extends AppCompatActivity {
         edtTime.setOnClickListener(v -> {
             new DatePickerDialog(DetailRoomActivity.this, date, myCalender.get(Calendar.YEAR), myCalender.get(Calendar.MONTH), myCalender.get(Calendar.DAY_OF_MONTH)).show();
         });
-
 
         btnConfirm = dialog.findViewById(R.id.btnConfirm);
         scheduleVisitRoomref = null;

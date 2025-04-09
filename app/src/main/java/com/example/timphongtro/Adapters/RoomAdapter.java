@@ -61,8 +61,17 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
         holder.area_room.setText(String.valueOf(room.getArea_room()));
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
-        ImagesRoomClass imagesRoomClass = room.getImages();
-        Glide.with(context).load(imagesRoomClass.getImg1()).centerCrop().into(holder.img_post);
+        ArrayList<String> images = room.getImages().getImages();
+        if (images != null && !images.isEmpty()) {
+            String firstImage = images.get(0);
+            if (firstImage != null && !firstImage.isEmpty()) {
+                Glide.with(context)
+                        .load(firstImage)
+                        .placeholder(R.drawable.loading)
+                        .error(R.drawable.loading)
+                        .into(holder.img_post);
+            }
+        }
 
         Address address = room.getAddress();
         holder.city.setText(address.getCity());

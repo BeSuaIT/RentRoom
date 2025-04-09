@@ -49,7 +49,7 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
         ImagesRoomClass imagesRoomClass = room.getImages();
-        Glide.with(context).load(imagesRoomClass.getImg1()).centerCrop().into(holder.img_post);
+        Glide.with(context).load(imagesRoomClass.getFirstImage()).centerCrop().into(holder.img_post);
 
         Address address = room.getAddress();
         holder.city.setText(address.getCity());

@@ -434,8 +434,13 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         extensions_room = new ArrayList<>();
         handleDataExtensions();
 
+        ArrayList<String> imageUrls = new ArrayList<>();
+        imageUrls.add(imageURL1);
+        imageUrls.add(imageURL1);
+        imageUrls.add(imageURL1);
+        imageUrls.add(imageURL1);
 
-        ImagesRoomClass images = new ImagesRoomClass(imageURL1, imageURL1, imageURL1, imageURL1);
+        ImagesRoomClass images = new ImagesRoomClass(imageUrls);
 //        saveImage();
 
         if (furnitures.isEmpty()) {
@@ -656,7 +661,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
             edtPrice.setText(String.valueOf(roomData.getPrice_room()));
             edtDeposit.setText(String.valueOf(roomData.getDeposit_room()));
 
-            uri = Uri.parse(roomData.getImages().getImg1());
+            uri = Uri.parse(roomData.getImages().getFirstImage());
             Glide.with(this)
                     .load(uri)
                     .into(uploadPicture1);

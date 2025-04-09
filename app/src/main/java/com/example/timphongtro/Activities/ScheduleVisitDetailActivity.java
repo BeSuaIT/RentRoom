@@ -116,7 +116,7 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
                             DienTich.setText(room.getArea_room());
                             Size.setText(String.valueOf(room.getPerson_in_room()));
                             Glide.with(ScheduleVisitDetailActivity.this)
-                                    .load(room.getImages().getImg1())
+                                    .load(room.getImages().getFirstImage())
                                     .into(img_post);
                         }
 
