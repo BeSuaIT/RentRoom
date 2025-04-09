@@ -113,7 +113,7 @@ public class HomeFragment extends Fragment {
                     imageSlider.setImageList(slideModels, ScaleTypes.FIT);
                 });
             }
-        }).addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to load images", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi không load được ảnh", Toast.LENGTH_SHORT).show());
     }
 
     // Xử lý spinner thành phố
@@ -188,15 +188,13 @@ public class HomeFragment extends Fragment {
 
                     updateSpinnerUI();
                 } catch (Exception e) {
-                    Toast.makeText(getContext(), "Error loading city data: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Lỗi không thể load thành phố: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getContext(), "Failed to load city data",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Lỗi không xác định", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -263,7 +261,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getContext(), "Failed to fetch room data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Lỗi không thể load bài đăng", Toast.LENGTH_SHORT).show();
             }
         });
     }

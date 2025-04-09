@@ -68,7 +68,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
                 Glide.with(context)
                         .load(firstImage)
                         .placeholder(R.drawable.loading)
-                        .error(R.drawable.loading)
+                        .error(R.drawable.img_no_image)
                         .into(holder.img_post);
             }
         }

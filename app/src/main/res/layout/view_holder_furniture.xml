@@ -22,7 +22,7 @@
                 android:id="@+id/imageViewFuniture"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                app:srcCompat="@drawable/ic_air_condittion" />
+                app:srcCompat="@drawable/ic_air_conditioner" />
 
             <TextView
                 android:id="@+id/titleFurniture"

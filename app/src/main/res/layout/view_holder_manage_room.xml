@@ -38,7 +38,7 @@
                     android:layout_width="120dp"
                     android:layout_height="140dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/image1">
+                    android:src="@drawable/img_no_image">
 
                 </ImageView>
 

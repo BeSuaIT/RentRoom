@@ -402,7 +402,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_margin="8dp"
-                            android:drawableStart="@drawable/ic_upload"
                             android:text="Thêm ảnh"
                             android:textAlignment="center"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
@@ -925,7 +924,7 @@
                                     android:layout_weight="1"
                                     android:background="@drawable/border_change_state_btn"
                                     android:button="@null"
-                                    android:drawableStart="@drawable/ic_air_condittion"
+                                    android:drawableStart="@drawable/ic_air_conditioner"
                                     android:gravity="center"
                                     android:padding="10dp"
                                     android:text="Điều hòa"

@@ -31,7 +31,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@drawable/image1">
+                android:src="@drawable/img_no_image">
 
             </ImageView>
 
@@ -44,7 +44,7 @@
             android:layout_marginStart="8dp"
             android:ellipsize="end"
             android:maxLines="2"
-            android:text="Tiêu đề phòng đẹp dai như nhóm trưởng"
+            android:text="Tiêu đề"
             android:textAllCaps="true"
             android:textColor="@color/black"
             android:textSize="16sp"

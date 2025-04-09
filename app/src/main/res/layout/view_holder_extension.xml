@@ -21,7 +21,7 @@
                 android:id="@+id/imageViewExtension"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                app:srcCompat="@drawable/ic_air_condittion" />
+                app:srcCompat="@drawable/ic_air_conditioner" />
 
             <TextView
                 android:id="@+id/titleExtension"

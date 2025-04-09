@@ -220,8 +220,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                 if (cart.getImages() != null && !cart.getImages().isEmpty()) {
                     Glide.with(context)
                             .load(cart.getImages().get(0))
-                            .placeholder(R.drawable.image1)
-                            .error(R.drawable.image1)
+                            .placeholder(R.drawable.loading)
+                            .error(R.drawable.img_no_image)
                             .centerCrop()
                             .into(cartItemImage);
                 }

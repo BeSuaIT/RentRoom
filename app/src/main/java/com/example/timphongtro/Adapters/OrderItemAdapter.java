@@ -132,8 +132,8 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Sell
                 if (item.getImages() != null && !item.getImages().isEmpty()) {
                     Glide.with(context)
                             .load(item.getImages().get(0))
-                            .placeholder(R.drawable.image1)
-                            .error(R.drawable.image1)
+                            .placeholder(R.drawable.loading)
+                            .error(R.drawable.img_no_image)
                             .into(serviceImage);
                 }
             }

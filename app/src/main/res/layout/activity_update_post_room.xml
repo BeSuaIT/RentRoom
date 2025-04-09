@@ -1082,7 +1082,7 @@
                             android:layout_weight="1"
                             android:background="@drawable/border_change_state_btn"
                             android:button="@null"
-                            android:drawableStart="@drawable/ic_air_condittion"
+                            android:drawableStart="@drawable/ic_air_conditioner"
                             android:gravity="center"
                             android:padding="10dp"
                             android:text="Điều hòa"

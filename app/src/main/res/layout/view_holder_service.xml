@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="180dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/image1" />
+            android:src="@drawable/img_no_image" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/border_radius_slider"
+                android:background="@drawable/rounded_button"
                 android:text="Thêm vào giỏ hàng"
                 android:textColor="@color/white" />
 

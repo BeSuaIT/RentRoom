@@ -79,7 +79,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:scaleType="centerCrop"
-                                android:src="@drawable/image1">
+                                android:src="@drawable/img_no_image">
 
                             </ImageView>
 
@@ -256,7 +256,7 @@
                                     android:id="@+id/tvName"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Nhất Vũ"
+                                    android:text="Admin"
                                     android:textColor="@color/black"
                                     android:textSize="24dp" />
 

@@ -28,7 +28,6 @@
                 android:layout_height="64dp"
                 android:background="@drawable/avatar"
                 android:gravity="center"
-                android:src="@drawable/image1"
                 android:textAlignment="center"
                 android:textColor="@color/white"
                 android:textSize="40sp">

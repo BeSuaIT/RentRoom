@@ -22,7 +22,7 @@
             android:layout_height="match_parent"
             android:background="@drawable/background_edittext"
             android:scaleType="centerCrop"
-            android:src="@drawable/image3"
+            android:src="@drawable/img_no_image"
             app:layout_constraintBottom_toTopOf="@id/textviewholder"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
