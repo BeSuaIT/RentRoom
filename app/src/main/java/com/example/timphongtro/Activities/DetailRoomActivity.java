@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
@@ -22,23 +23,20 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
-import com.bumptech.glide.request.RequestOptions;
 import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
+import com.denzcoskun.imageslider.interfaces.ItemClickListener;
 import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Adapters.UtilityAdapter;
-import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Adapters.FurnitureAdapter;
-import com.example.timphongtro.Models.Furniture;
+import com.example.timphongtro.Adapters.ZoomImageAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.R;
@@ -64,371 +62,368 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DetailRoomActivity extends AppCompatActivity {
-    private Room roomData;
-    private TextView textViewTitle, textViewPrice, textViewCombine_address, textViewPhone, textViewTypeRoom,
-            textViewFloor, textViewArea, textViewDeposit, textViewPersonInRoom, textViewGender,
-            textViewWater, textViewInternet, textViewElectric, textviewDescriptionRoom, textViewNameUser;
-    private RecyclerView recycleviewFuniture;
-    private RecyclerView recycleviewExtension;
-    private FurnitureAdapter furnitureAdapter;
-    private UtilityAdapter extensionAdapter;
-    private ImageView imageViewBack, imageViewLove;
-    private Button btnCall, btnBookRoom;
-    private MaterialCardView userPost;
-    private FirebaseUser user;
+    // Constants
     private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
-    FirebaseDatabase database;
-    DatabaseReference myLovePostRef;
-    DatabaseReference roomRef;
-    DatabaseReference userOwnPostRef;
-    DatabaseReference scheduleVisitRoomref;
-    boolean isLove;
-    Calendar myCalender;
-    TextView edtTime, tvprofile;
-    MaterialButton btnConfirm, btnCancel, btnZalo;
-    EditText edtYourName, edtPhone, edtNote;
-    BottomSheetDialog dialog;
-    UUID uuid;
+    
+    // UI Elements
+    private TextView roomTitleTextView, priceTextView, addressCombinedTextView, phoneTextView, roomTypeTextView,
+            floorTextView, roomAreaTextView, depositTextView, capacityTextView, genderTextView,
+            waterPriceTextView, internetPriceTextView, electricPriceTextView, roomDescriptionTextView,
+            userNameTextView, scheduleTime, userProfileTextView;
+    private RecyclerView furnitureRecyclerView, utilityRecyclerView;
+    private ImageView imageViewBack, imageViewLove;
+    private Button callButton, scheduleVisitButton;
+    private MaterialCardView userPostCard;
+    private ImageSlider roomImageSlider;
+    private MaterialButton confirmButton, cancelButton, zaloButton;
+    private EditText nameEditText, phoneEditText, noteEditText;
+    private BottomSheetDialog scheduleVisitDialog;
+    private Dialog dialogZoomImg;
+    
+    // Firebase References
+    private FirebaseUser currentUser;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference userLovedPostsReference, visitScheduleDatabaseRef, userPostReference, roomDatabaseRef;
+    
+    // Data
+    private Room room;
+    private UUID uuid;
+    private boolean isRoomLoved;
+    private Calendar bookingDate;
+    private FurnitureAdapter furnitureAdapter;
+    private UtilityAdapter utilityAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_room);
+        
+        initializeViews();
+        setupFirebaseReferences();
+        loadRoomData();
+        setupClickListeners();
+    }
 
-        Bundle bundle = getIntent().getExtras();
-        database = FirebaseDatabase.getInstance();
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        ImageSlider imageSlider = findViewById(R.id.ImageRoomPrd);
-        textViewTypeRoom = findViewById(R.id.textViewTypeRoom);
-        textViewTitle = findViewById(R.id.textViewTitle);
-        textViewPrice = findViewById(R.id.textViewPrice);
-        textViewCombine_address = findViewById(R.id.textViewCombine_address);
-        textViewPhone = findViewById(R.id.textViewPhone);
-        textViewFloor = findViewById(R.id.textViewFloor);
-        textViewArea = findViewById(R.id.textViewArea);
-        textViewDeposit = findViewById(R.id.textViewDeposit);
-        textViewPersonInRoom = findViewById(R.id.textViewPersonInRoom);
-        textViewGender = findViewById(R.id.textViewGender);
-        recycleviewFuniture = findViewById(R.id.recycleviewFuniture);
-        recycleviewExtension = findViewById(R.id.recycleviewExtension);
-        textViewWater = findViewById(R.id.textViewWater);
-        textViewInternet = findViewById(R.id.textViewInternet);
-        textViewElectric = findViewById(R.id.textViewElectric);
-        textviewDescriptionRoom = findViewById(R.id.textviewDescriptionRoom);
+    private void initializeViews() {
+        roomImageSlider = findViewById(R.id.roomImageSlider);
+        roomTypeTextView = findViewById(R.id.roomTypeTextView);
+        roomTitleTextView = findViewById(R.id.roomTitleTextView);
+        priceTextView = findViewById(R.id.priceTextView);
+        addressCombinedTextView = findViewById(R.id.addressCombinedTextView);
+        phoneTextView = findViewById(R.id.phoneTextView);
+        floorTextView = findViewById(R.id.floorTextView);
+        roomAreaTextView = findViewById(R.id.roomAreaTextView);
+        depositTextView = findViewById(R.id.depositTextView);
+        capacityTextView = findViewById(R.id.capacityTextView);
+        genderTextView = findViewById(R.id.genderTextView);
+        furnitureRecyclerView = findViewById(R.id.furnitureRecyclerView);
+        utilityRecyclerView = findViewById(R.id.utilityRecyclerView);
+        waterPriceTextView = findViewById(R.id.waterPriceTextView);
+        internetPriceTextView = findViewById(R.id.internetPriceTextView);
+        electricPriceTextView = findViewById(R.id.electricPriceTextView);
+        roomDescriptionTextView = findViewById(R.id.roomDescriptionTextView);
         imageViewBack = findViewById(R.id.imageViewBack);
         imageViewLove = findViewById(R.id.imageViewLove);
-        btnCall = findViewById(R.id.btnCall);
-        btnBookRoom = findViewById(R.id.btnBookRoom);
-        userPost = findViewById(R.id.userPost);
-        textViewNameUser = findViewById(R.id.textViewNameUser);
-        tvprofile = findViewById(R.id.tvprofileDetail);
-        btnZalo = findViewById(R.id.btnZalo);
+        callButton = findViewById(R.id.callButton);
+        scheduleVisitButton = findViewById(R.id.scheduleVisitButton);
+        userPostCard = findViewById(R.id.userPostCard);
+        userNameTextView = findViewById(R.id.userNameTextView);
+        userProfileTextView = findViewById(R.id.userProfileTextView);
+        zaloButton = findViewById(R.id.zaloButton);
+    }
+
+    private void setupFirebaseReferences() {
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    }
+
+    private void loadRoomData() {
+        Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             String roomString = bundle.getString("DataRoom");
-            Gson gson = new Gson();
-            roomData = gson.fromJson(roomString, Room.class);
-            userPost.setOnClickListener(v -> {
-                Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
-                intent.putExtra("id_own_post", roomData.getId_own_post());
-                startActivity(intent);
-            });
-            String typeRoomStr = "";
-            if (roomData.getType_room() == 0) {
-                typeRoomStr = "Trọ";
-            } else {
-                typeRoomStr = "Chung cư mini";
-            }
-            textViewTypeRoom.setText(typeRoomStr);
-            textViewTitle.setText(roomData.getTitle_room());
-            long price = roomData.getPrice_room();
-            DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
-            decimalFormat.setDecimalSeparatorAlwaysShown(false);
-            String priceNumber = decimalFormat.format(price) + " đ/tháng";
-            textViewPrice.setText(priceNumber);
-            textViewCombine_address.setText(roomData.getAddress().getAddress_combine());
-            textViewPhone.setText(roomData.getPhone());
-            textViewFloor.setText(String.valueOf(roomData.getFloor()));
-            textViewArea.setText(roomData.getArea_room());
-            textViewDeposit.setText(decimalFormat.format(roomData.getDeposit_room()));
-            textViewPersonInRoom.setText(String.valueOf(roomData.getPerson_in_room()));
-            textViewGender.setText(roomData.getGender_room());
-            textViewWater.setText(decimalFormat.format(roomData.getPrice_water()));
-            textViewInternet.setText(decimalFormat.format(roomData.getPrice_internet()));
-            textViewElectric.setText(decimalFormat.format(roomData.getPrice_electric()));
-            textviewDescriptionRoom.setText(roomData.getDescription_room());
+            room = new Gson().fromJson(roomString, Room.class);
+            displayRoomDetails();
+            setupImageSlider();
+            setupAdapters();
+            loadUserPostInfo();
+            checkLoveRoom();
+        }
+    }
 
-            ArrayList<SlideModel> slideModels = new ArrayList<>();
-            ArrayList<String> allImages = roomData.getImages().getImages();
-            if (allImages != null && !allImages.isEmpty()) {
-                for (String imageUrl : allImages) {
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        slideModels.add(new SlideModel(imageUrl, ScaleTypes.CENTER_CROP));
-                    }
+    private void displayRoomDetails() {
+        String typeRoomStr = room.getType_room() == 0 ? "Trọ" : "Chung cư mini";
+        roomTypeTextView.setText(typeRoomStr);
+        roomTitleTextView.setText(room.getTitle_room());
+        long price = room.getPrice_room();
+        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
+        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        String priceNumber = decimalFormat.format(price) + " đ/tháng";
+        priceTextView.setText(priceNumber);
+        addressCombinedTextView.setText(room.getAddress().getAddress_combine());
+        phoneTextView.setText(room.getPhone());
+        floorTextView.setText(String.valueOf(room.getFloor()));
+        roomAreaTextView.setText(room.getArea_room());
+        depositTextView.setText(decimalFormat.format(room.getDeposit_room()));
+        capacityTextView.setText(String.valueOf(room.getPerson_in_room()));
+        genderTextView.setText(room.getGender_room());
+        waterPriceTextView.setText(decimalFormat.format(room.getPrice_water()));
+        internetPriceTextView.setText(decimalFormat.format(room.getPrice_internet()));
+        electricPriceTextView.setText(decimalFormat.format(room.getPrice_electric()));
+        roomDescriptionTextView.setText(room.getDescription_room());
+    }
+
+    private void setupImageSlider() {
+        ArrayList<SlideModel> slideModels = new ArrayList<>();
+        ArrayList<String> allImages = room.getImages().getImages();
+        if (allImages != null && !allImages.isEmpty()) {
+            for (String imageUrl : allImages) {
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    slideModels.add(new SlideModel(imageUrl, ScaleTypes.CENTER_CROP));
                 }
-                imageSlider.setImageList(slideModels);
-                imageSlider.setOnClickListener(v -> showZoomImgDialog());
             }
+            roomImageSlider.setImageList(slideModels);
 
-            ArrayList<Furniture> furnitures = roomData.getFurniture();
-            furnitureAdapter = new FurnitureAdapter(DetailRoomActivity.this, furnitures);
-            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-            layoutManager.setOrientation(RecyclerView.HORIZONTAL);
-            recycleviewFuniture.setLayoutManager(layoutManager);
-            recycleviewFuniture.setAdapter(furnitureAdapter);
-
-            ArrayList<Utility> extensions = roomData.getExtension_room();
-            extensionAdapter = new UtilityAdapter(DetailRoomActivity.this, extensions);
-            LinearLayoutManager layoutManager1 = new LinearLayoutManager(this);
-            layoutManager1.setOrientation(RecyclerView.HORIZONTAL);
-            recycleviewExtension.setLayoutManager(layoutManager1);
-            recycleviewExtension.setAdapter(extensionAdapter);
-            imageViewBack.setOnClickListener(v -> finish());
-
-            userOwnPostRef = database.getReference("Users/" + roomData.getId_own_post());
-            userOwnPostRef.child("name").addValueEventListener(new ValueEventListener() {
+            // Set item click listener with position
+            roomImageSlider.setItemClickListener(new ItemClickListener() {
                 @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        String name = snapshot.getValue(String.class);
-                        textViewNameUser.setText(name);
-                        tvprofile.setText(getFirstLetter(name));
-                    }
+                public void doubleClick(int i) {
+
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
+                public void onItemSelected(int position) {
+                    showZoomImgDialog(position);
                 }
-            });
-
-            myLovePostRef = null;
-
-                myLovePostRef = database.getReference("LovePost/" + user.getUid());
-
-                String typeRoom = "ChungCuMini/";
-                if (roomData.getType_room() == 0) {
-                    typeRoom = "Tro/";
-                }
-                roomRef = database.getReference("Rooms/" + typeRoom + roomData.getId_room());
-                //check khi vao room detail
-                isLove = false;
-                checkLoveRoom();
-                //Chua tim thi Them tim
-                //day du lieu len
-                imageViewLove.setOnClickListener(v -> {
-                    isLove = true;
-                        roomRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (isLove) {
-                                    if (snapshot.hasChild(user.getUid())) {
-                                        roomRef.child("userLovePost").child(user.getUid()).removeValue();
-                                        //nem room vao bang LovePost
-                                        myLovePostRef.child(roomData.getId_room()).removeValue();
-                                        isLove = false;
-                                        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-                                        Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        roomRef.child("userLovePost").child(user.getUid()).setValue(true);
-                                        myLovePostRef.child(roomData.getId_room()).setValue(true);
-                                        isLove = false;
-                                        imageViewLove.setImageResource(R.drawable.ic_love_fill);
-                                        Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-                });
-
-            btnCall.setOnClickListener(v -> {
-                if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(DetailRoomActivity.this,
-                            new String[]{android.Manifest.permission.CALL_PHONE},
-                            CALL_PHONE_PERMISSION_REQUEST_CODE);
-                } else {
-                    makePhoneCall();
-                }
-            });
-
-            btnBookRoom.setOnClickListener(v -> showBottomDialog());
-
-            textViewPhone.setOnClickListener(v -> {
-                Toast.makeText(getApplicationContext(), "Lưu vào số điện thoại Clipboard", Toast.LENGTH_SHORT).show();
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-
-                // Tạo một đối tượng ClipData để chứa văn bản cần sao chép
-                ClipData clip = ClipData.newPlainText("Label", textViewPhone.getText());
-
-                // Sao chép ClipData vào clipboard
-                clipboard.setPrimaryClip(clip);
-            });
-
-            imageViewBack.setOnClickListener(v -> finish());
-
-            btnZalo.setOnClickListener(v -> {
-
-                String url = "http://zalo.me/" + "0964259203"; // URL bạn muốn chuyển đến
-
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(url));
-                Toast.makeText(DetailRoomActivity.this, "Bạn chỉ sử dụng chức năng khi máy đã cài đặt Zalo", Toast.LENGTH_SHORT).show();
-                startActivity(intent);
-            });
-
-            textViewCombine_address.setOnClickListener(v -> {
-                Toast.makeText(getApplicationContext(), "Lưu địa chỉ vào Clipboard", Toast.LENGTH_SHORT).show();
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-
-                // Tạo một đối tượng ClipData để chứa văn bản cần sao chép
-                ClipData clip = ClipData.newPlainText("Label", textViewCombine_address.getText());
-
-                // Sao chép ClipData vào clipboard
-                clipboard.setPrimaryClip(clip);
             });
         }
     }
 
+    private void setupAdapters() {
+        // Setup furniture adapter
+        furnitureAdapter = new FurnitureAdapter(this, room.getFurniture());
+        furnitureRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        furnitureRecyclerView.setAdapter(furnitureAdapter);
+
+        // Setup utility adapter
+        utilityAdapter = new UtilityAdapter(this, room.getExtension_room());
+        utilityRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        utilityRecyclerView.setAdapter(utilityAdapter);
+    }
+
+    private void setupClickListeners() {
+        imageViewBack.setOnClickListener(v -> finish());
+        callButton.setOnClickListener(v -> handleCallButtonClick());
+        scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
+        imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
+        zaloButton.setOnClickListener(v -> openZaloChat());
+        userPostCard.setOnClickListener(v -> {
+            Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
+            intent.putExtra("id_own_post", room.getId_own_post());
+            startActivity(intent);
+        });
+        phoneTextView.setOnClickListener(v -> copyToClipboard(phoneTextView.getText().toString(), "Lưu vào số điện thoại Clipboard"));
+        addressCombinedTextView.setOnClickListener(v -> copyToClipboard(addressCombinedTextView.getText().toString(), "Lưu địa chỉ vào Clipboard"));
+    }
+
+    private void handleCallButtonClick() {
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.CALL_PHONE},
+                    CALL_PHONE_PERMISSION_REQUEST_CODE);
+        } else {
+            makePhoneCall();
+        }
+    }
+
+    private void handleLoveButtonClick() {
+        isRoomLoved = true;
+        roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (isRoomLoved) {
+                    toggleLoveStatus(snapshot);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
+            }
+        });
+    }
+
+    private void toggleLoveStatus(DataSnapshot snapshot) {
+        if (snapshot.hasChild(currentUser.getUid())) {
+            removeLoveStatus();
+        } else {
+            addLoveStatus();
+        }
+        isRoomLoved = false;
+    }
+
+    private void removeLoveStatus() {
+        roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).removeValue();
+        userLovedPostsReference.child(room.getId_room()).removeValue();
+        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+        Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
+    }
+
+    private void addLoveStatus() {
+        roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).setValue(true);
+        userLovedPostsReference.child(room.getId_room()).setValue(true);
+        imageViewLove.setImageResource(R.drawable.ic_love_fill);
+        Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
+    }
+
+    private void copyToClipboard(String text, String message) {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Label", text);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
     private void makePhoneCall() {
         Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + roomData.getPhone()));
+        intent.setData(Uri.parse("tel:" + room.getPhone()));
 
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivity(intent);
         }
     }
 
-    private void showZoomImgDialog() {
-        final Dialog dialog = new Dialog(DetailRoomActivity.this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_zoom_img);
+    private void showZoomImgDialog(int currentPosition) {
+        dialogZoomImg = new Dialog(DetailRoomActivity.this);
+        dialogZoomImg.setContentView(R.layout.dialog_zoom_img);
 
-        ImageView imageViewBack = dialog.findViewById(R.id.imageViewBack);
-        ImageSlider zoomImageSlider = dialog.findViewById(R.id.imageViewZoom);
+        ViewPager2 viewPager = dialogZoomImg.findViewById(R.id.viewPagerZoom);
+        ImageView imageViewBack = dialogZoomImg.findViewById(R.id.imageViewBack);
 
-        ArrayList<String> allImages = roomData.getImages().getImages();
+        ArrayList<String> allImages = room.getImages().getImages();
         if (allImages != null && !allImages.isEmpty()) {
-            ArrayList<SlideModel> zoomSlideModels = new ArrayList<>();
-            for (String imageUrl : allImages) {
-                if (imageUrl != null && !imageUrl.isEmpty()) {
-                    zoomSlideModels.add(new SlideModel(imageUrl, ScaleTypes.CENTER_INSIDE));
-                }
-            }
-
-            zoomImageSlider.setImageList(zoomSlideModels);
+            ZoomImageAdapter adapter = new ZoomImageAdapter(this, allImages);
+            viewPager.setAdapter(adapter);
+            viewPager.setCurrentItem(currentPosition, false);
         }
 
-        imageViewBack.setOnClickListener(v -> dialog.dismiss());
+        imageViewBack.setOnClickListener(v -> {
+            if (dialogZoomImg.isShowing()) {
+                dialogZoomImg.dismiss();
+            }
+        });
 
-        dialog.show();
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.CENTER);
+        dialogZoomImg.show();
+        Window window = dialogZoomImg.getWindow();
+        if (window != null) {
+            window.setFlags(
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN
+            );
+            window.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+            window.setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+        }
     }
 
     private void showBottomDialog() {
-        dialog = new BottomSheetDialog(DetailRoomActivity.this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        scheduleVisitDialog = new BottomSheetDialog(DetailRoomActivity.this);
+        scheduleVisitDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        scheduleVisitDialog.setContentView(R.layout.dialog_book_room);
 
-        dialog.setContentView(R.layout.dialog_book_room);
+        ImageView cancelButton = scheduleVisitDialog.findViewById(R.id.cancelButton);
 
-        ImageView cancelButton = dialog.findViewById(R.id.cancelButton);
+        cancelButton.setOnClickListener(v -> {
+            if (scheduleVisitDialog.isShowing() && scheduleVisitDialog != null) {
+                scheduleVisitDialog.dismiss();
+            }
+        });
+        nameEditText = scheduleVisitDialog.findViewById(R.id.edtYourName);
+        phoneEditText = scheduleVisitDialog.findViewById(R.id.edtPhone);
+        noteEditText = scheduleVisitDialog.findViewById(R.id.edtNote);
 
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-        edtYourName = dialog.findViewById(R.id.edtYourName);
-        edtPhone = dialog.findViewById(R.id.edtPhone);
-        edtNote = dialog.findViewById(R.id.edtNote);
-
-        edtTime = dialog.findViewById(R.id.edtTime);
-        myCalender = Calendar.getInstance();
+        scheduleTime = scheduleVisitDialog.findViewById(R.id.edtTime);
+        bookingDate = Calendar.getInstance();
 
         DatePickerDialog.OnDateSetListener date = (view, year, month, dayOfMonth) -> {
-            myCalender.set(Calendar.YEAR, year);
-            myCalender.set(Calendar.MONTH, month);
-            myCalender.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            bookingDate.set(Calendar.YEAR, year);
+            bookingDate.set(Calendar.MONTH, month);
+            bookingDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
             updateLabel();
         };
 
-        edtTime.setOnClickListener(v -> {
-            new DatePickerDialog(DetailRoomActivity.this, date, myCalender.get(Calendar.YEAR), myCalender.get(Calendar.MONTH), myCalender.get(Calendar.DAY_OF_MONTH)).show();
+        scheduleTime.setOnClickListener(v -> {
+            new DatePickerDialog(DetailRoomActivity.this, date, bookingDate.get(Calendar.YEAR), bookingDate.get(Calendar.MONTH), bookingDate.get(Calendar.DAY_OF_MONTH)).show();
         });
 
-        btnConfirm = dialog.findViewById(R.id.btnConfirm);
-        scheduleVisitRoomref = null;
-            uuid = UUID.randomUUID();
-            scheduleVisitRoomref = database.getReference("MeetingSchedules/" + uuid.toString());
+        confirmButton = scheduleVisitDialog.findViewById(R.id.btnConfirm);
+        visitScheduleDatabaseRef = null;
+        uuid = UUID.randomUUID();
+        visitScheduleDatabaseRef = firebaseDatabase.getReference("MeetingSchedules/" + uuid.toString());
 
-            btnConfirm.setOnClickListener(v -> scheduleVisitRoom());
+        confirmButton.setOnClickListener(v -> scheduleVisitRoom());
 
-        btnCancel = dialog.findViewById(R.id.btnCancel);
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.BOTTOM);
-        dialog.setCancelable(true);
+        scheduleVisitDialog.show();
+        scheduleVisitDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        scheduleVisitDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        scheduleVisitDialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        scheduleVisitDialog.getWindow().setGravity(Gravity.BOTTOM);
+        scheduleVisitDialog.setCancelable(true);
     }
 
     private void updateLabel() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd/MM/yyyy", new Locale("vi", "VN"));
-        edtTime.setText(dateFormat.format(myCalender.getTime()));
+        scheduleTime.setText(dateFormat.format(bookingDate.getTime()));
     }
 
     private void scheduleVisitRoom() {
         boolean isValid = true;
-        if (TextUtils.isEmpty(edtYourName.getText().toString())) {
-            edtYourName.setError("Vui lòng nhập tên");
+        if (TextUtils.isEmpty(nameEditText.getText().toString())) {
+            nameEditText.setError("Vui lòng nhập tên");
             isValid = false;
         }
-        if (TextUtils.isEmpty(edtTime.getText().toString())) {
-            edtTime.setError("Vui lòng chọn ngày hẹn");
+        if (TextUtils.isEmpty(scheduleTime.getText().toString())) {
+            scheduleTime.setError("Vui lòng chọn ngày hẹn");
             isValid = false;
         }
         String phone = "";
-        if (TextUtils.isEmpty(edtPhone.getText().toString())) {
-            edtPhone.setError("Vui lòng nhập số điện thoại");
+        if (TextUtils.isEmpty(phoneEditText.getText().toString())) {
+            phoneEditText.setError("Vui lòng nhập số điện thoại");
             isValid = false;
         } else {
             String regex = "^\\d{10}$";
             Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(edtPhone.getText().toString());
+            Matcher matcher = pattern.matcher(phoneEditText.getText().toString());
             if (matcher.matches()) {
-                phone = edtPhone.getText().toString();
+                phone = phoneEditText.getText().toString();
             } else {
-                edtPhone.setError("Vui lòng nhập đúng định dạng số điện thoại");
+                phoneEditText.setError("Vui lòng nhập đúng định dạng số điện thoại");
                 isValid = false;
             }
         }
 
         if (isValid) {
-            ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(roomData.getType_room(), uuid.toString(), edtYourName.getText().toString(), phone, edtNote.getText().toString(), edtTime.getText().toString(), roomData.getId_own_post(), user.getUid(), "0", roomData.getId_room()); // status create
-                if (!user.getUid().equals(roomData.getId_own_post())) {
-                    scheduleVisitRoomref.setValue(schedule).addOnSuccessListener(unused -> {
-                        dialog.dismiss();
-                        Toast.makeText(getApplicationContext(), "Đặt lịch thành công", Toast.LENGTH_LONG).show();
-                    }).addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Đặt lịch thất bại", Toast.LENGTH_LONG).show());
-                } else {
-                    Toast.makeText(getApplicationContext(), "Bạn không thể đặt lịch hẹn với chính bài đăng của mình", Toast.LENGTH_LONG).show();
-                }
+            ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(room.getType_room(), uuid.toString(), nameEditText.getText().toString(), phone, noteEditText.getText().toString(), scheduleTime.getText().toString(), room.getId_own_post(), currentUser.getUid(), "0", room.getId_room()); // status create
+            if (!currentUser.getUid().equals(room.getId_own_post())) {
+                visitScheduleDatabaseRef.setValue(schedule).addOnSuccessListener(unused -> {
+                    scheduleVisitDialog.dismiss();
+                    Toast.makeText(getApplicationContext(), "Đặt lịch thành công", Toast.LENGTH_LONG).show();
+                }).addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Đặt lịch thất bại", Toast.LENGTH_LONG).show());
+            } else {
+                Toast.makeText(getApplicationContext(), "Bạn không thể đặt lịch hẹn với chính bài đăng của mình", Toast.LENGTH_LONG).show();
+            }
         } else {
             Toast.makeText(getApplicationContext(), "Vui lòng nhập đầy đủ các trường yêu cầu", Toast.LENGTH_LONG).show();
         }
     }
 
     private void checkLoveRoom() {
-        roomRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
+        roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    if (snapshot.hasChild(user.getUid())) {
+                    if (snapshot.hasChild(currentUser.getUid())) {
                         imageViewLove.setImageResource(R.drawable.ic_love_fill);
                     } else {
                         imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
@@ -441,6 +436,42 @@ public class DetailRoomActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void loadUserPostInfo() {
+        userPostReference = firebaseDatabase.getReference("Users/" + room.getId_own_post());
+        userPostReference.child("name").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String name = snapshot.getValue(String.class);
+                    userNameTextView.setText(name);
+                    userProfileTextView.setText(getFirstLetter(name));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        userLovedPostsReference = firebaseDatabase.getReference("LovePost/" + currentUser.getUid());
+
+        String typeRoom = "ChungCuMini/";
+        if (room.getType_room() == 0) {
+            typeRoom = "Tro/";
+        }
+        roomDatabaseRef = firebaseDatabase.getReference("Rooms/" + typeRoom + room.getId_room());
+    }
+
+    private void openZaloChat() {
+        String url = "http://zalo.me/" + "0964259203"; // URL bạn muốn chuyển đến
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        Toast.makeText(DetailRoomActivity.this, "Bạn chỉ sử dụng chức năng khi máy đã cài đặt Zalo", Toast.LENGTH_SHORT).show();
+        startActivity(intent);
     }
 
     public static String getFirstLetter(String input) {

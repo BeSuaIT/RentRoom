@@ -20,7 +20,6 @@
     <string name="btn_dangnhap">Đăng nhập</string>
     <string name="email">Email</string>
     <string name="matkhau">Mật khẩu</string>
-    <string name="back"><![CDATA[<]]></string>
     <string name="forgotpassword">Quên mật khẩu?</string>
     <string name="textview_dangky">Chưa có tài khoản?</string>
     <string name="dangxuat">Đăng xuất</string>
@@ -30,7 +29,6 @@
     <string name="chinhsuataikhoan">Chỉnh sửa tài khoản</string>
     <string name="capnhat">Cập nhật</string>
     <string name="default_web_client_id">788411668486-ovl0444bqj11oh4tjhuqs30eoimmv1kd.apps.googleusercontent.com</string>
-    <!--    <string name="default_web_client_id">1089171230154-vojh1sgv5mgtk7dmk3in7hhk48449edo.apps.googleusercontent.com</string>-->
     <string name="confirm">Phản hồi</string>
     <string name="confirmed">Đã xác nhận</string>
     <string name="refuse">Đã từ chối</string>

@@ -9,7 +9,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:indeterminateTint="@color/orange"></ProgressBar>
+        android:indeterminateTint="@color/orange_100"></ProgressBar>
 
     <TextView
         android:layout_width="0dp"

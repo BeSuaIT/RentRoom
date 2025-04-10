@@ -29,7 +29,7 @@
                 android:background="@drawable/avatar"
                 android:gravity="center"
                 android:textAlignment="center"
-                android:textColor="@color/white"
+                android:textColor="@color/white_100"
                 android:textSize="40sp">
 
             </TextView>
@@ -124,7 +124,7 @@
                 android:gravity="center"
                 android:padding="5dp"
                 android:text="Đã gửi"
-                android:textColor="@color/white" />
+                android:textColor="@color/white_100" />
         </LinearLayout>
 
     </LinearLayout>

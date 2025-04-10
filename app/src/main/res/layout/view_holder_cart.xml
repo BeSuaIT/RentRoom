@@ -47,7 +47,7 @@
                 android:gravity="center"
                 android:text="-"
                 android:textSize="18sp"
-                android:textColor="@color/white"/>
+                android:textColor="@color/white_100"/>
 
             <TextView
                 android:id="@+id/quantity"
@@ -64,7 +64,7 @@
                 android:gravity="center"
                 android:text="+"
                 android:textSize="18sp"
-                android:textColor="@color/white"/>
+                android:textColor="@color/white_100"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -73,7 +73,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Xóa"
-        android:textColor="@color/white"
+        android:textColor="@color/white_100"
         android:layout_gravity="center_vertical"/>
 
 </LinearLayout>

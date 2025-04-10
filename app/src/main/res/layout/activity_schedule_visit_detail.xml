@@ -347,7 +347,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:textAlignment="center"
-                                            android:textColor="@color/white"
+                                            android:textColor="@color/white_100"
                                             android:textSize="30sp" />
                                     </LinearLayout>
 
@@ -440,7 +440,7 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/white_100"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -454,9 +454,9 @@
             android:layout_marginRight="5dp"
             android:layout_weight="1"
             android:text="Từ chối"
-            android:textColor="@color/orange"
+            android:textColor="@color/orange_100"
             android:textSize="16sp"
-            app:strokeColor="@color/orange" />
+            app:strokeColor="@color/orange_100" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAccept"
@@ -465,13 +465,13 @@
             android:layout_height="50dp"
             android:layout_marginRight="10dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/orange"
+            android:backgroundTint="@color/orange_100"
             android:text="Xác nhận"
-            android:textColor="@color/white"
+            android:textColor="@color/white_100"
             android:textSize="16sp"
             app:cornerRadius="10dp"
             app:iconPadding="0dp"
-            app:strokeColor="@color/orange" />
+            app:strokeColor="@color/orange_100" />
 
     </LinearLayout>
 

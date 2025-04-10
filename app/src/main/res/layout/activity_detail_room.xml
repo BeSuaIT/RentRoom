@@ -5,13 +5,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/white_100">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/orange">
+        android:background="@color/orange_100">
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
@@ -32,13 +31,12 @@
                     android:src="@drawable/ic_back" />
 
                 <TextView
-                    android:id="@+id/textView"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Chi tiết phòng"
                     android:textAlignment="center"
-                    android:textColor="@color/white"
+                    android:textColor="@color/white_100"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
@@ -53,7 +51,6 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollView2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -67,12 +64,12 @@
             android:padding="16dp">
 
             <com.denzcoskun.imageslider.ImageSlider
-                android:id="@+id/ImageRoomPrd"
+                android:id="@+id/roomImageSlider"
                 android:layout_width="match_parent"
                 android:layout_height="280dp"
-                app:iss_auto_cycle="true"
-                app:iss_delay="1000"
-                app:iss_period="1000"
+                app:iss_auto_cycle="false"
+                app:iss_delay="0"
+                app:iss_period="0"
                 app:iss_title_background="@drawable/default_gradient"
                 app:layout_collapseMode="parallax"/>
 
@@ -83,14 +80,14 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/textViewTypeRoom"
+                    android:id="@+id/roomTypeTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/orange"
+                    android:textColor="@color/orange_100"
                     tools:text="Chung cư mini"/>
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/textViewGender"
+                    android:id="@+id/genderTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -100,7 +97,7 @@
 
             <!-- Title and Price -->
             <TextView
-                android:id="@+id/textViewTitle"
+                android:id="@+id/roomTitleTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -110,7 +107,7 @@
                 tools:text="Phòng trọ cao cấp"/>
 
             <TextView
-                android:id="@+id/textViewPrice"
+                android:id="@+id/priceTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -134,7 +131,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/textViewCombine_address"
+                        android:id="@+id/addressCombinedTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:drawablePadding="12dp"
@@ -143,7 +140,7 @@
                         tools:text="123 Đường ABC, Quận 1, TP.HCM"/>
 
                     <TextView
-                        android:id="@+id/textViewPhone"
+                        android:id="@+id/phoneTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
@@ -197,7 +194,6 @@
                         android:columnCount="2"
                         android:rowCount="2">
 
-                        <!-- Keep existing info items but in a grid -->
                         <!-- Floor -->
                         <LinearLayout
                             android:layout_width="0dp"
@@ -219,7 +215,7 @@
                                 android:text="Tầng"/>
 
                             <TextView
-                                android:id="@+id/textViewFloor"
+                                android:id="@+id/floorTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -248,7 +244,7 @@
                                 android:text="Diện tích"/>
 
                             <TextView
-                                android:id="@+id/textViewArea"
+                                android:id="@+id/roomAreaTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -277,7 +273,7 @@
                                 android:text="Đặt cọc"/>
 
                             <TextView
-                                android:id="@+id/textViewDeposit"
+                                android:id="@+id/depositTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -306,7 +302,7 @@
                                 android:text="Số người"/>
 
                             <TextView
-                                android:id="@+id/textViewPersonInRoom"
+                                android:id="@+id/capacityTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -381,7 +377,7 @@
                                 android:text="Điện"/>
 
                             <TextView
-                                android:id="@+id/textViewElectric"
+                                android:id="@+id/electricPriceTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -392,7 +388,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="đ/kwh"
-                                android:textColor="@color/orange"/>
+                                android:textColor="@color/orange_100"/>
                         </LinearLayout>
 
                         <!-- Water -->
@@ -415,7 +411,7 @@
                                 android:text="Nước"/>
 
                             <TextView
-                                android:id="@+id/textViewWater"
+                                android:id="@+id/waterPriceTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -426,7 +422,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="đ/m3"
-                                android:textColor="@color/orange"/>
+                                android:textColor="@color/orange_100"/>
                         </LinearLayout>
 
                         <!-- Internet -->
@@ -449,7 +445,7 @@
                                 android:text="Internet"/>
 
                             <TextView
-                                android:id="@+id/textViewInternet"
+                                android:id="@+id/internetPriceTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
@@ -460,7 +456,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="đ/phòng"
-                                android:textColor="@color/orange"/>
+                                android:textColor="@color/orange_100"/>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -502,7 +498,7 @@
                     </LinearLayout>
 
                     <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recycleviewExtension"
+                        android:id="@+id/utilityRecyclerView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"/>
@@ -546,7 +542,7 @@
                     </LinearLayout>
 
                     <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recycleviewFuniture"
+                        android:id="@+id/furnitureRecyclerView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"/>
@@ -555,7 +551,7 @@
 
             <!-- Owner Info -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/userPost"
+                android:id="@+id/userPostCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -574,10 +570,10 @@
                         android:gravity="center">
 
                         <TextView
-                            android:id="@+id/tvprofileDetail"
+                            android:id="@+id/userProfileTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/white"
+                            android:textColor="@color/white_100"
                             android:textSize="24sp"
                             tools:text="LH"/>
                     </LinearLayout>
@@ -590,7 +586,7 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/textViewNameUser"
+                            android:id="@+id/userNameTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@color/black"
@@ -649,7 +645,7 @@
                     </LinearLayout>
 
                     <TextView
-                        android:id="@+id/textviewDescriptionRoom"
+                        android:id="@+id/roomDescriptionTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
@@ -661,7 +657,6 @@
 
     <!-- Bottom Action Bar -->
     <com.google.android.material.bottomappbar.BottomAppBar
-        android:id="@+id/bottomAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -669,45 +664,44 @@
         app:fabCradleRoundedCornerRadius="10dp">
 
         <LinearLayout
-            android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="8dp">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnZalo"
+                android:id="@+id/zaloButton"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:text="Chat"
-                android:textColor="@color/orange"
+                android:textColor="@color/orange_100"
                 app:icon="@drawable/ic_zalo"
-                app:strokeColor="@color/orange"/>
+                app:strokeColor="@color/orange_100"/>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCall"
+                android:id="@+id/callButton"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:text="Gọi"
-                android:textColor="@color/orange"
+                android:textColor="@color/orange_100"
                 app:icon="@drawable/ic_phone"
-                app:strokeColor="@color/orange"/>
+                app:strokeColor="@color/orange_100"/>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnBookRoom"
+                android:id="@+id/scheduleVisitButton"
                 style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:backgroundTint="@color/orange"
+                android:backgroundTint="@color/orange_100"
                 android:text="Đặt lịch"
-                android:textColor="@color/white"/>
+                android:textColor="@color/white_100"/>
         </LinearLayout>
     </com.google.android.material.bottomappbar.BottomAppBar>
 

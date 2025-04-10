@@ -5,7 +5,7 @@
     android:drawableEnd="@drawable/ic_arrow_down"
     android:drawablePadding="8dp"
     android:fontFamily="sans-serif-medium"
-    android:textColor="@color/orange"
+    android:textColor="@color/orange_100"
     android:textSize="14sp"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"

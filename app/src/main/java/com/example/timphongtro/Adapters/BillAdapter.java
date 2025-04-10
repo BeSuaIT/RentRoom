@@ -63,7 +63,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
             case 0:
                 holder.tvStatus.setText("Đang xử lý");
                 holder.tvStatus.setBackgroundResource(R.drawable.status_pending);
-                holder.tvStatus.setTextColor(context.getColor(R.color.orange));
+                holder.tvStatus.setTextColor(context.getColor(R.color.orange_100));
                 break;
             case 1:
                 holder.tvStatus.setText("Hoàn thành");

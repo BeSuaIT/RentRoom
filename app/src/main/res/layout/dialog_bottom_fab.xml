@@ -55,7 +55,7 @@
             android:layout_gravity="center"
             android:layout_marginStart="20dp"
             android:text="@string/findaplace"
-            android:textColor="@color/orange"
+            android:textColor="@color/orange_100"
             android:textSize="20sp" />
 
     </LinearLayout>
@@ -78,7 +78,7 @@
             android:layout_gravity="center"
             android:layout_marginStart="20dp"
             android:text="@string/findpeople"
-            android:textColor="@color/orange"
+            android:textColor="@color/orange_100"
             android:textSize="20sp" />
 
     </LinearLayout>
@@ -102,7 +102,7 @@
             android:layout_gravity="center"
             android:layout_marginStart="20dp"
             android:text="@string/forrent"
-            android:textColor="@color/orange"
+            android:textColor="@color/orange_100"
             android:textSize="20sp" />
 
     </LinearLayout>
