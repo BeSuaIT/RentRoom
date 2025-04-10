@@ -1,5 +1,7 @@
 package com.example.timphongtro.Models;
 
+import com.google.firebase.database.Exclude;
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 
 public class ImagesRoomClass {
@@ -28,6 +30,7 @@ public class ImagesRoomClass {
         this.images.add(imageUrl);
     }
 
+    @Exclude
     public String getFirstImage() {
         return images != null && !images.isEmpty() ? images.get(0) : "";
     }

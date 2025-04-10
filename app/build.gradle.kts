@@ -65,6 +65,7 @@ dependencies {
     implementation ("com.github.chrisbanes:PhotoView:2.3.0")
     implementation("com.github.denzcoskun:ImageSlideshow:0.1.2")
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.facebook.shimmer:shimmer:0.5.0")

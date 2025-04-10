@@ -449,7 +449,8 @@ public class PostRoomActivity extends AppCompatActivity {
         extensions_room = new ArrayList<>();
         handleDataExtensions();
 
-        ImagesRoomClass images = new ImagesRoomClass(uploadedImageUrls);
+        ImagesRoomClass images = new ImagesRoomClass();
+        images.setImages(uploadedImageUrls);
 
         return new Room(id_own_post, id_room, title_room, price_room, address, area_room,
                 deposit_room, description_room, gender_room, park_slot,

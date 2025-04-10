@@ -1,6 +1,7 @@
 package com.example.timphongtro.Adapters;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,8 +10,14 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.timphongtro.R;
 
 import java.util.ArrayList;
@@ -35,18 +42,37 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         Uri imageUri = imageUris.get(position);
-        holder.imageView.setImageURI(imageUri);
+
+        Glide.with(context)
+                .load(imageUri.toString())
+                .placeholder(R.drawable.img_no_image)
+                .error(R.drawable.img_no_image)
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        return false;
+                    }
+                })
+                .into(holder.imageView);
 
         holder.btnDelete.setOnClickListener(v -> {
-            imageUris.remove(position);
-            notifyItemRemoved(position);
-            notifyItemRangeChanged(position, imageUris.size());
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION) {
+                imageUris.remove(adapterPosition);
+                notifyItemRemoved(adapterPosition);
+                notifyItemRangeChanged(adapterPosition, imageUris.size());
+            }
         });
     }
 
     @Override
     public int getItemCount() {
-        return imageUris.size();
+        return imageUris != null ? imageUris.size() : 0;
     }
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
