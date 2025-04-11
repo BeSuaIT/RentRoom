@@ -8,15 +8,18 @@ public class Room {
     private String id_own_post, id_room, title_room, area_room, description_room, gender_room, phone;
     private long price_room, deposit_room, price_electric, price_water, price_internet;
     private Address address;
-    private int park_slot, person_in_room, status_room, type_room, floor;
+    private int park_slot, person_in_room, status_room, type_room, floor ,loveCount;
     private ImagesRoomClass images;
-    private ArrayList<Furniture> furniture;
-    private ArrayList<Utility> extension_room;
+    private ArrayList<Furniture> roomFurniture;
+    private ArrayList<Utility> roomUtilities;
 
     public Room() {
     }
 
-    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room, String description_room, String gender_room, int park_slot, int person_in_room, int status_room, int type_room, String phone, int floor, ImagesRoomClass images, ArrayList<Furniture> furniture, ArrayList<Utility> extension_room, long price_electric, long price_water, long price_internet) {
+    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room,
+                String description_room, String gender_room, int park_slot, int person_in_room, int status_room, int type_room, String phone,
+                int floor, ImagesRoomClass images, ArrayList<Furniture> roomFurniture, ArrayList<Utility> roomUtilities,
+                long price_electric, long price_water, long price_internet) {
         this.id_own_post = id_own_post;
         this.id_room = id_room;
         this.title_room = title_room;
@@ -36,8 +39,8 @@ public class Room {
         this.price_water = price_water;
         this.price_internet = price_internet;
         this.images = images;
-        this.furniture = furniture;
-        this.extension_room = extension_room;
+        this.roomFurniture = roomFurniture;
+        this.roomUtilities = roomUtilities;
     }
 
     public long getPrice_electric() {
@@ -176,12 +179,12 @@ public class Room {
         this.images = images;
     }
 
-    public ArrayList<Furniture> getFurniture() {
-        return furniture;
+    public ArrayList<Furniture> getRoomFurniture() {
+        return roomFurniture;
     }
 
-    public void setFurniture(ArrayList<Furniture> furniture) {
-        this.furniture = furniture;
+    public void setRoomFurniture(ArrayList<Furniture> roomFurniture) {
+        this.roomFurniture = roomFurniture;
     }
 
     public int getFloor() {
@@ -192,12 +195,12 @@ public class Room {
         this.floor = floor;
     }
 
-    public ArrayList<Utility> getExtension_room() {
-        return extension_room;
+    public ArrayList<Utility> getRoomUtilities() {
+        return roomUtilities;
     }
 
-    public void setExtension_room(ArrayList<Utility> extension_room) {
-        this.extension_room = extension_room;
+    public void setRoomUtilities(ArrayList<Utility> roomUtilities) {
+        this.roomUtilities = roomUtilities;
     }
 
     public String getId_own_post() {
@@ -206,6 +209,14 @@ public class Room {
 
     public void setId_own_post(String id_own_post) {
         this.id_own_post = id_own_post;
+    }
+
+    public int getLoveCount() {
+        return loveCount;
+    }
+
+    public void setLoveCount(int loveCount) {
+        this.loveCount = loveCount;
     }
 
     @Override

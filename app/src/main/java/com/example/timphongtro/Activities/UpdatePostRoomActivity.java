@@ -230,8 +230,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
             imageAdapter.notifyDataSetChanged();
         }
 
-        setUtilityCheckboxes(roomData.getExtension_room());
-        setFurnitureCheckboxes(roomData.getFurniture());
+        setUtilityCheckboxes(roomData.getRoomUtilities());
+        setFurnitureCheckboxes(roomData.getRoomFurniture());
     }
 
     private void setupCitySpinner() {

@@ -93,6 +93,14 @@
                     android:layout_marginStart="8dp"
                     app:chipIcon="@drawable/ic_gender"
                     tools:text="Nam"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/loveTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    app:chipIcon="@drawable/ic_love_fill"
+                    tools:text="Lượt yêu thích: 8"/>
             </LinearLayout>
 
             <!-- Title and Price -->
@@ -147,7 +155,7 @@
                         android:drawablePadding="12dp"
                         android:gravity="center_vertical"
                         app:drawableStartCompat="@drawable/img_phone_resized"
-                        tools:text="+84 123 456 789"/>
+                        tools:text="0123 456 789"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

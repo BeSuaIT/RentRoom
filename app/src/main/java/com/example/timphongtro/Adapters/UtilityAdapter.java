@@ -20,11 +20,11 @@ import java.util.ArrayList;
 
 public class UtilityAdapter extends RecyclerView.Adapter<UtilityAdapter.ViewHolderExtension>{
     Context context;
-    ArrayList<Utility> list;
+    ArrayList<Utility> utilities;
 
-    public UtilityAdapter(Context context, ArrayList<Utility> list) {
+    public UtilityAdapter(Context context, ArrayList<Utility> utilities) {
         this.context = context;
-        this.list = list;
+        this.utilities = utilities;
     }
 
     @NonNull
@@ -36,10 +36,10 @@ public class UtilityAdapter extends RecyclerView.Adapter<UtilityAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolderExtension holder, int position) {
-        holder.titleExtension.setText(list.get(holder.getAdapterPosition()).getName());
-        if(!"".equals(list.get(holder.getAdapterPosition()).getImg())){
+        holder.titleExtension.setText(utilities.get(holder.getAdapterPosition()).getName());
+        if(!"".equals(utilities.get(holder.getAdapterPosition()).getImg())){
             Glide.with(context)
-                    .load(list.get(holder.getAdapterPosition()).getImg())
+                    .load(utilities.get(holder.getAdapterPosition()).getImg())
                     .apply(new RequestOptions()
                             .centerCrop()
                             .diskCacheStrategy(DiskCacheStrategy.ALL)) // để lưu ảnh trong bộ nhớ cache.
@@ -49,7 +49,7 @@ public class UtilityAdapter extends RecyclerView.Adapter<UtilityAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return utilities.size();
     }
 
     public static class ViewHolderExtension extends RecyclerView.ViewHolder {

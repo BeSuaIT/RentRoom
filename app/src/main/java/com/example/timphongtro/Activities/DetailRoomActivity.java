@@ -69,13 +69,13 @@ public class DetailRoomActivity extends AppCompatActivity {
     private TextView roomTitleTextView, priceTextView, addressCombinedTextView, phoneTextView, roomTypeTextView,
             floorTextView, roomAreaTextView, depositTextView, capacityTextView, genderTextView,
             waterPriceTextView, internetPriceTextView, electricPriceTextView, roomDescriptionTextView,
-            userNameTextView, scheduleTime, userProfileTextView;
+            userNameTextView, scheduleTime, userProfileTextView, loveTextView;
     private RecyclerView furnitureRecyclerView, utilityRecyclerView;
     private ImageView imageViewBack, imageViewLove;
     private Button callButton, scheduleVisitButton;
     private MaterialCardView userPostCard;
     private ImageSlider roomImageSlider;
-    private MaterialButton confirmButton, cancelButton, zaloButton;
+    private MaterialButton confirmButton, zaloButton;
     private EditText nameEditText, phoneEditText, noteEditText;
     private BottomSheetDialog scheduleVisitDialog;
     private Dialog dialogZoomImg;
@@ -107,6 +107,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     private void initializeViews() {
         roomImageSlider = findViewById(R.id.roomImageSlider);
         roomTypeTextView = findViewById(R.id.roomTypeTextView);
+        loveTextView = findViewById(R.id.loveTextView);
         roomTitleTextView = findViewById(R.id.roomTitleTextView);
         priceTextView = findViewById(R.id.priceTextView);
         addressCombinedTextView = findViewById(R.id.addressCombinedTextView);
@@ -200,12 +201,12 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void setupAdapters() {
         // Setup furniture adapter
-        furnitureAdapter = new FurnitureAdapter(this, room.getFurniture());
+        furnitureAdapter = new FurnitureAdapter(this, room.getRoomFurniture());
         furnitureRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         furnitureRecyclerView.setAdapter(furnitureAdapter);
 
         // Setup utility adapter
-        utilityAdapter = new UtilityAdapter(this, room.getExtension_room());
+        utilityAdapter = new UtilityAdapter(this, room.getRoomUtilities());
         utilityRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         utilityRecyclerView.setAdapter(utilityAdapter);
     }
@@ -242,7 +243,57 @@ public class DetailRoomActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (isRoomLoved) {
-                    toggleLoveStatus(snapshot);
+                    int currentLoveCount = (int) snapshot.getChildrenCount();
+                    toggleLoveStatus(snapshot, currentLoveCount);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+    }
+
+    private void toggleLoveStatus(DataSnapshot snapshot, int currentLoveCount) {
+        if (snapshot.hasChild(currentUser.getUid())) {
+            removeLoveStatus(currentLoveCount - 1);
+        } else {
+            addLoveStatus(currentLoveCount + 1);
+        }
+        isRoomLoved = false;
+    }
+
+    private void removeLoveStatus(int newCount) {
+        roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).removeValue();
+        userLovedPostsReference.child(room.getId_room()).removeValue();
+        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+        loveTextView.setText("Lượt yêu thích: " + newCount);
+        Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
+    }
+
+    private void addLoveStatus(int newCount) {
+        roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).setValue(true);
+        userLovedPostsReference.child(room.getId_room()).setValue(true);
+        imageViewLove.setImageResource(R.drawable.ic_love_fill);
+        loveTextView.setText("Lượt yêu thích: " + newCount);
+        Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
+    }
+
+    private void checkLoveRoom() {
+        roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    int loveCount = (int) snapshot.getChildrenCount();
+                    loveTextView.setText("Lượt yêu thích: " + loveCount);
+
+                    if (snapshot.hasChild(currentUser.getUid())) {
+                        imageViewLove.setImageResource(R.drawable.ic_love_fill);
+                    } else {
+                        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+                    }
+                } else {
+                    loveTextView.setText("Chưa có lượt yêu thích");
                 }
             }
 
@@ -251,29 +302,6 @@ public class DetailRoomActivity extends AppCompatActivity {
                 // Handle error
             }
         });
-    }
-
-    private void toggleLoveStatus(DataSnapshot snapshot) {
-        if (snapshot.hasChild(currentUser.getUid())) {
-            removeLoveStatus();
-        } else {
-            addLoveStatus();
-        }
-        isRoomLoved = false;
-    }
-
-    private void removeLoveStatus() {
-        roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).removeValue();
-        userLovedPostsReference.child(room.getId_room()).removeValue();
-        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-        Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
-    }
-
-    private void addLoveStatus() {
-        roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).setValue(true);
-        userLovedPostsReference.child(room.getId_room()).setValue(true);
-        imageViewLove.setImageResource(R.drawable.ic_love_fill);
-        Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
     }
 
     private void copyToClipboard(String text, String message) {
@@ -416,26 +444,6 @@ public class DetailRoomActivity extends AppCompatActivity {
         } else {
             Toast.makeText(getApplicationContext(), "Vui lòng nhập đầy đủ các trường yêu cầu", Toast.LENGTH_LONG).show();
         }
-    }
-
-    private void checkLoveRoom() {
-        roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    if (snapshot.hasChild(currentUser.getUid())) {
-                        imageViewLove.setImageResource(R.drawable.ic_love_fill);
-                    } else {
-                        imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
     }
 
     private void loadUserPostInfo() {
