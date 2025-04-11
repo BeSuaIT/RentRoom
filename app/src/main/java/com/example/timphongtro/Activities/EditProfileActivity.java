@@ -95,7 +95,6 @@ public class EditProfileActivity extends AppCompatActivity {
                                 finish();
                             })
                             .addOnFailureListener(e -> {
-                                // Có lỗi xảy ra khi cập nhật
                             });
                 } else {
                     Toast.makeText(getApplicationContext(),"Vui lòng nhập đúng định dạng số điện thoại",Toast.LENGTH_SHORT).show();
