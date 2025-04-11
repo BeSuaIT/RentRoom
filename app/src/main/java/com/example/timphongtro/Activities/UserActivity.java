@@ -34,7 +34,7 @@ import java.util.ArrayList;
 
 public class UserActivity extends AppCompatActivity {
 
-    private TextView username, phone, email, circleImageView;
+    private TextView username, phone, email, circleImageView, postCount, loveCount;
     private RecyclerView rcvUser;
     private RoomAdapter roomAdapter;
     private FirebaseDatabase database;
@@ -42,6 +42,8 @@ public class UserActivity extends AppCompatActivity {
     private ArrayList<Room> roomArrayList;
     private LinearLayout phoneLinear, emailLinear;
     private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
+    private int totalPosts = 0;
+    private int totalLoves = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +53,8 @@ public class UserActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         username = findViewById(R.id.username);
         ImageView imageView_back = findViewById(R.id.imageView_back);
+        postCount = findViewById(R.id.postCount);
+        loveCount = findViewById(R.id.loveCount);
         rcvUser = findViewById(R.id.rcvUser);
         phone = findViewById(R.id.phone);
         email = findViewById(R.id.email);
@@ -90,6 +94,9 @@ public class UserActivity extends AppCompatActivity {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         roomArrayList.clear();
+                        totalPosts = 0;
+                        totalLoves = 0;
+
                         if (snapshot.exists()) {
                             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                                 for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
@@ -97,16 +104,26 @@ public class UserActivity extends AppCompatActivity {
                                     if (room != null && room.getStatus_room() != 1
                                             && id_own_post.equals(room.getId_own_post())) {
                                         roomArrayList.add(room);
+                                        totalPosts++;
+
+                                        DataSnapshot lovesSnapshot = childSnapshot.child("userLovePost");
+                                        if (lovesSnapshot.exists()) {
+                                            totalLoves += lovesSnapshot.getChildrenCount();
+                                        }
                                     }
                                 }
                             }
                         }
+
+                        // Update UI
+                        postCount.setText(String.valueOf(totalPosts));
+                        loveCount.setText(String.valueOf(totalLoves));
                         roomAdapter.notifyDataSetChanged();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-
+                        // Handle error
                     }
                 });
                 roomAdapter = new RoomAdapter(UserActivity.this, roomArrayList);
