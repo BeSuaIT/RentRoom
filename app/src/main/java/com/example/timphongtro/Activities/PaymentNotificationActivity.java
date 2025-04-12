@@ -2,7 +2,6 @@ package com.example.timphongtro.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,7 +25,6 @@ public class PaymentNotificationActivity extends AppCompatActivity {
 
     private TextView tvNotify, tvDate, tvTransactionId, tvAmount;
     private ImageView ivStatus;
-    private Button btnHome, btnDetails;
     private String orderId;
 
     @Override
@@ -35,7 +33,6 @@ public class PaymentNotificationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_payment_notification);
 
         initViews();
-        setupListeners();
         loadOrderData();
     }
 
@@ -45,21 +42,16 @@ public class PaymentNotificationActivity extends AppCompatActivity {
         tvTransactionId = findViewById(R.id.textViewTransactionId);
         tvAmount = findViewById(R.id.textViewAmount);
         ivStatus = findViewById(R.id.imageViewStatus);
-        btnHome = findViewById(R.id.buttonHome);
-        btnDetails = findViewById(R.id.buttonDetails);
 
-        // Lấy orderId từ intent trước đó
         orderId = getIntent().getStringExtra("orderId");
-    }
 
-    private void setupListeners() {
-        btnHome.setOnClickListener(v -> {
+        findViewById(R.id.buttonHome).setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         });
 
-        btnDetails.setOnClickListener(v -> {
+        findViewById(R.id.buttonDetails).setOnClickListener(v -> {
             Intent intent = new Intent(this, BillActivity.class);
             startActivity(intent);
             finish();
@@ -85,7 +77,6 @@ public class PaymentNotificationActivity extends AppCompatActivity {
                     long amount = snapshot.child("totalAmount").getValue(Long.class);
                     long orderDate = snapshot.child("orderDate").getValue(Long.class);
 
-                    // Hiển thị trạng thái
                     if (paymentMethod.equals("zalopay") && status == 1) {
                         ivStatus.setImageResource(R.drawable.img_success);
                         tvNotify.setText("Thanh toán thành công");
@@ -94,15 +85,12 @@ public class PaymentNotificationActivity extends AppCompatActivity {
                         tvNotify.setText("Đặt hàng thành công\n Chờ người bán xác nhận");
                     }
 
-                    // Format và hiển thị ngày
                     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
                     String dateStr = sdf.format(new Date(orderDate));
                     tvDate.setText("Ngày: " + dateStr);
 
-                    // Hiển thị mã giao dịch
                     tvTransactionId.setText("Mã đơn hàng: " + orderId);
 
-                    // Format và hiển thị số tiền
                     DecimalFormat df = new DecimalFormat("#,###");
                     tvAmount.setText(df.format(amount) + " ₫");
                 }
@@ -110,8 +98,7 @@ public class PaymentNotificationActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PaymentNotificationActivity.this,
-                        "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(PaymentNotificationActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -29,7 +29,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public class MainActivity extends AppCompatActivity {
-    NetworkChangeReceiver networkChangeReceiver;
+    private NetworkChangeReceiver networkChangeReceiver;
     private boolean isReceiverRegistered = false;
     private ActivityMainBinding binding;
 
@@ -37,31 +37,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize view binding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Configure Google Sign-In
         new GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(true)
                 .setServerClientId(getString(R.string.default_web_client_id))
                 .build();
 
-        // Initialize network receiver
         networkChangeReceiver = new NetworkChangeReceiver();
 
-        // Set initial fragment and bottom navigation setup
         setupNavigation();
     }
 
     private void setupNavigation() {
-        // Set initial fragment
         replaceFragment(new HomeFragment());
-
-        // Remove background from bottom navigation
         binding.bottomNavigationView.setBackground(null);
 
-        // Handle bottom navigation item selection
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.home) {
                 replaceFragment(new HomeFragment());
@@ -134,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Unregister network receiver
         if (isReceiverRegistered) {
             unregisterReceiver(networkChangeReceiver);
             isReceiverRegistered = false;

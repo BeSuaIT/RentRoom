@@ -5,6 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
+import android.widget.TextView;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -15,16 +19,36 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class SplashScreen extends AppCompatActivity {
-    private static final int SPLASH_TIMER = 4000;
+    private static final int SPLASH_TIMER = 3000;
     private FirebaseAuth firebaseAuth;
+    private ImageView logoImage;
+    private TextView appName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
 
-        firebaseAuth = FirebaseAuth.getInstance();
+        initializeViews();
+        startAnimations();
+        initializeFirebase();
+    }
 
+    private void initializeViews() {
+        logoImage = findViewById(R.id.logoImage);
+        appName = findViewById(R.id.appName);
+    }
+
+    private void startAnimations() {
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up);
+
+        logoImage.startAnimation(fadeIn);
+        appName.startAnimation(slideUp);
+    }
+
+    private void initializeFirebase() {
+        firebaseAuth = FirebaseAuth.getInstance();
         new Handler().postDelayed(this::checkUserAndNavigate, SPLASH_TIMER);
     }
 
@@ -32,7 +56,6 @@ public class SplashScreen extends AppCompatActivity {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
         if (currentUser != null) {
-            // Kiểm tra xem UID còn tồn tại trong database không
             DatabaseReference userRef = FirebaseDatabase.getInstance()
                     .getReference("Users")
                     .child(currentUser.getUid());
@@ -41,33 +64,25 @@ public class SplashScreen extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     Intent intent;
-
                     if (snapshot.exists()) {
-                        // UID vẫn tồn tại trong database
                         intent = new Intent(SplashScreen.this, MainActivity.class);
                     } else {
-                        // UID không còn tồn tại, buộc đăng xuất
                         firebaseAuth.signOut();
                         intent = new Intent(SplashScreen.this, LoginActivity.class);
                     }
-
                     startActivity(intent);
                     finish();
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    // Nếu có lỗi khi kiểm tra, cho đăng xuất để an toàn
                     firebaseAuth.signOut();
-                    Intent intent = new Intent(SplashScreen.this, LoginActivity.class);
-                    startActivity(intent);
+                    startActivity(new Intent(SplashScreen.this, LoginActivity.class));
                     finish();
                 }
             });
         } else {
-            // Chưa đăng nhập
-            Intent intent = new Intent(SplashScreen.this, LoginActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(SplashScreen.this, LoginActivity.class));
             finish();
         }
     }

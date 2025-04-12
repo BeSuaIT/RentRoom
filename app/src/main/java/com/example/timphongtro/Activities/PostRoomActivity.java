@@ -68,24 +68,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PostRoomActivity extends AppCompatActivity {
-    // Constants
     private static final int PERMISSION_CODE = 1001;
-
-    // Firebase instances
     private FirebaseUser userCurrent;
     private FirebaseStorage storage;
     private DatabaseReference citiesRef;
-
-    // UI Components
-    private ImageView btnBack;
     private EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
             edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
-    private Button btn_create_room;
     private RadioGroup radioGroup;
     private Spinner spinnerCity, spinnerDistrict;
     private CheckBox[] utilityCheckboxes, furnitureCheckboxes, genderCheckboxes;
-
-    // Data holders
     private List<String> cities, districts;
     private ArrayList<Furniture> furnitureArrayList;
     private ArrayList<Utility> utilityArrayList;
@@ -95,8 +86,6 @@ public class PostRoomActivity extends AppCompatActivity {
     private RecyclerView recyclerViewImages;
     private ImageAdapter imageAdapter;
     private int uploadCount = 0;
-
-    // Dialog
     private BottomSheetDialog dialog;
     private LinearLayout pickImgAlbum, pickImgCamera;
     private ActivityResultLauncher<Intent> activityResultLauncher, cameraLauncher;
@@ -109,7 +98,6 @@ public class PostRoomActivity extends AppCompatActivity {
         initializeFirebase();
         initializeViews();
         setupActivityResultLaunchers();
-        setupClickListeners();
         setupCitySpinner();
     }
 
@@ -125,31 +113,27 @@ public class PostRoomActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
-        btnBack = this.findViewById(R.id.btnBack);
-
         edtTitleRoom = this.findViewById(R.id.edtTitleRoom);
         edtPrice = this.findViewById(R.id.edtPrice);
         edtDeposit = this.findViewById(R.id.edtDeposit);
-
         edtInternet = this.findViewById(R.id.edtInternet);
         edtElectric = this.findViewById(R.id.edtElectric);
         edtWater = this.findViewById(R.id.edtWater);
-
         radioGroup = this.findViewById(R.id.radioGroupType);
-
         edtArea = this.findViewById(R.id.edtArea);
         edtPhone = this.findViewById(R.id.edtPhone);
         edtFloor = this.findViewById(R.id.edtFloor);
         edtPerson = this.findViewById(R.id.edtPerson);
         edtDescriptionRoom = this.findViewById(R.id.edtDescriptionRoom);
         edtPark = this.findViewById(R.id.edtPark);
+        edtAddress = findViewById(R.id.edtAddress);
+
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btn_create_room).setOnClickListener(v -> showConfirmationDialog());
+        findViewById(R.id.btnAddImage).setOnClickListener(v -> showBottomDialog());
 
         spinnerCity = findViewById(R.id.spinnerCity);
         spinnerDistrict = findViewById(R.id.spinnerDistrict);
-
-        edtAddress = findViewById(R.id.edtAddress);
-
-        btn_create_room = this.findViewById(R.id.btn_create_room);
 
         selectedImages = new ArrayList<>();
         uploadedImageUrls = new ArrayList<>();
@@ -157,9 +141,6 @@ public class PostRoomActivity extends AppCompatActivity {
         recyclerViewImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         imageAdapter = new ImageAdapter(this, selectedImages);
         recyclerViewImages.setAdapter(imageAdapter);
-    
-        Button btnAddImage = findViewById(R.id.btnAddImage);
-        btnAddImage.setOnClickListener(v -> showBottomDialog());
 
         genderCheckboxes = new CheckBox[2];
         genderCheckboxes[0] = findViewById(R.id.checkboxNam);
@@ -186,11 +167,6 @@ public class PostRoomActivity extends AppCompatActivity {
 
         cities = new ArrayList<>();
         districts = new ArrayList<>();
-    }
-
-    private void setupClickListeners() {
-        btnBack.setOnClickListener(v -> finish());
-        btn_create_room.setOnClickListener(v -> showConfirmationDialog());
     }
 
     private void setupCitySpinner() {
@@ -607,18 +583,6 @@ public class PostRoomActivity extends AppCompatActivity {
         return TextUtils.isEmpty(text.getText().toString());
     }
 
-    private void checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, PERMISSION_CODE);
-            }
-        } else {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
-            }
-        }
-    }
-
     private void showBottomDialog() {
         dialog = new BottomSheetDialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -630,7 +594,16 @@ public class PostRoomActivity extends AppCompatActivity {
         cancelButton = dialog.findViewById(R.id.cancelButton);
 
         pickImgAlbum.setOnClickListener(v -> {
-            checkPermissions();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, PERMISSION_CODE);
+                }
+            } else {
+                if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
+                }
+            }
+
             Intent photoPicker = new Intent(Intent.ACTION_PICK);
             photoPicker.setType("image/*");
             photoPicker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);

@@ -2,7 +2,6 @@ package com.example.timphongtro.Activities;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -46,7 +45,7 @@ public class BillActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         billList = new ArrayList<>();
-        billAdapter = new BillAdapter(this, this);
+        billAdapter = new BillAdapter(this);
         rcvBills.setLayoutManager(new LinearLayoutManager(this));
         rcvBills.setAdapter(billAdapter);
     }

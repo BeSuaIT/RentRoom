@@ -63,7 +63,6 @@ public class LoginActivity extends AppCompatActivity {
         initFirebase();
         initViews();
         checkCurrentUser();
-        setupListeners();
     }
 
     private void initFirebase() {
@@ -74,7 +73,7 @@ public class LoginActivity extends AppCompatActivity {
         loginManager = LoginManager.getInstance();
 
         getGoogleIdOption = new GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(true)
+                .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(getString(R.string.default_web_client_id))
                 .build();
     }
@@ -87,6 +86,12 @@ public class LoginActivity extends AppCompatActivity {
         forgotPasswordTextView = findViewById(R.id.forgotPasswordText);
         googleSignInImageView = findViewById(R.id.googleSignInImageView);
         facebookSignInImageView = findViewById(R.id.facebookSignInImageView);
+
+        loginButton.setOnClickListener(v -> handleEmailPasswordSignIn());
+        googleSignInImageView.setOnClickListener(v -> signInWithCredentialManager());
+        facebookSignInImageView.setOnClickListener(v -> signInWithFacebook());
+        registerTextView.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
+        forgotPasswordTextView.setOnClickListener(v -> startActivity(new Intent(this, ForgotPasswordActivity.class)));
     }
 
     private void checkCurrentUser() {
@@ -94,14 +99,6 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
-    }
-
-    private void setupListeners() {
-        loginButton.setOnClickListener(v -> handleEmailPasswordSignIn());
-        googleSignInImageView.setOnClickListener(v -> signInWithCredentialManager());
-        facebookSignInImageView.setOnClickListener(v -> signInWithFacebook());
-        registerTextView.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
-        forgotPasswordTextView.setOnClickListener(v -> startActivity(new Intent(this, ForgotPasswordActivity.class)));
     }
 
     private void handleEmailPasswordSignIn() {
@@ -166,10 +163,6 @@ public class LoginActivity extends AppCompatActivity {
                     showToast("Lỗi lưu dữ liệu: " + e.getMessage());
                     firebaseAuth.signOut();
                 });
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(this, message, LENGTH_SHORT).show();
     }
 
     private void signInWithCredentialManager() {
@@ -247,6 +240,10 @@ public class LoginActivity extends AppCompatActivity {
                         showToast("Đăng nhập thất bại: " + errorMessage);
                     }
                 });
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, LENGTH_SHORT).show();
     }
 
     @Override

@@ -16,14 +16,15 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
-    private final FirebaseAuth auth = FirebaseAuth.getInstance();
+    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private EditText emailEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forgot_password);
 
-        EditText emailEditText = findViewById(R.id.emailEditText);
+        emailEditText = findViewById(R.id.emailEditText);
 
         findViewById(R.id.backButton).setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
 
@@ -43,7 +44,6 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                         // Email doesn't exist
                         Toast.makeText(this, "Email chưa được đăng ký", Toast.LENGTH_SHORT).show();
                     } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-                        // Email exists, proceed with password reset
                         auth.sendPasswordResetEmail(email)
                                 .addOnCompleteListener(task -> {
                                     if (task.isSuccessful()) {

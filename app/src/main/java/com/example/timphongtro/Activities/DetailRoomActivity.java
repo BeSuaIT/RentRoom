@@ -62,10 +62,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DetailRoomActivity extends AppCompatActivity {
-    // Constants
     private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
-    
-    // UI Elements
     private TextView roomTitleTextView, priceTextView, addressCombinedTextView, phoneTextView, roomTypeTextView,
             floorTextView, roomAreaTextView, depositTextView, capacityTextView, genderTextView,
             waterPriceTextView, internetPriceTextView, electricPriceTextView, roomDescriptionTextView,
@@ -79,13 +76,9 @@ public class DetailRoomActivity extends AppCompatActivity {
     private EditText nameEditText, phoneEditText, noteEditText;
     private BottomSheetDialog scheduleVisitDialog;
     private Dialog dialogZoomImg;
-    
-    // Firebase References
     private FirebaseUser currentUser;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference userLovedPostsReference, visitScheduleDatabaseRef, userPostReference, roomDatabaseRef;
-    
-    // Data
     private Room room;
     private UUID uuid;
     private boolean isRoomLoved;
@@ -101,7 +94,6 @@ public class DetailRoomActivity extends AppCompatActivity {
         initializeViews();
         setupFirebaseReferences();
         loadRoomData();
-        setupClickListeners();
     }
 
     private void initializeViews() {
@@ -131,6 +123,19 @@ public class DetailRoomActivity extends AppCompatActivity {
         userNameTextView = findViewById(R.id.userNameTextView);
         userProfileTextView = findViewById(R.id.userProfileTextView);
         zaloButton = findViewById(R.id.zaloButton);
+
+        imageViewBack.setOnClickListener(v -> finish());
+        callButton.setOnClickListener(v -> handleCallButtonClick());
+        scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
+        imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
+        zaloButton.setOnClickListener(v -> openZaloChat());
+        userPostCard.setOnClickListener(v -> {
+            Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
+            intent.putExtra("id_own_post", room.getId_own_post());
+            startActivity(intent);
+        });
+        phoneTextView.setOnClickListener(v -> copyToClipboard(phoneTextView.getText().toString(), "Lưu vào số điện thoại Clipboard"));
+        addressCombinedTextView.setOnClickListener(v -> copyToClipboard(addressCombinedTextView.getText().toString(), "Lưu địa chỉ vào Clipboard"));
     }
 
     private void setupFirebaseReferences() {
@@ -184,7 +189,6 @@ public class DetailRoomActivity extends AppCompatActivity {
             }
             roomImageSlider.setImageList(slideModels);
 
-            // Set item click listener with position
             roomImageSlider.setItemClickListener(new ItemClickListener() {
                 @Override
                 public void doubleClick(int i) {
@@ -200,30 +204,13 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void setupAdapters() {
-        // Setup furniture adapter
         furnitureAdapter = new FurnitureAdapter(this, room.getRoomFurniture());
         furnitureRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         furnitureRecyclerView.setAdapter(furnitureAdapter);
 
-        // Setup utility adapter
         utilityAdapter = new UtilityAdapter(this, room.getRoomUtilities());
         utilityRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         utilityRecyclerView.setAdapter(utilityAdapter);
-    }
-
-    private void setupClickListeners() {
-        imageViewBack.setOnClickListener(v -> finish());
-        callButton.setOnClickListener(v -> handleCallButtonClick());
-        scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
-        imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
-        zaloButton.setOnClickListener(v -> openZaloChat());
-        userPostCard.setOnClickListener(v -> {
-            Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
-            intent.putExtra("id_own_post", room.getId_own_post());
-            startActivity(intent);
-        });
-        phoneTextView.setOnClickListener(v -> copyToClipboard(phoneTextView.getText().toString(), "Lưu vào số điện thoại Clipboard"));
-        addressCombinedTextView.setOnClickListener(v -> copyToClipboard(addressCombinedTextView.getText().toString(), "Lưu địa chỉ vào Clipboard"));
     }
 
     private void handleCallButtonClick() {
@@ -233,7 +220,12 @@ public class DetailRoomActivity extends AppCompatActivity {
                     new String[]{android.Manifest.permission.CALL_PHONE},
                     CALL_PHONE_PERMISSION_REQUEST_CODE);
         } else {
-            makePhoneCall();
+            Intent intent = new Intent(Intent.ACTION_CALL);
+            intent.setData(Uri.parse("tel:" + room.getPhone()));
+
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
         }
     }
 
@@ -299,7 +291,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Handle error
             }
         });
     }
@@ -309,15 +300,6 @@ public class DetailRoomActivity extends AppCompatActivity {
         ClipData clip = ClipData.newPlainText("Label", text);
         clipboard.setPrimaryClip(clip);
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-    }
-
-    private void makePhoneCall() {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + room.getPhone()));
-
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        }
     }
 
     private void showZoomImgDialog(int currentPosition) {
@@ -378,7 +360,8 @@ public class DetailRoomActivity extends AppCompatActivity {
             bookingDate.set(Calendar.YEAR, year);
             bookingDate.set(Calendar.MONTH, month);
             bookingDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            updateLabel();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd/MM/yyyy", new Locale("vi", "VN"));
+            scheduleTime.setText(dateFormat.format(bookingDate.getTime()));
         };
 
         scheduleTime.setOnClickListener(v -> {
@@ -398,11 +381,6 @@ public class DetailRoomActivity extends AppCompatActivity {
         scheduleVisitDialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         scheduleVisitDialog.getWindow().setGravity(Gravity.BOTTOM);
         scheduleVisitDialog.setCancelable(true);
-    }
-
-    private void updateLabel() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd/MM/yyyy", new Locale("vi", "VN"));
-        scheduleTime.setText(dateFormat.format(bookingDate.getTime()));
     }
 
     private void scheduleVisitRoom() {
@@ -474,7 +452,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void openZaloChat() {
-        String url = "http://zalo.me/" + "0964259203"; // URL bạn muốn chuyển đến
+        String url = "http://zalo.me/" + "0964259203";
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(url));
@@ -498,5 +476,4 @@ public class DetailRoomActivity extends AppCompatActivity {
 
         return result.toString().toUpperCase();
     }
-
 }

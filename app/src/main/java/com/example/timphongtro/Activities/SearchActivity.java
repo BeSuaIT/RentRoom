@@ -21,12 +21,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class SearchActivity extends AppCompatActivity {
-    RecyclerView roomrecyclerView;
-    DatabaseReference roomRef;
-    SearchAdapter searchAdapter;
-    ArrayList<Room> roomArrayList;
-    SearchView searchView;
-    String district;
+    private RecyclerView roomrecyclerView;
+    private DatabaseReference roomRef;
+    private SearchAdapter searchAdapter;
+    private ArrayList<Room> roomArrayList;
+    private SearchView searchView;
+    private String district;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +58,6 @@ public class SearchActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-//                Toast.makeText(getApplicationContext(), district, Toast.LENGTH_SHORT).show();
                 searchList(newText);
                 return true;
             }

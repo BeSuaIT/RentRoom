@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.timphongtro.Activities.BillActivity;
 import com.example.timphongtro.Models.Bill;
 import com.example.timphongtro.Models.BillItem;
 import com.example.timphongtro.Models.Service;
@@ -34,7 +33,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
     private List<Bill> bills;
     private Context context;
 
-    public BillAdapter(Context context, BillActivity billActivity) {
+    public BillAdapter(Context context) {
         this.context = context;
         this.bills = new ArrayList<>();
     }
@@ -58,7 +57,6 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
                 bill.getCity();
         holder.tvLocation.setText(fullAddress);
 
-        // Cấu hình trạng thái với màu tương ứng
         switch (bill.getStatus()) {
             case 0:
                 holder.tvStatus.setText("Đang xử lý");
@@ -160,7 +158,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
         return sdf.format(new Date(timestamp));
     }
 
-    static class BillViewHolder extends RecyclerView.ViewHolder {
+    public static class BillViewHolder extends RecyclerView.ViewHolder {
         TextView tvOrderId, tvDateTime, tvTotalAmount, tvStatus, tvLocation;
 
         public BillViewHolder(@NonNull View itemView) {

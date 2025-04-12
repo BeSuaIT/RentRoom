@@ -120,15 +120,12 @@ public class RegisterActivity extends AppCompatActivity {
                     hideLoadingDialog();
                     showToast("Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản");
                     firebaseAuth.signOut();
-                    navigateToLogin();
-                });
-    }
 
-    private void navigateToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                });
     }
 
     private void showToast(String message) {
