@@ -20,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,10 +74,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     private DatabaseReference citiesRef;
 
     // UI Components
-    private ImageView btnBack;
     private EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
             edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
-    private Button btn_create_room;
     private RadioGroup radioGroupType, radioGroupState;
     private Spinner spinnerCity, spinnerDistrict;
     private CheckBox[] utilityCheckboxes, furnitureCheckboxes, genderCheckboxes;
@@ -113,7 +112,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         initializeFirebase();
         initializeViews();
         setupActivityResultLaunchers();
-        setupClickListeners();
         setupCitySpinner();
 
         if (roomData != null) {
@@ -133,8 +131,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
-        btnBack = findViewById(R.id.btnBack);
-
         edtTitleRoom = findViewById(R.id.edtTitleRoom);
         edtPrice = findViewById(R.id.edtPrice);
         edtDeposit = findViewById(R.id.edtDeposit);
@@ -155,7 +151,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         spinnerCity = findViewById(R.id.spinnerCity);
         spinnerDistrict = findViewById(R.id.spinnerDistrict);
 
-        btn_create_room = findViewById(R.id.btn_create_room);
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btn_create_room).setOnClickListener(v -> showConfirmationDialog());
 
         selectedImages = new ArrayList<>();
         uploadedImageUrls = new ArrayList<>();
@@ -571,11 +568,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         }
     }
 
-    private void setupClickListeners() {
-        btnBack.setOnClickListener(v -> finish());
-        btn_create_room.setOnClickListener(v -> showConfirmationDialog());
-    }
-
     private void showConfirmationDialog() {
         AlertDialog confirmDialog = new AlertDialog.Builder(this)
                 .setTitle("Xác nhận")
@@ -589,22 +581,26 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
             positiveButton.setOnClickListener(view -> {
                 confirmDialog.dismiss();
 
+                // Tạo room object với dữ liệu mới trước
+                if (!validateInputs()) return;
+                Room updatedRoom = createRoomObject();
+
                 if (!selectedImages.isEmpty()) {
                     AlertDialog progressDialog = new AlertDialog.Builder(this)
                             .setView(R.layout.progress_layout)
                             .setCancelable(false)
                             .create();
                     progressDialog.show();
-                    uploadImages(progressDialog);
+                    uploadImagesAndUpdateRoom(progressDialog, updatedRoom); // Truyền updatedRoom vào
                 } else {
-                    onClickPushData();
+                    uploadRoomToFirebase(updatedRoom); // Upload trực tiếp nếu không có ảnh mới
                 }
             });
         });
         confirmDialog.show();
     }
 
-    private void uploadImages(AlertDialog progressDialog) {
+    private void uploadImagesAndUpdateRoom(AlertDialog progressDialog, Room updatedRoom) {
         try {
             ArrayList<String> newUploadedUrls = new ArrayList<>();
 
@@ -689,6 +685,13 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                     }
                 }
             }
+
+            ImagesRoomClass imagesRoom = new ImagesRoomClass();
+            imagesRoom.setImages(newUploadedUrls);
+            updatedRoom.setImages(imagesRoom);
+            uploadRoomToFirebase(updatedRoom);
+            progressDialog.dismiss();
+
         } catch (Exception e) {
             if (!isFinishing()) {
                 progressDialog.dismiss();
@@ -812,17 +815,72 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     }
 
     private void uploadRoomToFirebase(Room room) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        String path_type = room.getType_room() == 1 ? "ChungCuMini" : "Tro";
-        DatabaseReference myRef = database.getReference("Rooms/" + path_type);
+        // Lấy reference đến node hiện tại
+        DatabaseReference currentRef = FirebaseDatabase.getInstance()
+                .getReference("Rooms")
+                .child(roomData.getType_room() == 1 ? "ChungCuMini" : "Tro")
+                .child(roomData.getId_room());
 
-        myRef.child(room.getId_room()).setValue(room)
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+        // Lấy reference đến node mới (nếu type_room thay đổi)
+        DatabaseReference newRef = FirebaseDatabase.getInstance()
+                .getReference("Rooms")
+                .child(room.getType_room() == 1 ? "ChungCuMini" : "Tro")
+                .child(room.getId_room());
+
+        // Nếu type_room thay đổi, xóa data cũ và tạo mới
+        if (roomData.getType_room() != room.getType_room()) {
+            currentRef.removeValue().addOnSuccessListener(aVoid -> {
+                uploadData(room, newRef);
+            });
+        } else {
+            uploadData(room, currentRef);
+        }
+    }
+
+    private void uploadData(Room room, DatabaseReference ref) {
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setView(R.layout.progress_layout)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        // Convert Room object to Map
+        Map<String, Object> roomMap = new HashMap<>();
+        roomMap.put("id_own_post", room.getId_own_post());
+        roomMap.put("id_room", room.getId_room());
+        roomMap.put("title_room", room.getTitle_room());
+        roomMap.put("price_room", room.getPrice_room());
+        roomMap.put("deposit_room", room.getDeposit_room());
+        roomMap.put("area_room", room.getArea_room());
+        roomMap.put("description_room", room.getDescription_room());
+        roomMap.put("gender_room", room.getGender_room());
+        roomMap.put("park_slot", room.getPark_slot());
+        roomMap.put("person_in_room", room.getPerson_in_room());
+        roomMap.put("status_room", room.getStatus_room());
+        roomMap.put("type_room", room.getType_room());
+        roomMap.put("phone", room.getPhone());
+        roomMap.put("floor", room.getFloor());
+        roomMap.put("price_electric", room.getPrice_electric());
+        roomMap.put("price_water", room.getPrice_water());
+        roomMap.put("price_internet", room.getPrice_internet());
+        roomMap.put("address", room.getAddress());
+        roomMap.put("roomFurniture", room.getRoomFurniture());
+        roomMap.put("roomUtilities", room.getRoomUtilities());
+        roomMap.put("images", room.getImages());
+
+        ref.setValue(roomMap)
+                .addOnSuccessListener(aVoid -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(UpdatePostRoomActivity.this,
+                            "Cập nhật thông tin phòng thành công",
+                            Toast.LENGTH_SHORT).show();
                     finish();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Cập nhật thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(e -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(UpdatePostRoomActivity.this,
+                            "Cập nhật thất bại: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 }
