@@ -807,13 +807,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         );
     }
 
-    private void onClickPushData() {
-        if (!validateInputs()) return;
-
-        Room updatedRoom = createRoomObject();
-        uploadRoomToFirebase(updatedRoom);
-    }
-
     private void uploadRoomToFirebase(Room room) {
         // Lấy reference đến node hiện tại
         DatabaseReference currentRef = FirebaseDatabase.getInstance()
