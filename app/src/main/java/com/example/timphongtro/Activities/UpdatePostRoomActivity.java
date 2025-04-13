@@ -20,7 +20,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +37,6 @@ import android.widget.Toast;
 
 import com.example.timphongtro.Adapters.ImageAdapter;
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.Furniture;
@@ -218,8 +216,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         radioGroupType.check(roomData.getType_room() == 1 ? R.id.radiobtnChungCu : R.id.radiobtnTro);
         radioGroupState.check(roomData.getStatus_room() == 1 ? R.id.radiobtnUnavailable : R.id.radiobtnAvailable);
 
-        if (roomData.getImages() != null && roomData.getImages().getImages() != null) {
-            uploadedImageUrls = new ArrayList<>(roomData.getImages().getImages());
+        if (roomData.getImages() != null) {
+            uploadedImageUrls = new ArrayList<>(roomData.getImages());
             selectedImages.clear();
             for (String imageUrl : uploadedImageUrls) {
                 selectedImages.add(Uri.parse(imageUrl));
@@ -581,7 +579,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
             positiveButton.setOnClickListener(view -> {
                 confirmDialog.dismiss();
 
-                // Tạo room object với dữ liệu mới trước
                 if (!validateInputs()) return;
                 Room updatedRoom = createRoomObject();
 
@@ -591,9 +588,9 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                             .setCancelable(false)
                             .create();
                     progressDialog.show();
-                    uploadImagesAndUpdateRoom(progressDialog, updatedRoom); // Truyền updatedRoom vào
+                    uploadImagesAndUpdateRoom(progressDialog, updatedRoom);
                 } else {
-                    uploadRoomToFirebase(updatedRoom); // Upload trực tiếp nếu không có ảnh mới
+                    uploadRoomToFirebase(updatedRoom);
                 }
             });
         });
@@ -612,10 +609,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
             }
 
             if (selectedImages.isEmpty()) {
-                ImagesRoomClass imagesRoom = new ImagesRoomClass();
-                imagesRoom.setImages(newUploadedUrls);
-                roomData.setImages(imagesRoom);
-                uploadRoomToFirebase(roomData);
+                updatedRoom.setImages(newUploadedUrls);
+                uploadRoomToFirebase(updatedRoom);
                 progressDialog.dismiss();
                 return;
             }
@@ -628,10 +623,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                 if (imageUri.toString().startsWith("https://")) {
                     uploadCount++;
                     if (uploadCount == totalImages) {
-                        ImagesRoomClass imagesRoom = new ImagesRoomClass();
-                        imagesRoom.setImages(newUploadedUrls);
-                        roomData.setImages(imagesRoom);
-                        uploadRoomToFirebase(roomData);
+                        updatedRoom.setImages(newUploadedUrls);
+                        uploadRoomToFirebase(updatedRoom);
                         progressDialog.dismiss();
                     }
                     continue;
@@ -646,14 +639,10 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                                 newUploadedUrls.add(uri.toString());
                                 uploadCount++;
 
-                                if (uploadCount == totalImages) {
-                                    if (!hasError[0] && !isFinishing()) {
-                                        ImagesRoomClass imagesRoom = new ImagesRoomClass();
-                                        imagesRoom.setImages(newUploadedUrls);
-                                        roomData.setImages(imagesRoom);
-                                        uploadRoomToFirebase(roomData);
-                                        progressDialog.dismiss();
-                                    }
+                                if (uploadCount == totalImages && !hasError[0]) {
+                                    updatedRoom.setImages(newUploadedUrls);
+                                    uploadRoomToFirebase(updatedRoom);
+                                    progressDialog.dismiss();
                                 }
                             });
                         })
@@ -668,8 +657,8 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                         });
             }
 
-            if (roomData.getImages() != null && roomData.getImages().getImages() != null) {
-                for (String oldImageUrl : roomData.getImages().getImages()) {
+            if (roomData.getImages() != null) {
+                for (String oldImageUrl : roomData.getImages()) {
                     if (!newUploadedUrls.contains(oldImageUrl)) {
                         try {
                             String filePath = oldImageUrl.substring(
@@ -685,12 +674,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                     }
                 }
             }
-
-            ImagesRoomClass imagesRoom = new ImagesRoomClass();
-            imagesRoom.setImages(newUploadedUrls);
-            updatedRoom.setImages(imagesRoom);
-            uploadRoomToFirebase(updatedRoom);
-            progressDialog.dismiss();
 
         } catch (Exception e) {
             if (!isFinishing()) {
@@ -773,13 +756,13 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         handleDataFurniture();
         handleDataExtensions();
 
-        ImagesRoomClass images;
+        ArrayList<String> images;
         if (!uploadedImageUrls.isEmpty()) {
-            images = new ImagesRoomClass(uploadedImageUrls);
+            images = new ArrayList<>(uploadedImageUrls);
         } else if (roomData.getImages() != null) {
-            images = roomData.getImages();
+            images = new ArrayList<>(roomData.getImages());
         } else {
-            images = new ImagesRoomClass(new ArrayList<>());
+            images = new ArrayList<>();
         }
 
         return new Room(
@@ -808,24 +791,90 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     }
 
     private void uploadRoomToFirebase(Room room) {
-        // Lấy reference đến node hiện tại
+        // Lấy reference đến node hiện tại và node mới
         DatabaseReference currentRef = FirebaseDatabase.getInstance()
                 .getReference("Rooms")
                 .child(roomData.getType_room() == 1 ? "ChungCuMini" : "Tro")
                 .child(roomData.getId_room());
 
-        // Lấy reference đến node mới (nếu type_room thay đổi)
         DatabaseReference newRef = FirebaseDatabase.getInstance()
                 .getReference("Rooms")
                 .child(room.getType_room() == 1 ? "ChungCuMini" : "Tro")
                 .child(room.getId_room());
 
-        // Nếu type_room thay đổi, xóa data cũ và tạo mới
+        // Nếu type_room thay đổi
         if (roomData.getType_room() != room.getType_room()) {
-            currentRef.removeValue().addOnSuccessListener(aVoid -> {
-                uploadData(room, newRef);
+            // Tạo dialog progress
+            AlertDialog progressDialog = new AlertDialog.Builder(this)
+                    .setView(R.layout.progress_layout)
+                    .setCancelable(false)
+                    .create();
+            progressDialog.show();
+
+            // Đọc userLovePost từ node cũ
+            currentRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    // Lấy toàn bộ dữ liệu của node cũ
+                    Map<String, Object> oldData = (Map<String, Object>) task.getResult().getValue();
+                    if (oldData != null && oldData.containsKey("userLovePost")) {
+                        Object userLovePost = oldData.get("userLovePost");
+                        
+                        // Xóa node cũ sau khi đã lấy được dữ liệu
+                        currentRef.removeValue().addOnSuccessListener(aVoid -> {
+                            // Thêm userLovePost vào room mới
+                            room.setUserLovePost(userLovePost);
+                            
+                            // Tạo Map dữ liệu mới để upload
+                            Map<String, Object> roomMap = new HashMap<>();
+                            roomMap.put("id_own_post", room.getId_own_post());
+                            roomMap.put("id_room", room.getId_room());
+                            roomMap.put("title_room", room.getTitle_room());
+                            roomMap.put("price_room", room.getPrice_room());
+                            roomMap.put("deposit_room", room.getDeposit_room());
+                            roomMap.put("area_room", room.getArea_room());
+                            roomMap.put("description_room", room.getDescription_room());
+                            roomMap.put("gender_room", room.getGender_room());
+                            roomMap.put("park_slot", room.getPark_slot());
+                            roomMap.put("person_in_room", room.getPerson_in_room());
+                            roomMap.put("status_room", room.getStatus_room());
+                            roomMap.put("type_room", room.getType_room());
+                            roomMap.put("phone", room.getPhone());
+                            roomMap.put("floor", room.getFloor());
+                            roomMap.put("price_electric", room.getPrice_electric());
+                            roomMap.put("price_water", room.getPrice_water());
+                            roomMap.put("price_internet", room.getPrice_internet());
+                            roomMap.put("address", room.getAddress());
+                            roomMap.put("roomFurniture", room.getRoomFurniture());
+                            roomMap.put("roomUtilities", room.getRoomUtilities());
+                            roomMap.put("images", room.getImages());
+                            roomMap.put("userLovePost", userLovePost);  // Thêm userLovePost vào dữ liệu mới
+
+                            // Upload lên node mới
+                            newRef.setValue(roomMap)
+                                    .addOnSuccessListener(aVoid2 -> {
+                                        progressDialog.dismiss();
+                                        Toast.makeText(UpdatePostRoomActivity.this, 
+                                                "Cập nhật thông tin phòng thành công", 
+                                                Toast.LENGTH_SHORT).show();
+                                        finish();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        progressDialog.dismiss();
+                                        Toast.makeText(UpdatePostRoomActivity.this,
+                                                "Cập nhật thất bại: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                    });
+                        });
+                    }
+                } else {
+                    progressDialog.dismiss();
+                    Toast.makeText(UpdatePostRoomActivity.this,
+                            "Không thể đọc dữ liệu hiện tại",
+                            Toast.LENGTH_SHORT).show();
+                }
             });
         } else {
+            // Nếu không thay đổi type_room, update bình thường
             uploadData(room, currentRef);
         }
     }
@@ -837,43 +886,51 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                 .create();
         progressDialog.show();
 
-        // Convert Room object to Map
-        Map<String, Object> roomMap = new HashMap<>();
-        roomMap.put("id_own_post", room.getId_own_post());
-        roomMap.put("id_room", room.getId_room());
-        roomMap.put("title_room", room.getTitle_room());
-        roomMap.put("price_room", room.getPrice_room());
-        roomMap.put("deposit_room", room.getDeposit_room());
-        roomMap.put("area_room", room.getArea_room());
-        roomMap.put("description_room", room.getDescription_room());
-        roomMap.put("gender_room", room.getGender_room());
-        roomMap.put("park_slot", room.getPark_slot());
-        roomMap.put("person_in_room", room.getPerson_in_room());
-        roomMap.put("status_room", room.getStatus_room());
-        roomMap.put("type_room", room.getType_room());
-        roomMap.put("phone", room.getPhone());
-        roomMap.put("floor", room.getFloor());
-        roomMap.put("price_electric", room.getPrice_electric());
-        roomMap.put("price_water", room.getPrice_water());
-        roomMap.put("price_internet", room.getPrice_internet());
-        roomMap.put("address", room.getAddress());
-        roomMap.put("roomFurniture", room.getRoomFurniture());
-        roomMap.put("roomUtilities", room.getRoomUtilities());
-        roomMap.put("images", room.getImages());
+        ref.child("userLovePost").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Object userLovePost = task.getResult().getValue();
 
-        ref.setValue(roomMap)
-                .addOnSuccessListener(aVoid -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(UpdatePostRoomActivity.this,
-                            "Cập nhật thông tin phòng thành công",
-                            Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(UpdatePostRoomActivity.this,
-                            "Cập nhật thất bại: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
+                Map<String, Object> roomMap = new HashMap<>();
+                roomMap.put("id_own_post", room.getId_own_post());
+                roomMap.put("id_room", room.getId_room());
+                roomMap.put("title_room", room.getTitle_room());
+                roomMap.put("price_room", room.getPrice_room());
+                roomMap.put("deposit_room", room.getDeposit_room());
+                roomMap.put("area_room", room.getArea_room());
+                roomMap.put("description_room", room.getDescription_room());
+                roomMap.put("gender_room", room.getGender_room());
+                roomMap.put("park_slot", room.getPark_slot());
+                roomMap.put("person_in_room", room.getPerson_in_room());
+                roomMap.put("status_room", room.getStatus_room());
+                roomMap.put("type_room", room.getType_room());
+                roomMap.put("phone", room.getPhone());
+                roomMap.put("floor", room.getFloor());
+                roomMap.put("price_electric", room.getPrice_electric());
+                roomMap.put("price_water", room.getPrice_water());
+                roomMap.put("price_internet", room.getPrice_internet());
+                roomMap.put("address", room.getAddress());
+                roomMap.put("roomFurniture", room.getRoomFurniture());
+                roomMap.put("roomUtilities", room.getRoomUtilities());
+                roomMap.put("images", room.getImages());
+
+                if (userLovePost != null) {
+                    roomMap.put("userLovePost", userLovePost);
+                }
+
+                ref.updateChildren(roomMap)
+                        .addOnSuccessListener(aVoid -> {
+                            progressDialog.dismiss();
+                            Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            progressDialog.dismiss();
+                            Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+            } else {
+                progressDialog.dismiss();
+                Toast.makeText(UpdatePostRoomActivity.this, "Không thể đọc dữ liệu hiện tại", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

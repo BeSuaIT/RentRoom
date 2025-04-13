@@ -27,7 +27,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -39,7 +38,6 @@ import android.widget.Toast;
 import com.example.timphongtro.Adapters.ImageAdapter;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Utility;
-import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.Furniture;
 import com.example.timphongtro.R;
@@ -425,12 +423,9 @@ public class PostRoomActivity extends AppCompatActivity {
         utilityArrayList = new ArrayList<>();
         handleDataExtensions();
 
-        ImagesRoomClass images = new ImagesRoomClass();
-        images.setImages(uploadedImageUrls);
-
         return new Room(id_own_post, id_room, title_room, price_room, address, area_room,
                 deposit_room, description_room, gender_room, park_slot,
-                person_in_room, status_room, type_room, phone, floor, images,
+                person_in_room, status_room, type_room, phone, floor, uploadedImageUrls,
                 furnitureArrayList, utilityArrayList,
                 Long.parseLong(edtElectric.getText().toString()),
                 Long.parseLong(edtWater.getText().toString()),
@@ -441,7 +436,31 @@ public class PostRoomActivity extends AppCompatActivity {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         String path_type = room.getType_room() == 1 ? "ChungCuMini" : "Tro";
         DatabaseReference myRef = database.getReference("Rooms/" + path_type);
-        myRef.child(room.getId_room()).setValue(room)
+
+        Map<String, Object> roomMap = new HashMap<>();
+        roomMap.put("id_own_post", room.getId_own_post());
+        roomMap.put("id_room", room.getId_room());
+        roomMap.put("title_room", room.getTitle_room());
+        roomMap.put("price_room", room.getPrice_room());
+        roomMap.put("deposit_room", room.getDeposit_room());
+        roomMap.put("area_room", room.getArea_room());
+        roomMap.put("description_room", room.getDescription_room());
+        roomMap.put("gender_room", room.getGender_room());  
+        roomMap.put("park_slot", room.getPark_slot());
+        roomMap.put("person_in_room", room.getPerson_in_room());
+        roomMap.put("status_room", room.getStatus_room());
+        roomMap.put("type_room", room.getType_room());
+        roomMap.put("phone", room.getPhone());
+        roomMap.put("floor", room.getFloor());
+        roomMap.put("price_electric", room.getPrice_electric());
+        roomMap.put("price_water", room.getPrice_water());
+        roomMap.put("price_internet", room.getPrice_internet());
+        roomMap.put("address", room.getAddress());
+        roomMap.put("roomFurniture", room.getRoomFurniture());
+        roomMap.put("roomUtilities", room.getRoomUtilities());
+        roomMap.put("images", room.getImages());
+
+        myRef.child(room.getId_room()).setValue(roomMap)
                 .addOnSuccessListener(unused -> {
                     Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                     finish();

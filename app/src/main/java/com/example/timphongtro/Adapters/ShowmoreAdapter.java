@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.DetailRoomActivity;
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 
@@ -48,8 +47,7 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         holder.area_room.setText(String.valueOf(room.getArea_room()));
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
-        ImagesRoomClass imagesRoomClass = room.getImages();
-        Glide.with(context).load(imagesRoomClass.getFirstImage()).centerCrop().into(holder.img_post);
+        Glide.with(context).load(room.getFirstImage()).centerCrop().into(holder.img_post);
 
         Address address = room.getAddress();
         holder.city.setText(address.getCity());

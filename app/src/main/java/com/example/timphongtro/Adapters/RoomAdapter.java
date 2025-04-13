@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.DetailRoomActivity;
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -61,7 +60,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
         holder.area_room.setText(String.valueOf(room.getArea_room()));
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
-        ArrayList<String> images = room.getImages().getImages();
+        ArrayList<String> images = room.getImages();
         if (images != null && !images.isEmpty()) {
             String firstImage = images.get(0);
             if (firstImage != null && !firstImage.isEmpty()) {

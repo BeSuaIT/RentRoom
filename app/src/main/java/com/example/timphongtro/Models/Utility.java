@@ -3,7 +3,6 @@ package com.example.timphongtro.Models;
 public class Utility {
     private String name;
     private String img;
-
     private String id;
 
     public Utility() {

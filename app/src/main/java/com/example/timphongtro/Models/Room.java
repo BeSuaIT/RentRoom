@@ -8,8 +8,9 @@ public class Room {
     private String id_own_post, id_room, title_room, area_room, description_room, gender_room, phone;
     private long price_room, deposit_room, price_electric, price_water, price_internet;
     private Address address;
-    private int park_slot, person_in_room, status_room, type_room, floor ,loveCount;
-    private ImagesRoomClass images;
+    private int park_slot, person_in_room, status_room, type_room, floor, loveCount;
+    private ArrayList<String> images;
+    private Object userLovePost;
     private ArrayList<Furniture> roomFurniture;
     private ArrayList<Utility> roomUtilities;
 
@@ -18,7 +19,7 @@ public class Room {
 
     public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room,
                 String description_room, String gender_room, int park_slot, int person_in_room, int status_room, int type_room, String phone,
-                int floor, ImagesRoomClass images, ArrayList<Furniture> roomFurniture, ArrayList<Utility> roomUtilities,
+                int floor, ArrayList<String> images, ArrayList<Furniture> roomFurniture, ArrayList<Utility> roomUtilities,
                 long price_electric, long price_water, long price_internet) {
         this.id_own_post = id_own_post;
         this.id_room = id_room;
@@ -171,14 +172,17 @@ public class Room {
         this.phone = phone;
     }
 
-    public ImagesRoomClass getImages() {
+    public ArrayList<String> getImages() {
         return images;
     }
 
-    public void setImages(ImagesRoomClass images) {
+    public void setImages(ArrayList<String> images) {
         this.images = images;
     }
 
+    public String getFirstImage() {
+        return images != null && !images.isEmpty() ? images.get(0) : "";
+    }
     public ArrayList<Furniture> getRoomFurniture() {
         return roomFurniture;
     }
@@ -201,6 +205,14 @@ public class Room {
 
     public void setRoomUtilities(ArrayList<Utility> roomUtilities) {
         this.roomUtilities = roomUtilities;
+    }
+
+    public Object getUserLovePost() {
+        return userLovePost;
+    }
+
+    public void setUserLovePost(Object userLovePost) {
+        this.userLovePost = userLovePost;
     }
 
     public String getId_own_post() {

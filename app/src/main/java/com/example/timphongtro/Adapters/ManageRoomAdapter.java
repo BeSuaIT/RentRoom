@@ -19,7 +19,6 @@ import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.DetailRoomActivity;
 import com.example.timphongtro.Activities.UpdatePostRoomActivity;
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -56,9 +55,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
             holder.area_room.setText(String.valueOf(room.getArea_room()));
             holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
-
-            ImagesRoomClass imagesRoomClass = room.getImages();
-            Glide.with(context).load(imagesRoomClass.getFirstImage()).centerCrop().into(holder.img_post);
+            Glide.with(context).load(room.getFirstImage()).centerCrop().into(holder.img_post);
 
             Address address = room.getAddress();
             holder.city.setText(address.getCity());

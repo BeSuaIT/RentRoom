@@ -180,7 +180,7 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void setupImageSlider() {
         ArrayList<SlideModel> slideModels = new ArrayList<>();
-        ArrayList<String> allImages = room.getImages().getImages();
+        ArrayList<String> allImages = room.getImages();
         if (allImages != null && !allImages.isEmpty()) {
             for (String imageUrl : allImages) {
                 if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -309,7 +309,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         ViewPager2 viewPager = dialogZoomImg.findViewById(R.id.viewPagerZoom);
         ImageView imageViewBack = dialogZoomImg.findViewById(R.id.imageViewBack);
 
-        ArrayList<String> allImages = room.getImages().getImages();
+        ArrayList<String> allImages = room.getImages();
         if (allImages != null && !allImages.isEmpty()) {
             ZoomImageAdapter adapter = new ZoomImageAdapter(this, allImages);
             viewPager.setAdapter(adapter);
