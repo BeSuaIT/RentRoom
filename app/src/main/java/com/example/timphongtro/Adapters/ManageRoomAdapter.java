@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.DetailRoomActivity;
-import com.example.timphongtro.Activities.UpdatePostRoomActivity;
+import com.example.timphongtro.Activities.EditPostActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
@@ -89,7 +89,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             });
 
             holder.imageViewEdit.setOnClickListener(v -> {
-                Intent updateRoom = new Intent(context, UpdatePostRoomActivity.class);
+                Intent updateRoom = new Intent(context, EditPostActivity.class);
                 updateRoom.putExtra("DataRoom", room.toString());
                 context.startActivity(updateRoom);
             });

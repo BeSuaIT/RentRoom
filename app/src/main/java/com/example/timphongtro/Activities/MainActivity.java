@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
         contract.setOnClickListener(v -> {
             dialog.dismiss();
-                Intent post = new Intent(this, PostRoomActivity.class);
+                Intent post = new Intent(this, PostActivity.class);
                 startActivity(post);
         });
 

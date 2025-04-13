@@ -65,7 +65,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PostRoomActivity extends AppCompatActivity {
+public class PostActivity extends AppCompatActivity {
     private static final int PERMISSION_CODE = 1001;
     private FirebaseUser userCurrent;
     private FirebaseStorage storage;
@@ -91,7 +91,7 @@ public class PostRoomActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_post_room);
+        setContentView(R.layout.activity_post);
 
         initializeFirebase();
         initializeViews();
@@ -188,7 +188,7 @@ public class PostRoomActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(
-                        PostRoomActivity.this,
+                        PostActivity.this,
                         android.R.layout.simple_spinner_item,
                         cities
                 );
@@ -215,7 +215,7 @@ public class PostRoomActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PostRoomActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PostActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -237,7 +237,7 @@ public class PostRoomActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(
-                        PostRoomActivity.this,
+                        PostActivity.this,
                         android.R.layout.simple_spinner_item,
                         districts
                 );
@@ -247,7 +247,7 @@ public class PostRoomActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PostRoomActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PostActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -356,7 +356,7 @@ public class PostRoomActivity extends AppCompatActivity {
                         });
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(PostRoomActivity.this,
+                        Toast.makeText(PostActivity.this,
                                 "Lỗi khi tải ảnh lên", Toast.LENGTH_SHORT).show();
                         progressDialog.dismiss();
                     });
@@ -462,11 +462,11 @@ public class PostRoomActivity extends AppCompatActivity {
 
         myRef.child(room.getId_room()).setValue(roomMap)
                 .addOnSuccessListener(unused -> {
-                    Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PostActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                     finish();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(PostRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(PostActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
                 );
     }
 

@@ -26,6 +26,9 @@
         android:theme="@style/Base.Theme.TimPhongTro"
         tools:targetApi="31">
         <activity
+            android:name=".Activities.PhoneVerificationActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activities.PaymentNotificationActivity"
             android:exported="true" />
         <activity
@@ -66,7 +69,7 @@
             android:name=".Activities.MyLovePostActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.UpdatePostRoomActivity"
+            android:name=".Activities.EditPostActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.CartActivity"
@@ -96,7 +99,7 @@
             android:name=".Activities.RegisterActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.PostRoomActivity"
+            android:name=".Activities.PostActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.ManagePostActivity"

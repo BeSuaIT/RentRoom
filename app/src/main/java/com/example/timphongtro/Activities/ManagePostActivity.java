@@ -53,7 +53,7 @@ public class ManagePostActivity extends AppCompatActivity {
         imageViewBack.setOnClickListener(v -> finish());
 
         imageViewPost.setOnClickListener(v -> {
-            Intent post = new Intent(ManagePostActivity.this, PostRoomActivity.class);
+            Intent post = new Intent(ManagePostActivity.this, PostActivity.class);
             startActivity(post);
         });
         userCurrent = FirebaseAuth.getInstance().getCurrentUser();

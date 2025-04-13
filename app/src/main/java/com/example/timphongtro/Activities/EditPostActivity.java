@@ -63,7 +63,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UpdatePostRoomActivity extends AppCompatActivity {
+public class EditPostActivity extends AppCompatActivity {
 
     private static final int PERMISSION_CODE = 1001;
     private FirebaseUser userCurrent;
@@ -91,7 +91,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_update_post_room);
+        setContentView(R.layout.activity_edit_post);
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -242,7 +242,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(
-                        UpdatePostRoomActivity.this,
+                        EditPostActivity.this,
                         android.R.layout.simple_spinner_item,
                         cities
                 );
@@ -272,7 +272,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(UpdatePostRoomActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditPostActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -293,14 +293,14 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                     }
                 }
 
-                ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(UpdatePostRoomActivity.this, android.R.layout.simple_spinner_item, districts);
+                ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(EditPostActivity.this, android.R.layout.simple_spinner_item, districts);
                 districtAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerDistrict.setAdapter(districtAdapter);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(UpdatePostRoomActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditPostActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -638,7 +638,7 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                             hasError[0] = true;
                             if (!isFinishing()) {
                                 progressDialog.dismiss();
-                                Toast.makeText(UpdatePostRoomActivity.this,
+                                Toast.makeText(EditPostActivity.this,
                                         "Lỗi tải ảnh: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
                             }
@@ -839,18 +839,18 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                             newRef.setValue(roomMap)
                                     .addOnSuccessListener(aVoid2 -> {
                                         progressDialog.dismiss();
-                                        Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(EditPostActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                                         finish();
                                     })
                                     .addOnFailureListener(e -> {
                                         progressDialog.dismiss();
-                                        Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(EditPostActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
                         });
                     }
                 } else {
                     progressDialog.dismiss();
-                    Toast.makeText(UpdatePostRoomActivity.this, "Không thể đọc dữ liệu hiện tại", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditPostActivity.this, "Không thể đọc dữ liệu hiện tại", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -900,16 +900,16 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                 ref.updateChildren(roomMap)
                         .addOnSuccessListener(aVoid -> {
                             progressDialog.dismiss();
-                            Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(EditPostActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                             finish();
                         })
                         .addOnFailureListener(e -> {
                             progressDialog.dismiss();
-                            Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(EditPostActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
             } else {
                 progressDialog.dismiss();
-                Toast.makeText(UpdatePostRoomActivity.this, "Không thể đọc dữ liệu hiện tại", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditPostActivity.this, "Không thể đọc dữ liệu hiện tại", Toast.LENGTH_SHORT).show();
             }
         });
     }

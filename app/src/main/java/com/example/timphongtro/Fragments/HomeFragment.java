@@ -20,7 +20,7 @@ import android.widget.Toast;
 import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
-import com.example.timphongtro.Activities.PostRoomActivity;
+import com.example.timphongtro.Activities.PostActivity;
 import com.example.timphongtro.Activities.SearchActivity;
 import com.example.timphongtro.Activities.ServiceActivity;
 import com.example.timphongtro.Adapters.DistrictAdapter;
@@ -84,7 +84,7 @@ public class HomeFragment extends Fragment {
 
         view.findViewById(R.id.find_room).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
         view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> {
-            Intent intent = (user != null) ? new Intent(getContext(), PostRoomActivity.class) : new Intent(getContext(), LoginActivity.class);
+            Intent intent = (user != null) ? new Intent(getContext(), PostActivity.class) : new Intent(getContext(), LoginActivity.class);
             startActivity(intent);
         });
         setupServiceClickListeners(view);

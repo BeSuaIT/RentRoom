@@ -1,5 +1,6 @@
 package com.example.timphongtro.Activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -8,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
@@ -21,6 +23,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.regex.Pattern;
 
 public class EditProfileActivity extends AppCompatActivity {
+    private static final int PHONE_VERIFICATION_REQUEST = 1;
     private FirebaseDatabase database;
     private FirebaseUser currentUser;
     private DatabaseReference userRef;
@@ -105,11 +108,20 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void updateUserProfile(String name, String phone) {
+        // Nếu số điện thoại thay đổi
+        if (!phone.equals(user.getPhone())) {
+            Intent intent = new Intent(this, PhoneVerificationActivity.class);
+            intent.putExtra("phone", phone);
+            startActivityForResult(intent, PHONE_VERIFICATION_REQUEST);
+            return;
+        }
+
+        // Nếu chỉ thay đổi tên
         User updatedUser = new User(
                 user.getEmail(),
                 currentUser.getUid(),
                 name,
-                phone,
+                user.getPhone(), // giữ nguyên số điện thoại cũ
                 user.getPermission(),
                 user.getCreatedAt()
         );
@@ -122,6 +134,14 @@ public class EditProfileActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         showToast("Cập nhật thất bại")
                 );
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PHONE_VERIFICATION_REQUEST && resultCode == RESULT_OK) {
+            finish(); // Đóng màn hình edit profile sau khi verify thành công
+        }
     }
 
     private void showToast(String message) {
