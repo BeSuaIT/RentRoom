@@ -66,19 +66,14 @@ import java.util.Map;
 public class UpdatePostRoomActivity extends AppCompatActivity {
 
     private static final int PERMISSION_CODE = 1001;
-    // Firebase instances
     private FirebaseUser userCurrent;
     private FirebaseStorage storage;
     private DatabaseReference citiesRef;
-
-    // UI Components
     private EditText edtTitleRoom, edtDeposit, edtPrice, edtInternet, edtElectric, edtWater,
             edtArea, edtPhone, edtFloor, edtPerson, edtDescriptionRoom, edtPark, edtAddress;
     private RadioGroup radioGroupType, radioGroupState;
     private Spinner spinnerCity, spinnerDistrict;
     private CheckBox[] utilityCheckboxes, furnitureCheckboxes, genderCheckboxes;
-
-    // Data holders
     private List<String> cities, districts;
     private ArrayList<Furniture> furnitures;
     private ArrayList<Utility> extensions_room;
@@ -89,8 +84,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     private ImageAdapter imageAdapter;
     private int uploadCount = 0;
     private Room roomData;
-
-    // Dialog
     private BottomSheetDialog dialog;
     private LinearLayout pickImgAlbum, pickImgCamera;
     private ActivityResultLauncher<Intent> activityResultLauncher, cameraLauncher;
@@ -192,7 +185,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
     }
 
     private void populateDataFromRoom() {
-        // Populate form fields with room data
         edtTitleRoom.setText(roomData.getTitle_room());
         edtPrice.setText(String.valueOf(roomData.getPrice_room()));
         edtDeposit.setText(String.valueOf(roomData.getDeposit_room()));
@@ -448,7 +440,15 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         cancelButton = dialog.findViewById(R.id.cancelButton);
 
         pickImgAlbum.setOnClickListener(v -> {
-            checkPermissions();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, PERMISSION_CODE);
+                }
+            } else {
+                if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
+                }
+            }
             Intent photoPicker = new Intent(Intent.ACTION_PICK);
             photoPicker.setType("image/*");
             photoPicker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -476,18 +476,6 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         dialog.getWindow().setGravity(Gravity.BOTTOM);
         dialog.setCancelable(true);
-    }
-
-    private void checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, PERMISSION_CODE);
-            }
-        } else {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
-            }
-        }
     }
 
     private void setupActivityResultLaunchers() {
@@ -804,14 +792,12 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
 
         // Nếu type_room thay đổi
         if (roomData.getType_room() != room.getType_room()) {
-            // Tạo dialog progress
             AlertDialog progressDialog = new AlertDialog.Builder(this)
                     .setView(R.layout.progress_layout)
                     .setCancelable(false)
                     .create();
             progressDialog.show();
 
-            // Đọc userLovePost từ node cũ
             currentRef.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult() != null) {
                     // Lấy toàn bộ dữ liệu của node cũ
@@ -847,30 +833,24 @@ public class UpdatePostRoomActivity extends AppCompatActivity {
                             roomMap.put("roomFurniture", room.getRoomFurniture());
                             roomMap.put("roomUtilities", room.getRoomUtilities());
                             roomMap.put("images", room.getImages());
-                            roomMap.put("userLovePost", userLovePost);  // Thêm userLovePost vào dữ liệu mới
+                            roomMap.put("userLovePost", userLovePost);
 
                             // Upload lên node mới
                             newRef.setValue(roomMap)
                                     .addOnSuccessListener(aVoid2 -> {
                                         progressDialog.dismiss();
-                                        Toast.makeText(UpdatePostRoomActivity.this, 
-                                                "Cập nhật thông tin phòng thành công", 
-                                                Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                                         finish();
                                     })
                                     .addOnFailureListener(e -> {
                                         progressDialog.dismiss();
-                                        Toast.makeText(UpdatePostRoomActivity.this,
-                                                "Cập nhật thất bại: " + e.getMessage(),
-                                                Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(UpdatePostRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
                         });
                     }
                 } else {
                     progressDialog.dismiss();
-                    Toast.makeText(UpdatePostRoomActivity.this,
-                            "Không thể đọc dữ liệu hiện tại",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UpdatePostRoomActivity.this, "Không thể đọc dữ liệu hiện tại", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
