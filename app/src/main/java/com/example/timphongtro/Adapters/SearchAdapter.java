@@ -15,30 +15,29 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.DetailRoomActivity;
 import com.example.timphongtro.Models.Address;
-import com.example.timphongtro.Models.ImagesRoomClass;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHolder> {
-    Context context;
-    ArrayList<Room> list;
-    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    FirebaseUser user = firebaseAuth.getCurrentUser();
-    Room room;
+    private final Context context;
+    private ArrayList<Room> list;
+    private final FirebaseAuth firebaseAuth;
+    private final DecimalFormat decimalFormat;
+
     public SearchAdapter(Context context, ArrayList<Room> list) {
         this.context = context;
         this.list = list;
+        this.firebaseAuth = FirebaseAuth.getInstance();
+        this.decimalFormat = new DecimalFormat("#,###");
+        this.decimalFormat.setDecimalSeparatorAlwaysShown(false);
     }
 
     @NonNull
@@ -50,68 +49,71 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
-        decimalFormat.setDecimalSeparatorAlwaysShown(false);
         Room room = list.get(position);
+
         holder.title_room.setText(room.getTitle_room());
         holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
         holder.area_room.setText(String.valueOf(room.getArea_room()));
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
-        ImagesRoomClass imagesRoomClass = room.getImages();
-        Glide.with(context).load(imagesRoomClass.getFirstImage()).centerCrop().into(holder.img_post);
+        if (room.getImages() != null && room.getFirstImage() != null) {
+            Glide.with(context)
+                    .load(room.getFirstImage())
+                    .placeholder(R.drawable.img_no_image)
+                    .error(R.drawable.img_no_image)
+                    .centerCrop()
+                    .into(holder.img_post);
+        }
 
         Address address = room.getAddress();
-        holder.city.setText(address.getCity());
-        holder.district.setText(address.getDistrict());
-        holder.detail.setText(address.getDetail());
+        if (address != null) {
+            holder.city.setText(address.getCity());
+            holder.district.setText(address.getDistrict());
+            holder.detail.setText(address.getDetail());
+        }
+
         holder.cardViewRoom.setOnClickListener(v -> {
-            String userID = "";
-            if(user != null) {
-                userID = user.getUid();
+            FirebaseUser user = firebaseAuth.getCurrentUser();
+            if (user != null) {
+                saveToRecentlyRead(user.getUid(), room.getId_room());
             }
-            Intent detailRoom = new Intent(context, DetailRoomActivity.class);
-            detailRoom.putExtra("DataRoom", room.toString());
-            context.startActivity(detailRoom);
-            RecentlyRead(userID,holder);
+            navigateToDetail(room);
         });
     }
 
-    private void RecentlyRead(String userID, SearchAdapter.MyViewHolder holder) {
-        if(user != null) {
+    private void saveToRecentlyRead(String userId, String roomId) {
+        DatabaseReference historyRef = FirebaseDatabase.getInstance()
+                .getReference("Histories")
+                .child(userId)
+                .child(roomId);
 
-            room = list.get(holder.getAdapterPosition());
-            Date timeRead = new Date();
-            long timestamp = timeRead.getTime();
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Histories/" + userID);
-            databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    databaseReference.child(room.getId_room()).setValue(timestamp);
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                }
-            });
-        }
+        historyRef.setValue(new Date().getTime())
+                .addOnFailureListener(e -> {
+                });
     }
+
+    private void navigateToDetail(Room room) {
+        Intent detailRoom = new Intent(context, DetailRoomActivity.class);
+        detailRoom.putExtra("DataRoom", room.toString());
+        context.startActivity(detailRoom);
+    }
+
     @Override
     public int getItemCount() {
         return list.size();
     }
 
     public void searchDataList(ArrayList<Room> searchList) {
-        list = searchList;
+        this.list = searchList;
         notifyDataSetChanged();
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
+        final TextView title_room, price_room, area_room, city, district, detail, people_room;
+        final ImageView img_post;
+        final CardView cardViewRoom;
 
-        TextView people_room, price_room, area_room, city, district, detail, title_room;
-        ImageView img_post;
-        CardView cardViewRoom;
-
-        public MyViewHolder(@NonNull View itemView) {
+        MyViewHolder(@NonNull View itemView) {
             super(itemView);
             title_room = itemView.findViewById(R.id.PostTitle);
             price_room = itemView.findViewById(R.id.RoomCost);
