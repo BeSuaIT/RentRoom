@@ -145,24 +145,49 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void saveUserToDatabase(FirebaseUser user) {
-        HashMap<String, Object> userMap = new HashMap<>();
-        userMap.put("uid", user.getUid());
-        userMap.put("email", user.getEmail());
-        userMap.put("name", user.getDisplayName());
-        userMap.put("phone", "");
-        userMap.put("permission", "user");
-        userMap.put("createdAt", System.currentTimeMillis());
+        // Kiểm tra user đã tồn tại chưa
+        databaseReference.child(user.getUid()).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (task.getResult().exists()) {
+                    HashMap<String, Object> updates = new HashMap<>();
+                    updates.put("email", user.getEmail());
+                    updates.put("name", user.getDisplayName());
 
-        databaseReference.child(user.getUid()).setValue(userMap)
-                .addOnSuccessListener(unused -> {
-                    showToast("Đăng nhập thành công");
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    showToast("Lỗi lưu dữ liệu: " + e.getMessage());
-                    firebaseAuth.signOut();
-                });
+                    databaseReference.child(user.getUid()).updateChildren(updates)
+                        .addOnSuccessListener(unused -> {
+                            showToast("Đăng nhập thành công");
+                            startActivity(new Intent(this, MainActivity.class));
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            showToast("Lỗi cập nhật dữ liệu: " + e.getMessage());
+                            firebaseAuth.signOut();
+                        });
+                } else {
+                    HashMap<String, Object> userMap = new HashMap<>();
+                    userMap.put("uid", user.getUid());
+                    userMap.put("email", user.getEmail());
+                    userMap.put("name", user.getDisplayName());
+                    userMap.put("phone", "");
+                    userMap.put("permission", "user");
+                    userMap.put("createdAt", System.currentTimeMillis());
+
+                    databaseReference.child(user.getUid()).setValue(userMap)
+                        .addOnSuccessListener(unused -> {
+                            showToast("Đăng nhập thành công");
+                            startActivity(new Intent(this, MainActivity.class));
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            showToast("Lỗi lưu dữ liệu: " + e.getMessage());
+                            firebaseAuth.signOut();
+                        });
+                }
+            } else {
+                showToast("Lỗi kiểm tra dữ liệu: " + task.getException().getMessage());
+                firebaseAuth.signOut();
+            }
+        });
     }
 
     private void signInWithCredentialManager() {
