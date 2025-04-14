@@ -28,9 +28,15 @@
     <color name="orange_10">#1AFF9800</color>
     <color name="orange_5">#0DFF9800</color>
 
+
+    <color name="status_pending">#FFA000</color>
+    <color name="status_sent">#2196F3</color>
+    <color name="status_approved">#4CAF50</color>
+    <color name="status_rejected">#F44336</color>
+    <color name="gray">#757575</color>
+
     <color name="black">#000000</color>
     <color name="red">#FF0000</color>
-    <color name="gray">#757575</color>
     <color name="green">#00FF00</color>
     <color name="red_300">#E2593E</color>
     <color name="red_600">#DC6A53</color>

@@ -28,40 +28,57 @@ public class ServiceActivity extends AppCompatActivity {
     private ImageView cart_button, back_button;
     private ServiceAdapter serviceAdapter;
     private ArrayList<Service> serviceArrayList;
-    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    private FirebaseUser user = firebaseAuth.getCurrentUser();
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser user;
     private String item;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service);
+        
+        // Initialize views and firebase
+        initializeViews();
+        initializeFirebase();
+
+        // Get intent data
+        item = getIntent().getStringExtra("item");
+        if (item == null) {
+            finish();
+            return;
+        }
+
+        // Setup click listeners
+        setupClickListeners();
+
+        // Initialize RecyclerView and load data
+        initializeRecyclerView();
+        loadServicesFromDatabase();
+    }
+
+    private void initializeViews() {
         cart_button = findViewById(R.id.button_cart);
         back_button = findViewById(R.id.imageView_back);
+        rcv_service = findViewById(R.id.rcv_service);
+    }
 
-        item = "";
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            item = bundle.getString("item");
-            back_button.setOnClickListener(v -> finish());
+    private void initializeFirebase() {
+        firebaseAuth = FirebaseAuth.getInstance();
+        user = firebaseAuth.getCurrentUser();
+    }
 
-            cart_button.setOnClickListener(v -> {
-                if (user != null) {
-                    openServiceActivity(item);
-                } else {
-                    Intent intent = new Intent(ServiceActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                }
-            });
-
-            initializeRecyclerView();
-            loadServicesFromDatabase();
-        }
+    private void setupClickListeners() {
+        back_button.setOnClickListener(v -> finish());
+        
+        cart_button.setOnClickListener(v -> {
+            Intent intent = user != null ? 
+                new Intent(this, CartActivity.class) : 
+                new Intent(this, LoginActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void initializeRecyclerView() {
-        rcv_service = findViewById(R.id.rcv_service);
-
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         rcv_service.setLayoutManager(gridLayoutManager);
 

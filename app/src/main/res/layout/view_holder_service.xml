@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/rounded_button"
+                android:backgroundTint="@color/orange_100"
                 android:text="Thêm vào giỏ hàng"
                 android:textColor="@color/white_100" />
 

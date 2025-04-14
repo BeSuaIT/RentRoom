@@ -84,7 +84,7 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
                 DatabaseReference cartRef = FirebaseDatabase.getInstance()
                         .getReference("Carts")
                         .child(userID)
-                        .child(sellerId);  // Group by seller first
+                        .child(sellerId);
 
                 cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override

@@ -142,17 +142,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
         return sellerIds.size();
     }
 
-    private void removeItem(String sellerId, String serviceId) {
-        cartRef.child(sellerId).child(serviceId).removeValue()
-                .addOnSuccessListener(aVoid -> {
-                    // Item removed successfully
-                })
-                .addOnFailureListener(e -> {
-                    // Handle error
-                });
-    }
-
-    static class SellerViewHolder extends RecyclerView.ViewHolder {
+    public static class SellerViewHolder extends RecyclerView.ViewHolder {
         final TextView sellerName;
         final RecyclerView itemsRecyclerView;
 

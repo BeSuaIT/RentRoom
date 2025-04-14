@@ -35,10 +35,24 @@
     <string name="send">Đã gửi</string>
     <string name="Search">Tìm kiếm...</string>
 
-
     <string name="facebook_app_id">1093262142482244</string>
     <string name="fb_login_protocol_scheme">fb1093262142482244</string>
     <string name="facebook_client_token">23ac5f16f915c119404ab4a260b52225</string>
 
+    <!-- Schedule Visit Status -->
+    <string name="reject">Từ chối</string>
+    <string name="cancel">Hủy</string>
+
+    <!-- Schedule Visit Dialog -->
+    <string name="confirmation">Xác nhận lịch hẹn</string>
+    <string name="confirm_schedule_message">Bạn có muốn xác nhận lịch hẹn này không?</string>
+    <string name="schedule_approved">Đã xác nhận lịch hẹn</string>
+    <string name="schedule_rejected">Đã từ chối lịch hẹn</string>
+
+    <!-- Schedule Visit Details -->
+    <string name="detail_schedule_title">Chi tiết lịch hẹn</string>
+    <string name="phone_number">Số điện thoại: %s</string>
+    <string name="visit_time">Thời gian xem: %s</string>
+    <string name="note">Ghi chú: %s</string>
 
 </resources>
