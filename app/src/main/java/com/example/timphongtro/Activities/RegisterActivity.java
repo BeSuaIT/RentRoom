@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.Validator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
@@ -29,16 +30,14 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         initFirebase();
-
-        if (firebaseAuth.getCurrentUser() != null) {
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
-        }
-
         initViews();
     }
 
     private void initFirebase() {
+        if (firebaseAuth.getCurrentUser() != null) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
         firebaseAuth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference("Users");
     }
@@ -62,6 +61,26 @@ public class RegisterActivity extends AppCompatActivity {
         checkEmailExists(email, password);
     }
 
+    private boolean validateInput(String name, String email, String password) {
+        if (TextUtils.isEmpty(name)) {
+            setError(nameEditText, "Vui lòng nhập tên");
+            return false;
+        }
+        if (TextUtils.isEmpty(email)) {
+            setError(emailEditText, "Vui lòng nhập email");
+            return false;
+        }
+        if (!Validator.isValidEmail(email)) {
+            setError(emailEditText, "Email không hợp lệ");
+            return false;
+        }
+        if (TextUtils.isEmpty(password) || password.length() < 6) {
+            setError(passwordEditText, "Mật khẩu phải có ít nhất 6 ký tự");
+            return false;
+        }
+        return true;
+    }
+
     private void checkEmailExists(String email, String password) {
         firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(task -> {
@@ -79,51 +98,6 @@ public class RegisterActivity extends AppCompatActivity {
                     } else {
                         showToast("Lỗi đăng ký");
                     }
-                }
-            });
-    }
-
-    private boolean validateInput(String name, String email, String password) {
-        if (TextUtils.isEmpty(name)) {
-            setError(nameEditText, "Vui lòng nhập tên");
-            return false;
-        }
-        if (TextUtils.isEmpty(email)) {
-            setError(emailEditText, "Vui lòng nhập email");
-            return false;
-        }
-        if (TextUtils.isEmpty(password) || password.length() < 6) {
-            setError(passwordEditText, "Mật khẩu phải có ít nhất 6 ký tự");
-            return false;
-        }
-        return true;
-    }
-
-    private void setError(EditText editText, String error) {
-        editText.setError(error);
-        editText.requestFocus();
-    }
-
-    private void createUser(String email, String password) {
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful() && task.getResult().getUser() != null) {
-                    sendVerificationEmail(task.getResult().getUser());
-                } else {
-                    hideLoadingDialog();
-                    String errorMessage;
-                    if (task.getException() instanceof FirebaseAuthException) {
-                        FirebaseAuthException e = (FirebaseAuthException) task.getException();
-                        if (e.getErrorCode().equals("ERROR_EMAIL_ALREADY_IN_USE")) {
-                            errorMessage = "Email này đã được sử dụng";
-                            setError(emailEditText, errorMessage);
-                        } else {
-                            errorMessage = "Đăng ký thất bại: " + e.getMessage();
-                        }
-                    } else {
-                        errorMessage = "Đăng ký thất bại";
-                    }
-                    showToast(errorMessage);
                 }
             });
     }
@@ -163,10 +137,6 @@ public class RegisterActivity extends AppCompatActivity {
             });
     }
 
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
     private void showLoadingDialog() {
         if (loadingDialog == null) {
             loadingDialog = new AlertDialog.Builder(this)
@@ -181,5 +151,14 @@ public class RegisterActivity extends AppCompatActivity {
         if (loadingDialog != null && loadingDialog.isShowing()) {
             loadingDialog.dismiss();
         }
+    }
+
+    private void setError(EditText editText, String error) {
+        editText.setError(error);
+        editText.requestFocus();
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

@@ -12,6 +12,7 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.Validator;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -48,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextView registerTextView, forgotPasswordTextView;
     private ImageView googleSignInImageView, facebookSignInImageView;
     private Button loginButton;
+    private AlertDialog loadingDialog;
     private FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
     private CredentialManager credentialManager;
@@ -110,8 +113,10 @@ public class LoginActivity extends AppCompatActivity {
 
         if (!validateInput(email, password)) return;
 
+        showLoadingDialog();
         firebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
+                    hideLoadingDialog();
                     if (task.isSuccessful() && task.getResult().getUser() != null) {
                         if (task.getResult().getUser().isEmailVerified()) {
                             showToast("Đăng nhập thành công");
@@ -130,70 +135,22 @@ public class LoginActivity extends AppCompatActivity {
 
     private boolean validateInput(String email, String password) {
         if (TextUtils.isEmpty(email)) {
-            emailEditText.setError("Vui lòng nhập Email");
-            emailEditText.requestFocus();
+            setError(emailEditText, "Vui lòng nhập Email");
             return false;
         }
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailEditText.setError("Email không hợp lệ");
-            emailEditText.requestFocus();
+        if (!Validator.isValidEmail(email)) {
+            setError(emailEditText, "Email không hợp lệ");
             return false;
         }
         if (TextUtils.isEmpty(password) || password.length() < 6) {
-            passwordEditText.setError("Mật khẩu phải có ít nhất 6 ký tự");
-            passwordEditText.requestFocus();
+            setError(passwordEditText, "Mật khẩu phải có ít nhất 6 ký tự");
             return false;
         }
         return true;
     }
 
-    private void saveUserToDatabase(FirebaseUser user) {
-        // Kiểm tra user đã tồn tại chưa
-        databaseReference.child(user.getUid()).get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                if (task.getResult().exists()) {
-                    HashMap<String, Object> updates = new HashMap<>();
-                    updates.put("email", user.getEmail());
-                    updates.put("name", user.getDisplayName());
-
-                    databaseReference.child(user.getUid()).updateChildren(updates)
-                        .addOnSuccessListener(unused -> {
-                            showToast("Đăng nhập thành công");
-                            startActivity(new Intent(this, MainActivity.class));
-                            finish();
-                        })
-                        .addOnFailureListener(e -> {
-                            showToast("Lỗi cập nhật dữ liệu: " + e.getMessage());
-                            firebaseAuth.signOut();
-                        });
-                } else {
-                    HashMap<String, Object> userMap = new HashMap<>();
-                    userMap.put("uid", user.getUid());
-                    userMap.put("email", user.getEmail());
-                    userMap.put("name", user.getDisplayName());
-                    userMap.put("phone", "");
-                    userMap.put("permission", "user");
-                    userMap.put("createdAt", System.currentTimeMillis());
-
-                    databaseReference.child(user.getUid()).setValue(userMap)
-                        .addOnSuccessListener(unused -> {
-                            showToast("Đăng nhập thành công");
-                            startActivity(new Intent(this, MainActivity.class));
-                            finish();
-                        })
-                        .addOnFailureListener(e -> {
-                            showToast("Lỗi lưu dữ liệu: " + e.getMessage());
-                            firebaseAuth.signOut();
-                        });
-                }
-            } else {
-                showToast("Lỗi kiểm tra dữ liệu: " + task.getException().getMessage());
-                firebaseAuth.signOut();
-            }
-        });
-    }
-
     private void signInWithCredentialManager() {
+        showLoadingDialog();
         GetCredentialRequest request = new GetCredentialRequest.Builder()
                 .addCredentialOption(getGoogleIdOption)
                 .build();
@@ -218,12 +175,14 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                 }
                             } catch (Exception e) {
+                                hideLoadingDialog();
                                 showToast("Lỗi xử lý đăng nhập: " + e.getMessage());
                             }
                         }
 
                         @Override
                         public void onError(@NonNull GetCredentialException e) {
+                            hideLoadingDialog();
                             showToast("Đăng nhập thất bại: " + e.getMessage());
                         }
                     });
@@ -243,6 +202,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void signInWithFacebook() {
+        showLoadingDialog();
         loginManager.logInWithReadPermissions(this, Arrays.asList("email", "public_profile"));
         loginManager.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -252,11 +212,13 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onCancel() {
+                hideLoadingDialog();
                 showToast("Đăng nhập Facebook đã bị hủy");
             }
 
             @Override
             public void onError(@NonNull FacebookException e) {
+                hideLoadingDialog();
                 showToast("Đăng nhập Facebook thất bại: " + e.getMessage());
             }
         });
@@ -277,8 +239,79 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
+    private void saveUserToDatabase(FirebaseUser user) {
+        databaseReference.child(user.getUid()).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (task.getResult().exists()) {
+                    HashMap<String, Object> updates = new HashMap<>();
+                    updates.put("email", user.getEmail());
+                    updates.put("name", user.getDisplayName());
+
+                    databaseReference.child(user.getUid()).updateChildren(updates)
+                            .addOnSuccessListener(unused -> {
+                                hideLoadingDialog();
+                                showToast("Đăng nhập thành công");
+                                startActivity(new Intent(this, MainActivity.class));
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                hideLoadingDialog();
+                                showToast("Lỗi cập nhật dữ liệu: " + e.getMessage());
+                                firebaseAuth.signOut();
+                            });
+                } else {
+                    HashMap<String, Object> userMap = new HashMap<>();
+                    userMap.put("uid", user.getUid());
+                    userMap.put("email", user.getEmail());
+                    userMap.put("name", user.getDisplayName());
+                    userMap.put("phone", "");
+                    userMap.put("permission", "user");
+                    userMap.put("createdAt", System.currentTimeMillis());
+
+                    databaseReference.child(user.getUid()).setValue(userMap)
+                            .addOnSuccessListener(unused -> {
+                                hideLoadingDialog();
+                                showToast("Đăng nhập thành công");
+                                startActivity(new Intent(this, MainActivity.class));
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                hideLoadingDialog();
+                                showToast("Lỗi lưu dữ liệu: " + e.getMessage());
+                                firebaseAuth.signOut();
+                            });
+                }
+            } else {
+                hideLoadingDialog();
+                showToast("Lỗi kiểm tra dữ liệu: " + task.getException().getMessage());
+                firebaseAuth.signOut();
+            }
+        });
+    }
+
+    private void setError(EditText editText, String error) {
+        editText.setError(error);
+        editText.requestFocus();
+    }
+
     private void showToast(String message) {
         Toast.makeText(this, message, LENGTH_SHORT).show();
+    }
+
+    private void showLoadingDialog() {
+        if (loadingDialog == null) {
+            loadingDialog = new AlertDialog.Builder(this)
+                    .setView(R.layout.progress_layout)
+                    .setCancelable(false)
+                    .create();
+        }
+        loadingDialog.show();
+    }
+
+    private void hideLoadingDialog() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
     }
 
     @Override
