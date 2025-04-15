@@ -72,7 +72,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     private Button callButton, scheduleVisitButton;
     private MaterialCardView userPostCard;
     private ImageSlider roomImageSlider;
-    private MaterialButton confirmButton, zaloButton;
+    private MaterialButton confirmButton, followButton;
     private EditText nameEditText, phoneEditText, noteEditText;
     private BottomSheetDialog scheduleVisitDialog;
     private Dialog dialogZoomImg;
@@ -90,7 +90,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_room);
-        
+
         initializeViews();
         setupFirebaseReferences();
         loadRoomData();
@@ -122,13 +122,13 @@ public class DetailRoomActivity extends AppCompatActivity {
         userPostCard = findViewById(R.id.userPostCard);
         userNameTextView = findViewById(R.id.userNameTextView);
         userProfileTextView = findViewById(R.id.userProfileTextView);
-        zaloButton = findViewById(R.id.zaloButton);
+        followButton = findViewById(R.id.followButton); // thay thế zaloButton
 
         imageViewBack.setOnClickListener(v -> finish());
         callButton.setOnClickListener(v -> handleCallButtonClick());
         scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
         imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
-        zaloButton.setOnClickListener(v -> openZaloChat());
+        followButton.setOnClickListener(v -> handleFollowButtonClick());
         userPostCard.setOnClickListener(v -> {
             Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
             intent.putExtra("id_own_post", room.getId_own_post());
@@ -153,10 +153,13 @@ public class DetailRoomActivity extends AppCompatActivity {
             setupAdapters();
             loadUserPostInfo();
             checkLoveRoom();
+            checkFollowStatus();
         }
     }
 
     private void displayRoomDetails() {
+        if (room == null) return;
+        
         String typeRoomStr = room.getType_room() == 0 ? "Trọ" : "Chung cư mini";
         roomTypeTextView.setText(typeRoomStr);
         roomTitleTextView.setText(room.getTitle_room());
@@ -451,13 +454,63 @@ public class DetailRoomActivity extends AppCompatActivity {
         roomDatabaseRef = firebaseDatabase.getReference("Rooms/" + typeRoom + room.getId_room());
     }
 
-    private void openZaloChat() {
-        String url = "http://zalo.me/" + "0964259203";
+    private void handleFollowButtonClick() {
+        if (currentUser == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập để theo dõi", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
 
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(url));
-        Toast.makeText(DetailRoomActivity.this, "Bạn chỉ sử dụng chức năng khi máy đã cài đặt Zalo", Toast.LENGTH_SHORT).show();
-        startActivity(intent);
+        DatabaseReference followRef = FirebaseDatabase.getInstance()
+                .getReference("FollowPosts")
+                .child(currentUser.getUid())
+                .child(room.getId_room());
+
+        followRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (task.getResult().exists()) {
+                    followRef.removeValue()
+                        .addOnSuccessListener(unused -> {
+                            followButton.setText("Theo dõi");
+                            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                            Toast.makeText(this, "Đã bỏ theo dõi", Toast.LENGTH_SHORT).show();
+                        });
+                } else {
+                    followRef.setValue(true)
+                        .addOnSuccessListener(unused -> {
+                            followButton.setText("Đã theo dõi");
+                            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                            Toast.makeText(this, "Đã theo dõi phòng này", Toast.LENGTH_SHORT).show();
+                        });
+                }
+            }
+        });
+    }
+
+    private void checkFollowStatus() {
+        if (currentUser != null) {
+            DatabaseReference followRef = FirebaseDatabase.getInstance()
+                    .getReference("FollowPosts")
+                    .child(currentUser.getUid())
+                    .child(room.getId_room());
+
+            followRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        followButton.setText("Đã theo dõi");
+                        followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                    } else {
+                        followButton.setText("Theo dõi");
+                        followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
+            });
+        }
     }
 
     public static String getFirstLetter(String input) {

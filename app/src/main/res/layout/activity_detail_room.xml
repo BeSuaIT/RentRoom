@@ -678,17 +678,17 @@
             android:padding="8dp">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/zaloButton"
+                android:id="@+id/followButton"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="Chat"
+                android:text="Theo dõi"
                 android:textColor="@color/orange_100"
-                app:icon="@drawable/ic_zalo"
+                app:icon="@drawable/ic_follow"
                 app:strokeColor="@color/orange_100"/>
-
+                
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/callButton"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"

@@ -3,7 +3,6 @@ package com.example.timphongtro.Fragments;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -11,8 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
-import com.example.timphongtro.Adapters.RoomAdapter;
+import com.example.timphongtro.Adapters.FollowRoomAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,99 +26,78 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class FollowFragment extends Fragment {
-    FirebaseUser user;
-    FirebaseDatabase database;
-    DatabaseReference myLovePostRef;
-    DatabaseReference roomRef;
-    ArrayList<String> roomsLove;
-    ArrayList<Room> rooms;
-    RoomAdapter roomAdapter;
-    RecyclerView rcvLovePost;
+    private RecyclerView rcvFollowPost;
+    private ArrayList<Room> followedRooms;
+    private FollowRoomAdapter roomAdapter;
+    private FirebaseUser currentUser;
+    private DatabaseReference followPostsRef;
+
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_follow, container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_follow, container, false);
+        initViews(view);
+        loadFollowedRooms();
+        return view;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        database = FirebaseDatabase.getInstance();
+    private void initViews(View view) {
+        rcvFollowPost = view.findViewById(R.id.rcvFollowPost);
+        followedRooms = new ArrayList<>();
+        roomAdapter = new FollowRoomAdapter(requireContext(), followedRooms); // Thay đổi adapter
+        rcvFollowPost.setLayoutManager(new LinearLayoutManager(getContext()));
+        rcvFollowPost.setAdapter(roomAdapter);
 
-        rcvLovePost = view.findViewById(R.id.rcvLovePost);
-        roomsLove = new ArrayList<>();
-        rooms = new ArrayList<>();
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
-        linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
-        rcvLovePost.setLayoutManager(linearLayoutManager);
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        followPostsRef = FirebaseDatabase.getInstance().getReference("FollowPosts");
+    }
 
-        if (user != null) {
-            myLovePostRef = database.getReference("LovePost/" + user.getUid());
-            myLovePostRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                            String roomInLove = dataSnapshot.getKey();
-                            roomsLove.add(roomInLove);
-                        }
-                        roomRef = database.getReference("rooms");
-                        roomRef.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                rooms.clear();
-                                if (snapshot.exists()) {
-                                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                        String key = dataSnapshot.getKey();
-                                        if (key.equals("Tro") || key.equals("ChungCuMini")) {
-                                            for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                                                if (childSnapshot.exists()) {
-                                                    if (roomsLove.contains(childSnapshot.getKey())) {
-                                                        Room room = childSnapshot.getValue(Room.class);
-                                                        if (room != null) {
-                                                            if (room.getStatus_room() != 1) {
-                                                                rooms.add(room);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                roomAdapter.notifyDataSetChanged();
-                                updateRecyclerViewVisibility(rooms, rcvLovePost, view.findViewById(R.id.noHasLovePost));
-                            }
+    private void loadFollowedRooms() {
+        if (currentUser == null) return;
 
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
+        followPostsRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                followedRooms.clear();
+                for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                    String roomId = roomSnapshot.getKey();
+                    // Kiểm tra trong cả 2 loại phòng
+                    checkRoomInType(roomId, "Tro");
+                    checkRoomInType(roomId, "ChungCuMini");
+                }
+            }
 
-                            }
-                        });
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "Lỗi tải danh sách theo dõi", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void checkRoomInType(String roomId, String type) {
+        DatabaseReference roomsRef = FirebaseDatabase.getInstance()
+                .getReference("Rooms")
+                .child(type)
+                .child(roomId);
+
+        roomsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Room room = snapshot.getValue(Room.class);
+                    if (room != null) {
+                        // Set the type_room based on the node
+                        room.setType_room(type.equals("ChungCuMini") ? 1 : 0);
+                        followedRooms.add(room);
+                        roomAdapter.notifyDataSetChanged();
                     }
                 }
+            }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
-                }
-            });
-        }
-
-
-        roomAdapter = new RoomAdapter(getContext(), rooms);
-        rcvLovePost.setAdapter(roomAdapter);
-    }
-
-    private void updateRecyclerViewVisibility(ArrayList<Room> rooms, RecyclerView rcvLovePost, View noHasLovePostView) {
-        if (rooms.isEmpty()) {
-            rcvLovePost.setVisibility(View.GONE);
-            noHasLovePostView.setVisibility(View.VISIBLE);
-        } else {
-            rcvLovePost.setVisibility(View.VISIBLE);
-            noHasLovePostView.setVisibility(View.GONE);
-        }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), 
+                    "Lỗi tải thông tin phòng", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
