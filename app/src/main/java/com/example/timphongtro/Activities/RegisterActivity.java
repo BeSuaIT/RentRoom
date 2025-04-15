@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -27,12 +28,13 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        initFirebase();
+
         if (firebaseAuth.getCurrentUser() != null) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
 
-        initFirebase();
         initViews();
     }
 
@@ -57,7 +59,28 @@ public class RegisterActivity extends AppCompatActivity {
         if (!validateInput(name, email, password)) return;
 
         showLoadingDialog();
-        createUser(email, password);
+        checkEmailExists(email, password);
+    }
+
+    private void checkEmailExists(String email, String password) {
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult().getUser() != null) {
+                    sendVerificationEmail(task.getResult().getUser());
+                } else {
+                    hideLoadingDialog();
+                    if (task.getException() instanceof FirebaseAuthException) {
+                        FirebaseAuthException e = (FirebaseAuthException) task.getException();
+                        if (e.getErrorCode().equals("ERROR_EMAIL_ALREADY_IN_USE")) {
+                            setError(emailEditText, "Email này đã được sử dụng");
+                        } else {
+                            showToast("Lỗi đăng ký: " + e.getMessage());
+                        }
+                    } else {
+                        showToast("Lỗi đăng ký");
+                    }
+                }
+            });
     }
 
     private boolean validateInput(String name, String email, String password) {
@@ -83,49 +106,61 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void createUser(String email, String password) {
         firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult().getUser() != null) {
-                        sendVerificationEmail(task.getResult().getUser());
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult().getUser() != null) {
+                    sendVerificationEmail(task.getResult().getUser());
+                } else {
+                    hideLoadingDialog();
+                    String errorMessage;
+                    if (task.getException() instanceof FirebaseAuthException) {
+                        FirebaseAuthException e = (FirebaseAuthException) task.getException();
+                        if (e.getErrorCode().equals("ERROR_EMAIL_ALREADY_IN_USE")) {
+                            errorMessage = "Email này đã được sử dụng";
+                            setError(emailEditText, errorMessage);
+                        } else {
+                            errorMessage = "Đăng ký thất bại: " + e.getMessage();
+                        }
                     } else {
-                        hideLoadingDialog();
-                        showToast("Đăng ký thất bại");
+                        errorMessage = "Đăng ký thất bại";
                     }
-                });
+                    showToast(errorMessage);
+                }
+            });
     }
 
     private void sendVerificationEmail(FirebaseUser user) {
         user.sendEmailVerification()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        saveUserData(user);
-                    } else {
-                        hideLoadingDialog();
-                        showToast("Gửi email xác minh thất bại");
-                    }
-                });
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    saveUserData(user);
+                } else {
+                    hideLoadingDialog();
+                    showToast("Gửi email xác minh thất bại");
+                }
+            });
     }
 
     private void saveUserData(FirebaseUser user) {
         User userData = new User(
-                user.getEmail(),
-                user.getUid(),
-                nameEditText.getText().toString(),
-                "",
-                "user",
-                System.currentTimeMillis()
+            user.getEmail(),
+            user.getUid(),
+            nameEditText.getText().toString(),
+            "",
+            "user",
+            System.currentTimeMillis()
         );
 
         databaseReference.child(user.getUid()).setValue(userData)
-                .addOnSuccessListener(unused -> {
-                    hideLoadingDialog();
-                    showToast("Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản");
-                    firebaseAuth.signOut();
+            .addOnSuccessListener(unused -> {
+                hideLoadingDialog();
+                showToast("Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản");
+                firebaseAuth.signOut();
 
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish();
-                });
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            });
     }
 
     private void showToast(String message) {
@@ -135,9 +170,9 @@ public class RegisterActivity extends AppCompatActivity {
     private void showLoadingDialog() {
         if (loadingDialog == null) {
             loadingDialog = new AlertDialog.Builder(this)
-                    .setView(R.layout.progress_layout)
-                    .setCancelable(false)
-                    .create();
+                .setView(R.layout.progress_layout)
+                .setCancelable(false)
+                .create();
         }
         loadingDialog.show();
     }
