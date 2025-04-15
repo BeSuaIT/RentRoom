@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         initFirebase();
+        setupGoogleSignIn();
         initViews();
         checkCurrentUser();
     }
@@ -71,7 +72,9 @@ public class LoginActivity extends AppCompatActivity {
         credentialManager = CredentialManager.create(this);
         callbackManager = CallbackManager.Factory.create();
         loginManager = LoginManager.getInstance();
+    }
 
+    private void setupGoogleSignIn() {
         getGoogleIdOption = new GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(getString(R.string.default_web_client_id))
@@ -204,11 +207,18 @@ public class LoginActivity extends AppCompatActivity {
                     new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
                         @Override
                         public void onResult(GetCredentialResponse result) {
-                            Credential credential = result.getCredential();
-                            if (credential instanceof CustomCredential &&
-                                    GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
-                                GoogleIdTokenCredential googleCredential = GoogleIdTokenCredential.createFrom(credential.getData());
-                                firebaseAuthWithGoogle(googleCredential.getIdToken());
+                            try {
+                                Credential credential = result.getCredential();
+                                if (credential instanceof CustomCredential) {
+                                    String type = credential.getType();
+                                    if (GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(type)) {
+                                        GoogleIdTokenCredential googleCredential =
+                                                GoogleIdTokenCredential.createFrom(credential.getData());
+                                        firebaseAuthWithGoogle(googleCredential.getIdToken());
+                                    }
+                                }
+                            } catch (Exception e) {
+                                showToast("Lỗi xử lý đăng nhập: " + e.getMessage());
                             }
                         }
 
