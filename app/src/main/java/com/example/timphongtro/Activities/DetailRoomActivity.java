@@ -78,7 +78,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     private Dialog dialogZoomImg;
     private FirebaseUser currentUser;
     private FirebaseDatabase firebaseDatabase;
-    private DatabaseReference userLovedPostsReference, visitScheduleDatabaseRef, userPostReference, roomDatabaseRef;
+    private DatabaseReference visitScheduleDatabaseRef, userPostReference, roomDatabaseRef;
     private Room room;
     private UUID uuid;
     private boolean isRoomLoved;
@@ -122,7 +122,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         userPostCard = findViewById(R.id.userPostCard);
         userNameTextView = findViewById(R.id.userNameTextView);
         userProfileTextView = findViewById(R.id.userProfileTextView);
-        followButton = findViewById(R.id.followButton); // thay thế zaloButton
+        followButton = findViewById(R.id.followButton);
 
         imageViewBack.setOnClickListener(v -> finish());
         callButton.setOnClickListener(v -> handleCallButtonClick());
@@ -260,7 +260,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void removeLoveStatus(int newCount) {
         roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).removeValue();
-        userLovedPostsReference.child(room.getId_room()).removeValue();
         imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
         loveTextView.setText("Lượt yêu thích: " + newCount);
         Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
@@ -268,7 +267,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void addLoveStatus(int newCount) {
         roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).setValue(true);
-        userLovedPostsReference.child(room.getId_room()).setValue(true);
         imageViewLove.setImageResource(R.drawable.ic_love_fill);
         loveTextView.setText("Lượt yêu thích: " + newCount);
         Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
@@ -444,8 +442,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
             }
         });
-
-        userLovedPostsReference = firebaseDatabase.getReference("LovePost/" + currentUser.getUid());
 
         String typeRoom = "ChungCuMini/";
         if (room.getType_room() == 0) {
