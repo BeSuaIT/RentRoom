@@ -25,219 +25,214 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class scheduleVisitRoomActivity extends AppCompatActivity {
-    ImageView imageViewBack;
-    TabLayout tablayout;
-    RecyclerView rcvScheduleVisit;
-    FirebaseDatabase database;
-    DatabaseReference scheduleRef, roomRef;
-    ArrayList<ScheduleVisitRoomClass> schedules;
-    ArrayList<String> roomlist;
-    ScheduleVisitRoomSendAdapter scheduleVisitRoomSendAdapter;
-    FirebaseUser user;
+    private ImageView backButton;
+    private TabLayout scheduleTabLayout;
+    private RecyclerView scheduleVisitRecyclerView;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference meetingSchedulesRef, availableRoomsRef;
+    private ArrayList<ScheduleVisitRoomClass> scheduleVisitRoomClasses;
+    private ArrayList<Room> availableRooms;
+    private ScheduleVisitRoomSendAdapter scheduleVisitRoomSendAdapter;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_schedule_visit_room);
 
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        database = FirebaseDatabase.getInstance();
-        scheduleRef = database.getReference("MeetingSchedules");
-        schedules = new ArrayList<>();
-        imageViewBack = findViewById(R.id.imageViewBack);
-        rcvScheduleVisit = findViewById(R.id.rcvScheduleVisit);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(scheduleVisitRoomActivity.this);
+        initializeVariables();
+        setupViews();
+        loadRoomData();
+        loadScheduleData();
+        setupTabLayout();
+    }
+
+    private void initializeVariables() {
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        meetingSchedulesRef = firebaseDatabase.getReference("MeetingSchedules");
+        availableRoomsRef = firebaseDatabase.getReference("Rooms");
+        scheduleVisitRoomClasses = new ArrayList<>();
+        availableRooms = new ArrayList<>();
+    }
+
+    private void setupViews() {
+        backButton = findViewById(R.id.imageViewBack);
+        scheduleVisitRecyclerView = findViewById(R.id.rcvScheduleVisit);
+        scheduleTabLayout = findViewById(R.id.tablayout);
+        
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        rcvScheduleVisit.setLayoutManager(linearLayoutManager);
-        imageViewBack.setOnClickListener(v -> finish());
-        roomlist = new ArrayList<>();
-        roomRef = database.getReference("Rooms");
+        scheduleVisitRecyclerView.setLayoutManager(linearLayoutManager);
+        
+        backButton.setOnClickListener(v -> finish());
+        
+        scheduleVisitRoomSendAdapter = new ScheduleVisitRoomSendAdapter(this, scheduleVisitRoomClasses);
+        scheduleVisitRecyclerView.setAdapter(scheduleVisitRoomSendAdapter);
+    }
 
-        roomRef.addValueEventListener(new ValueEventListener() {
+    private void loadRoomData() {
+        availableRoomsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                roomlist.clear();
+                availableRooms.clear();
                 if (snapshot.exists()) {
                     for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                        String key = dataSnapshot.getKey();
-                        if (key.equals("Tro") || key.equals("ChungCuMini")) {
-                            for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                                Room room = childSnapshot.getValue(Room.class);
-                                if (room != null && room.getStatus_room() != 1 && room.getStatus_room() != 1) {
-                                    roomlist.add(room.getId_room());
-                                }
-                            }
-                        }
+                        processRoomCategory(dataSnapshot);
                     }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
             }
         });
+    }
 
-        scheduleRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                schedules.clear();
-                if (snapshot.exists()) {
-                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                        ScheduleVisitRoomClass scheduleVisitRoomClass = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
-                        if (scheduleVisitRoomClass != null) {
-                            if (roomlist.contains(scheduleVisitRoomClass.getIdRoom()) && scheduleVisitRoomClass.getIdFrom().equals(user.getUid())) {
-                                schedules.add(scheduleVisitRoomClass);
-                            }
-                        }
-                    }
+    private void processRoomCategory(DataSnapshot dataSnapshot) {
+        String key = dataSnapshot.getKey();
+        if ("Tro".equals(key) || "ChungCuMini".equals(key)) {
+            for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                Room room = childSnapshot.getValue(Room.class);
+                if (room != null && room.getStatus_room() != 1) {
+                    availableRooms.add(room);
                 }
-                scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-                updateRecyclerViewVisibility(schedules,rcvScheduleVisit,findViewById(R.id.noHasLovePost));
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-        tablayout = findViewById(R.id.tablayout);
-        if (user != null) {
-            tablayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(TabLayout.Tab tab) {
-                    int position = tab.getPosition();
-
-
-                    switch (position) {
-                        case 0:
-                            schedules.clear();
-                            scheduleRef.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    schedules.clear();
-                                    if (snapshot.exists()) {
-                                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                            ScheduleVisitRoomClass scheduleVisitRoomClass = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
-                                            if (scheduleVisitRoomClass != null) {
-                                                if (roomlist.contains(scheduleVisitRoomClass.getIdRoom()) && scheduleVisitRoomClass.getIdFrom().equals(user.getUid())) {
-                                                    schedules.add(scheduleVisitRoomClass);
-                                                }
-                                            }
-                                        }
-                                    }
-                                    scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-                                    updateRecyclerViewVisibility(schedules,rcvScheduleVisit,findViewById(R.id.noHasLovePost));
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-
-                                }
-                            });
-                            break;
-                        case 1:
-                            schedules.clear();
-                            scheduleRef.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    schedules.clear();
-                                    if (snapshot.exists()) {
-                                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                            ScheduleVisitRoomClass scheduleVisitRoomClass = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
-                                            if (scheduleVisitRoomClass != null) {
-                                                if (roomlist.contains(scheduleVisitRoomClass.getIdRoom()) && scheduleVisitRoomClass.getIdTo().equals(user.getUid()) && "0".equals(scheduleVisitRoomClass.getStatus())) {
-                                                    schedules.add(scheduleVisitRoomClass);
-                                                }
-                                            }
-                                        }
-                                    }
-                                    scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-                                    updateRecyclerViewVisibility(schedules,rcvScheduleVisit,findViewById(R.id.noHasLovePost));
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-
-                                }
-                            });
-                            break;
-                        case 2:
-                            schedules.clear();
-                            scheduleRef.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    schedules.clear();
-                                    if (snapshot.exists()) {
-                                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                            ScheduleVisitRoomClass scheduleVisitRoomClass = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
-                                            if (scheduleVisitRoomClass != null) {
-                                                if (roomlist.contains(scheduleVisitRoomClass.getIdRoom()) && scheduleVisitRoomClass.getIdTo().equals(user.getUid()) && "1".equals(scheduleVisitRoomClass.getStatus())) {
-                                                    schedules.add(scheduleVisitRoomClass);
-                                                }
-                                            }
-                                        }
-                                    }
-                                    scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-                                    updateRecyclerViewVisibility(schedules,rcvScheduleVisit,findViewById(R.id.noHasLovePost));
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-
-                                }
-                            });
-                            break;
-                        case 3:
-                            schedules.clear();
-                            scheduleRef.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    schedules.clear();
-                                    if (snapshot.exists()) {
-                                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                                            ScheduleVisitRoomClass scheduleVisitRoomClass = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
-                                            if (scheduleVisitRoomClass != null) {
-                                                if (roomlist.contains(scheduleVisitRoomClass.getIdRoom()) && scheduleVisitRoomClass.getIdTo().equals(user.getUid()) && "2".equals(scheduleVisitRoomClass.getStatus())) {
-                                                    schedules.add(scheduleVisitRoomClass);
-                                                }
-                                            }
-                                        }
-                                    }
-                                    scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-                                    updateRecyclerViewVisibility(schedules,rcvScheduleVisit,findViewById(R.id.noHasLovePost));
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-
-                                }
-                            });
-                            break;
-                    }
-                }
-
-                @Override
-                public void onTabUnselected(TabLayout.Tab tab) {
-
-                }
-
-                @Override
-                public void onTabReselected(TabLayout.Tab tab) {
-
-                }
-            });
-            scheduleVisitRoomSendAdapter = new ScheduleVisitRoomSendAdapter(scheduleVisitRoomActivity.this, schedules);
-            rcvScheduleVisit.setAdapter(scheduleVisitRoomSendAdapter);
         }
     }
-    private void updateRecyclerViewVisibility(ArrayList<ScheduleVisitRoomClass> rooms, RecyclerView rcvLovePost, View noHistoryView) {
-        if (rooms.isEmpty()) {
-            rcvLovePost.setVisibility(View.GONE);
-            noHistoryView.setVisibility(View.VISIBLE);
-        } else {
-            rcvLovePost.setVisibility(View.VISIBLE);
-            noHistoryView.setVisibility(View.GONE);
+
+    private void loadScheduleData() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleList(snapshot, currentUser.getUid(), "");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+    }
+
+    private void setupTabLayout() {
+        if (currentUser != null) {
+            scheduleTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
+                    handleTabSelection(tab.getPosition());
+                }
+
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {}
+
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {}
+            });
         }
+    }
+
+    private void handleTabSelection(int position) {
+        scheduleVisitRoomClasses.clear();
+        switch (position) {
+            case 0:
+                loadSentSchedules();
+                break;
+            case 1:
+                loadPendingSchedules();
+                break;
+            case 2:
+                loadAcceptedSchedules();
+                break;
+            case 3:
+                loadRejectedSchedules();
+                break;
+        }
+    }
+
+    private void loadSentSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleList(snapshot, currentUser.getUid(), "");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void loadPendingSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleList(snapshot, "", "0");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void loadAcceptedSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleList(snapshot, "", "1");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void loadRejectedSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleList(snapshot, "", "2");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void updateScheduleList(DataSnapshot snapshot, String fromId, String status) {
+        scheduleVisitRoomClasses.clear();
+        if (snapshot.exists()) {
+            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                ScheduleVisitRoomClass schedule = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
+                if (isValidSchedule(schedule, fromId, status)) {
+                    scheduleVisitRoomClasses.add(schedule);
+                }
+            }
+        }
+        scheduleVisitRoomSendAdapter.notifyDataSetChanged();
+        updateRecyclerViewVisibility(scheduleVisitRoomClasses, scheduleVisitRecyclerView, findViewById(R.id.noHasLovePost));
+    }
+
+    private boolean isValidSchedule(ScheduleVisitRoomClass schedule, String fromId, String status) {
+        if (schedule == null) return false;
+        
+        boolean roomExists = availableRooms.stream()
+            .anyMatch(room -> room.getId_room().equals(schedule.getIdRoom()));
+            
+        if (!roomExists) return false;
+
+        if (!fromId.isEmpty()) {
+            return schedule.getIdFrom().equals(fromId);
+        }
+
+        if (!status.isEmpty()) {
+            return schedule.getIdTo().equals(currentUser.getUid()) &&
+                   status.equals(schedule.getStatus());
+        }
+
+        return true;
+    }
+
+    private void updateRecyclerViewVisibility(ArrayList<ScheduleVisitRoomClass> rooms, RecyclerView rcvLovePost, View noHistoryView) {
+        rcvLovePost.setVisibility(rooms.isEmpty() ? View.GONE : View.VISIBLE);
+        noHistoryView.setVisibility(rooms.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }
