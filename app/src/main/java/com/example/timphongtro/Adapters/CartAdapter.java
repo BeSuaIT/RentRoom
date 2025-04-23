@@ -30,11 +30,11 @@ import java.util.List;
 import java.util.Map;
 
 public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHolder> {
-    private final Context context;
-    private final Map<String, List<Cart>> sellerItemsMap;
-    private final List<String> sellerIds;
-    private final DatabaseReference cartRef;
-    private final DecimalFormat decimalFormat;
+    private Context context;
+    private Map<String, List<Cart>> sellerItemsMap;
+    private List<String> sellerIds;
+    private DatabaseReference cartRef;
+    private DecimalFormat decimalFormat;
 
     public CartAdapter(Context context, ArrayList<Cart> cartList) {
         this.context = context;
@@ -143,8 +143,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
     }
 
     public static class SellerViewHolder extends RecyclerView.ViewHolder {
-        final TextView sellerName;
-        final RecyclerView itemsRecyclerView;
+        TextView sellerName;
+        RecyclerView itemsRecyclerView;
 
         SellerViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -154,7 +154,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
     }
 
     private class CartItemsAdapter extends RecyclerView.Adapter<CartItemsAdapter.ItemViewHolder> {
-        private final List<Cart> items;
+        private List<Cart> items;
 
         CartItemsAdapter(List<Cart> items) {
             this.items = items;
@@ -179,10 +179,10 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
         }
 
         class ItemViewHolder extends RecyclerView.ViewHolder {
-            final ImageView cartItemImage;
-            final TextView cartItemName, itemPrice, quantity;
-            final TextView increaseButton, decreaseButton;
-            final Button removeButton;
+            ImageView cartItemImage;
+            TextView cartItemName, itemPrice, quantity;
+            TextView increaseButton, decreaseButton;
+            Button removeButton;
 
             ItemViewHolder(@NonNull View itemView) {
                 super(itemView);
