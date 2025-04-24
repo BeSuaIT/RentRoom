@@ -663,7 +663,6 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Action Bar -->
     <com.google.android.material.bottomappbar.BottomAppBar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -674,42 +673,64 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginEnd="12dp"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:paddingHorizontal="16dp"
+            android:weightSum="3">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/followButton"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_height="35dp"
                 android:layout_weight="1"
-                android:text="Theo dõi"
-                android:textColor="@color/orange_100"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
                 app:icon="@drawable/ic_follow"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="@color/orange_100"
                 app:strokeColor="@color/orange_100"/>
-                
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/callButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_height="35dp"
                 android:layout_weight="1"
-                android:text="Gọi"
-                android:textColor="@color/orange_100"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginStart="20dp"
+                android:backgroundTint="@color/green"
                 app:icon="@drawable/ic_phone"
-                app:strokeColor="@color/orange_100"/>
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="@color/white_100"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/scheduleVisitButton"
                 style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="35dp"
                 android:layout_weight="1"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
                 android:backgroundTint="@color/orange_100"
-                android:text="Đặt lịch"
-                android:textColor="@color/white_100"/>
+                app:icon="@drawable/ic_calendar"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="@color/white_100"/>
         </LinearLayout>
     </com.google.android.material.bottomappbar.BottomAppBar>
 

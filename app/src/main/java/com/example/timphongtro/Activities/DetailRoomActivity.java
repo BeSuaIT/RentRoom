@@ -467,15 +467,13 @@ public class DetailRoomActivity extends AppCompatActivity {
                 if (task.getResult().exists()) {
                     followRef.removeValue()
                         .addOnSuccessListener(unused -> {
-                            followButton.setText("Theo dõi");
                             followButton.setIcon(getDrawable(R.drawable.ic_follow));
                             Toast.makeText(this, "Đã bỏ theo dõi", Toast.LENGTH_SHORT).show();
                         });
                 } else {
                     followRef.setValue(true)
                         .addOnSuccessListener(unused -> {
-                            followButton.setText("Đã theo dõi");
-                            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                            followButton.setIcon(getDrawable(R.drawable.ic_unfollow));
                             Toast.makeText(this, "Đã theo dõi phòng này", Toast.LENGTH_SHORT).show();
                         });
                 }
@@ -494,10 +492,8 @@ public class DetailRoomActivity extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists()) {
-                        followButton.setText("Đã theo dõi");
-                        followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                        followButton.setIcon(getDrawable(R.drawable.ic_unfollow));
                     } else {
-                        followButton.setText("Theo dõi");
                         followButton.setIcon(getDrawable(R.drawable.ic_follow));
                     }
                 }
