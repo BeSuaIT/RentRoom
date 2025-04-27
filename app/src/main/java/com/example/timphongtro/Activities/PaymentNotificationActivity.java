@@ -4,28 +4,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.timphongtro.R;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 public class PaymentNotificationActivity extends AppCompatActivity {
-
-    private TextView tvNotify, tvDate, tvTransactionId, tvAmount;
+    private TextView tvNotify;
     private ImageView ivStatus;
-    private String orderId;
+    private String SUCCESS_ZALOPAY = "Thanh toán ZaloPay thành công\nCảm ơn bạn đã sử dụng dịch vụ!";
+    private String SUCCESS_COD = "Đặt hàng thành công\nBạn sẽ thanh toán khi nhận hàng";
+    private String FAILED_PAYMENT = "Thanh toán không thành công\nVui lòng thử lại sau";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,17 +22,12 @@ public class PaymentNotificationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_payment_notification);
 
         initViews();
-        loadOrderData();
+        showStatus();
     }
 
     private void initViews() {
         tvNotify = findViewById(R.id.textViewNotify);
-        tvDate = findViewById(R.id.textViewDate);
-        tvTransactionId = findViewById(R.id.textViewTransactionId);
-        tvAmount = findViewById(R.id.textViewAmount);
         ivStatus = findViewById(R.id.imageViewStatus);
-
-        orderId = getIntent().getStringExtra("orderId");
 
         findViewById(R.id.buttonHome).setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
@@ -58,60 +42,20 @@ public class PaymentNotificationActivity extends AppCompatActivity {
         });
     }
 
-    private void loadOrderData() {
-        if (orderId == null) {
-            showDefaultStatus();
-            return;
-        }
+    private void showStatus() {
+        String paymentMethod = getIntent().getStringExtra("payment_method");
+        boolean isSuccess = getIntent().getBooleanExtra("is_success", false);
 
-        DatabaseReference orderRef = FirebaseDatabase.getInstance()
-                .getReference("Bills")
-                .child(orderId);
-
-        orderRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String paymentMethod = snapshot.child("paymentMethod").getValue(String.class);
-                    int status = snapshot.child("status").getValue(Integer.class);
-                    long amount = snapshot.child("totalAmount").getValue(Long.class);
-                    long orderDate = snapshot.child("orderDate").getValue(Long.class);
-
-                    if (paymentMethod.equals("zalopay") && status == 1) {
-                        ivStatus.setImageResource(R.drawable.img_success);
-                        tvNotify.setText("Thanh toán thành công");
-                    } else if (paymentMethod.equals("cod")) {
-                        ivStatus.setImageResource(R.drawable.img_pending);
-                        tvNotify.setText("Đặt hàng thành công\n Chờ người bán xác nhận");
-                    }
-
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-                    String dateStr = sdf.format(new Date(orderDate));
-                    tvDate.setText("Ngày: " + dateStr);
-
-                    tvTransactionId.setText("Mã đơn hàng: " + orderId);
-
-                    DecimalFormat df = new DecimalFormat("#,###");
-                    tvAmount.setText(df.format(amount) + " ₫");
-                }
+        if (isSuccess) {
+            ivStatus.setImageResource(R.drawable.img_success);
+            if ("zalopay".equals(paymentMethod)) {
+                tvNotify.setText(SUCCESS_ZALOPAY);
+            } else if ("cod".equals(paymentMethod)) {
+                tvNotify.setText(SUCCESS_COD);
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PaymentNotificationActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void showDefaultStatus() {
-        String result = getIntent().getStringExtra("result");
-        if (result != null) {
-            tvNotify.setText(result);
-            if (result.contains("thành công")) {
-                ivStatus.setImageResource(R.drawable.img_success);
-            } else {
-                ivStatus.setImageResource(R.drawable.img_cancel);
-            }
+        } else {
+            ivStatus.setImageResource(R.drawable.img_cancel);
+            tvNotify.setText(FAILED_PAYMENT);
         }
     }
 }

@@ -126,7 +126,7 @@
                 <TextView
                     android:id="@+id/billButton"
                     style="@style/ProfileMenuItemStyle"
-                    android:text="Quản lý đơn thanh toán"
+                    android:text="Quản lý đơn hàng"
                     app:drawableStartCompat="@drawable/img_bill_resized" />
 
                 <TextView

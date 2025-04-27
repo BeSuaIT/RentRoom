@@ -208,7 +208,6 @@ public class ConfirmOrderActivity extends AppCompatActivity {
 
         EditText editTextAddress = findViewById(R.id.editText_address);
         String detailAddress = editTextAddress.getText().toString().trim();
-
         DatabaseReference cartRef = FirebaseDatabase.getInstance()
                 .getReference("Carts")
                 .child(user.getUid());
@@ -217,67 +216,90 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
                 DatabaseReference ordersRef = FirebaseDatabase.getInstance().getReference("Bills");
+                final int[] successCount = {0};
+                final int totalOrders = (int) cartSnapshot.getChildrenCount();
 
                 for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
                     String sellerId = sellerSnapshot.getKey();
                     if (sellerId == null) continue;
 
                     String orderId = generateOrderId();
+                    Map<String, Object> orderData = createOrderData(user.getUid(), sellerId, status, 
+                        detailAddress, sellerSnapshot);
 
-                    Map<String, Object> orderData = new HashMap<>();
-                    orderData.put("userId", user.getUid());
-                    orderData.put("sellerId", sellerId);
-                    orderData.put("orderDate", ServerValue.TIMESTAMP);
-                    orderData.put("status", status);
-                    orderData.put("city", spinnerCity.getSelectedItem().toString());
-                    orderData.put("district", spinnerDistrict.getSelectedItem().toString());
-                    orderData.put("detailAddress", detailAddress);
-                    orderData.put("paymentMethod", selectedPaymentMethod);
-
-                    Map<String, Integer> items = new HashMap<>();
-                    long totalAmount = 0;
-
-                    for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
-                        String serviceId = itemSnapshot.getKey();
-                        Integer amount = itemSnapshot.getValue(Integer.class);
-                        if (serviceId == null || amount == null) continue;
-
-                        items.put(serviceId, amount);
-
-                        for (Cart cartItem : cartList) {
-                            if (cartItem.getServiceId().equals(serviceId)) {
-                                totalAmount += (long) cartItem.getPrice() * amount;
-                                break;
+                    ordersRef.child(orderId).setValue(orderData)
+                        .addOnSuccessListener(aVoid -> {
+                            successCount[0]++;
+                            // Chỉ show notification và finish khi tất cả đơn hàng đã được tạo
+                            if (successCount[0] == totalOrders) {
+                                showPaymentNotification(selectedPaymentMethod, true);
+                                cartRef.removeValue();
+                                finish();
                             }
-                        }
-                    }
-
-                    orderData.put("items", items);
-                    orderData.put("totalAmount", totalAmount);
-
-                    // Lưu order vào database
-                    ordersRef.child(orderId).setValue(orderData);
-                    ordersRef.child(orderId).setValue(orderData).addOnSuccessListener(aVoid -> {
-                        Intent intent = new Intent(ConfirmOrderActivity.this, PaymentNotificationActivity.class);
-                        intent.putExtra("orderId", orderId);
-                        startActivity(intent);
-                        finish();
-                    });
+                        })
+                        .addOnFailureListener(e -> {
+                            showPaymentNotification(selectedPaymentMethod, false);
+                            Toast.makeText(ConfirmOrderActivity.this, 
+                                "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
                 }
-
-                cartRef.removeValue().addOnSuccessListener(aVoid -> {
-                    if (selectedPaymentMethod.equals("cod")) {
-                        Toast.makeText(ConfirmOrderActivity.this, "Đặt hàng thành công!", Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(ConfirmOrderActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                showPaymentNotification(selectedPaymentMethod, false);
+                Toast.makeText(ConfirmOrderActivity.this, 
+                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private Map<String, Object> createOrderData(String userId, String sellerId, 
+        int status, String detailAddress, DataSnapshot sellerSnapshot) {
+        
+        Map<String, Object> orderData = new HashMap<>();
+        orderData.put("userId", userId);
+        orderData.put("sellerId", sellerId);
+        orderData.put("orderDate", ServerValue.TIMESTAMP);
+        orderData.put("status", status);
+        orderData.put("city", spinnerCity.getSelectedItem().toString());
+        orderData.put("district", spinnerDistrict.getSelectedItem().toString());
+        orderData.put("detailAddress", detailAddress);
+        orderData.put("paymentMethod", selectedPaymentMethod);
+
+        Map<String, Integer> items = new HashMap<>();
+        long totalAmount = calculateTotalAmount(sellerSnapshot, items);
+
+        orderData.put("items", items);
+        orderData.put("totalAmount", totalAmount);
+
+        return orderData;
+    }
+
+    private long calculateTotalAmount(DataSnapshot sellerSnapshot, Map<String, Integer> items) {
+        long totalAmount = 0;
+        for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
+            String serviceId = itemSnapshot.getKey();
+            Integer amount = itemSnapshot.getValue(Integer.class);
+            if (serviceId == null || amount == null) continue;
+
+            items.put(serviceId, amount);
+
+            for (Cart cartItem : cartList) {
+                if (cartItem.getServiceId().equals(serviceId)) {
+                    totalAmount += (long) cartItem.getPrice() * amount;
+                    break;
+                }
+            }
+        }
+        return totalAmount;
+    }
+
+    private void showPaymentNotification(String paymentMethod, boolean isSuccess) {
+        Intent intent = new Intent(this, PaymentNotificationActivity.class);
+        intent.putExtra("payment_method", paymentMethod);
+        intent.putExtra("is_success", isSuccess);
+        startActivity(intent);
     }
 
     private String generateOrderId() {
@@ -346,11 +368,8 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         paymentMethods.add("Thanh toán khi nhận hàng");
         paymentMethods.add("Thanh toán ZaloPay");
 
-        paymentAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                paymentMethods);
-        paymentAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item);
+        paymentAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, paymentMethods);
+        paymentAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerPayment.setAdapter(paymentAdapter);
 
         spinnerPayment.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
