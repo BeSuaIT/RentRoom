@@ -2,18 +2,18 @@ package com.example.timphongtro.Activities;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.timphongtro.Adapters.RoomAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -27,124 +27,152 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HistoryActivity extends AppCompatActivity {
-    private FirebaseDatabase database;
-    private ArrayList<Room> roomArrayList;
-    private RoomAdapter roomAdapter;
-    private RecyclerView rcvHistory;
+
+    private SwipeRefreshLayout swipeRefresh;
+    private RecyclerView recyclerView;
+    private View emptyView;
+    private RoomAdapter adapter;
+    private ArrayList<Room> rooms;
+    private DatabaseReference historyRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
+        
+        initializeViews();
+        setupListeners();
+        loadHistory();
+    }
+
+    private void initializeViews() {
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        recyclerView = findViewById(R.id.recyclerView);
+        emptyView = findViewById(R.id.emptyView);
+
+        rooms = new ArrayList<>();
+        adapter = new RoomAdapter(this, rooms);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        database = FirebaseDatabase.getInstance();
-        DatabaseReference myHistoryRef = database.getReference("Histories/" + user.getUid());
+        if (user != null) {
+            historyRef = FirebaseDatabase.getInstance()
+                .getReference("Histories")
+                .child(user.getUid());
+        }
+    }
 
-        ImageView imageViewBack = findViewById(R.id.imageView_back);
-        ImageView button_clear = findViewById(R.id.button_clear);
+    private void setupListeners() {
+        findViewById(R.id.backButton).setOnClickListener(v -> finish());
+        findViewById(R.id.clearButton).setOnClickListener(v -> showClearDialog());
+        swipeRefresh.setOnRefreshListener(this::loadHistory);
+    }
 
-        button_clear.setOnClickListener(v -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(HistoryActivity.this);
-            builder.setTitle("Delete history").setMessage("Are you sure want to delete all?").setPositiveButton("Yes", (dialog, which) -> {
-                FirebaseDatabase.getInstance();
-                myHistoryRef.removeValue().addOnCompleteListener(task -> {
-                    roomArrayList.clear();
-                    roomAdapter.notifyDataSetChanged();
-                    updateRecyclerViewVisibility(roomArrayList, rcvHistory, findViewById(R.id.nohistory));
-                    Toast.makeText(HistoryActivity.this, "Successful", Toast.LENGTH_SHORT).show();
-                });
-            }).setNegativeButton("No", (dialog, which) -> {
+    private void showClearDialog() {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle("Xóa lịch sử")
+            .setMessage("Bạn có chắc muốn xóa tất cả lịch sử xem?")
+            .setPositiveButton("Xóa", (dialog, which) -> clearHistory())
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
 
-            });
-            AlertDialog alertDialog = builder.create();
-            alertDialog.show();
-        });
-        imageViewBack.setOnClickListener(v -> finish());
+    private void clearHistory() {
+        if (historyRef == null) return;
 
-        rcvHistory = findViewById(R.id.rcv_history);
-        roomArrayList = new ArrayList<>();
-        roomAdapter = new RoomAdapter(HistoryActivity.this, roomArrayList);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(HistoryActivity.this);
-        linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
-        rcvHistory.setLayoutManager(linearLayoutManager);
-        rcvHistory.setAdapter(roomAdapter);
+        historyRef.removeValue()
+            .addOnSuccessListener(unused -> {
+                rooms.clear();
+                adapter.notifyDataSetChanged();
+                updateEmptyState();
+                Toast.makeText(this, "Đã xóa lịch sử", Toast.LENGTH_SHORT).show();
+            })
+            .addOnFailureListener(e -> 
+                Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+            );
+    }
 
-        myHistoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+    private void loadHistory() {
+        if (historyRef == null) return;
+        
+        swipeRefresh.setRefreshing(true);
+
+        historyRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-                roomArrayList.clear();
-                Map<String, Long> roomTimeMap = new HashMap<>();
-                ArrayList<String> roomIds = new ArrayList<>();
-
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    String roomId = dataSnapshot.getKey();
-                    long timestamp = dataSnapshot.getValue(Long.class);
-                    roomIds.add(roomId);
-                    roomTimeMap.put(roomId, timestamp);
+                Map<String, Long> timestamps = new HashMap<>();
+                
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    String roomId = child.getKey();
+                    Long timestamp = child.getValue(Long.class);
+                    if (roomId != null && timestamp != null) {
+                        timestamps.put(roomId, timestamp);
+                    }
                 }
-
-                DatabaseReference roomsRef = database.getReference("Rooms");
-                roomsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot roomsSnapshot) {
-                        // Duyệt qua các nhánh to, ở đây là "Tro" và "ChungCuMini"
-                        if (roomsSnapshot.exists()) {
-                            for (DataSnapshot roomTypeSnapshot : roomsSnapshot.getChildren()) {
-                                // Duyệt qua các phòng trong nhánh
-                                for (DataSnapshot roomSnapshot : roomTypeSnapshot.getChildren()) {
-                                    String roomId = roomSnapshot.getKey();
-                                    if (roomIds.contains(roomId)) {
-                                        Room roomCur = roomSnapshot.getValue(Room.class);
-                                        roomArrayList.add(roomCur);
-                                    }
-                                }
-                            }
-                        }
-                        roomArrayList.sort((o1, o2) -> {
-                            Long timestamp1 = roomTimeMap.get(o1.getId_room());
-                            Long timestamp2 = roomTimeMap.get(o2.getId_room());
-                            if (timestamp1 != null && timestamp2 != null) {
-                                return Long.compare(timestamp2, timestamp1);
-                            } else if (timestamp1 != null) {
-                                return -1; // timestamp2 is null, consider timestamp1 smaller
-                            } else if (timestamp2 != null) {
-                                return 1; // timestamp1 is null, consider timestamp2 smaller
-                            } else {
-                                return 0; // both timestamps are null, consider them equal
-                            }
-                        });
-
-                        roomAdapter.notifyDataSetChanged();
-                        updateRecyclerViewVisibility(roomArrayList, rcvHistory, findViewById(R.id.nohistory));
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Toast.makeText(HistoryActivity.this, "Errors while getting history!", Toast.LENGTH_SHORT).show();
-                    }
-                });
-
+                
+                loadRoomDetails(timestamps);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(HistoryActivity.this, "Errors while getting history!", Toast.LENGTH_SHORT).show();
+                swipeRefresh.setRefreshing(false);
+                Toast.makeText(HistoryActivity.this, 
+                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-
-        roomAdapter = new RoomAdapter(HistoryActivity.this, roomArrayList);
-        rcvHistory.setAdapter(roomAdapter);
     }
 
-    private void updateRecyclerViewVisibility(ArrayList<Room> roomArrayList, RecyclerView rcvHistory, View noHistoryView) {
-        if (roomArrayList.isEmpty()) {
-            rcvHistory.setVisibility(View.GONE);
-            noHistoryView.setVisibility(View.VISIBLE);
-        } else {
-            rcvHistory.setVisibility(View.VISIBLE);
-            noHistoryView.setVisibility(View.GONE);
+    private void loadRoomDetails(Map<String, Long> timestamps) {
+        if (timestamps.isEmpty()) {
+            rooms.clear();
+            adapter.notifyDataSetChanged();
+            updateEmptyState();
+            swipeRefresh.setRefreshing(false);
+            return;
         }
+
+        FirebaseDatabase.getInstance().getReference("Rooms")
+            .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    rooms.clear();
+                    
+                    for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
+                        for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
+                            String roomId = roomSnapshot.getKey();
+                            if (timestamps.containsKey(roomId)) {
+                                Room room = roomSnapshot.getValue(Room.class);
+                                if (room != null) {
+                                    rooms.add(room);
+                                }
+                            }
+                        }
+                    }
+
+                    // Sort by timestamp
+                    rooms.sort((r1, r2) -> {
+                        Long t1 = timestamps.get(r1.getId_room());
+                        Long t2 = timestamps.get(r2.getId_room());
+                        return t2.compareTo(t1);
+                    });
+
+                    adapter.notifyDataSetChanged();
+                    updateEmptyState();
+                    swipeRefresh.setRefreshing(false);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    swipeRefresh.setRefreshing(false);
+                    Toast.makeText(HistoryActivity.this, 
+                        "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
+    private void updateEmptyState() {
+        recyclerView.setVisibility(rooms.isEmpty() ? View.GONE : View.VISIBLE);
+        emptyView.setVisibility(rooms.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }
