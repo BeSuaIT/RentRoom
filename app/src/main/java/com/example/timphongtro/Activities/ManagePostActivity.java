@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,143 +26,113 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class ManagePostActivity extends AppCompatActivity {
-    ImageView imageViewBack, imageViewPost;
-    //    Spinner spinnerStatusRoom;
-    RecyclerView rcvMyPost;
-    ArrayList<Room> roomlist;
-
-    DatabaseReference roomdatabase;
-    ManageRoomAdapter manageRoomAdapter;
-
-    FirebaseUser userCurrent;
-    TabLayout tabLayout;
-    int statusRoomInt; //da cho thue la 1 ; chua cho thue la 0
+    private RecyclerView recyclerView;
+    private View emptyView;
+    private TabLayout tabLayout;
+    private ManageRoomAdapter adapter;
+    private ArrayList<Room> roomList;
+    private DatabaseReference roomsRef;
+    private FirebaseUser currentUser;
+    private int currentStatus = 0; // 0: available, 1: rented
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_post);
 
+        initializeViews();
+        setupListeners();
+        setupRecyclerView();
+        loadRooms();
+    }
 
-//        Sửa
-        imageViewBack = findViewById(R.id.imageViewBack);
-        imageViewPost = findViewById(R.id.imageViewPost);
-//        spinnerStatusRoom = findViewById(R.id.spinnerStatusRoom);
-        rcvMyPost = findViewById(R.id.rcvMyPost);
+    private void initializeViews() {
+        recyclerView = findViewById(R.id.rcvMyPost);
+        emptyView = findViewById(R.id.noHasLovePost);
         tabLayout = findViewById(R.id.tabLayout);
+        
+        findViewById(R.id.imageViewBack).setOnClickListener(v -> finish());
+        findViewById(R.id.imageViewPost).setOnClickListener(v -> 
+            startActivity(new Intent(this, PostActivity.class)));
+        findViewById(R.id.fabAddPost).setOnClickListener(v -> 
+            startActivity(new Intent(this, PostActivity.class)));
+    }
 
-        imageViewBack.setOnClickListener(v -> finish());
-
-        imageViewPost.setOnClickListener(v -> {
-            Intent post = new Intent(ManagePostActivity.this, PostActivity.class);
-            startActivity(post);
-        });
-        userCurrent = FirebaseAuth.getInstance().getCurrentUser();
-
-
-//        String[] data = {"Phòng trống", "Đã cho thuê"};
-//        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, data);
-//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        spinnerStatusRoom.setAdapter(adapter);
-
-//        roomdatabase = FirebaseDatabase.getInstance().getReference("myRooms/");
-
-        if (userCurrent != null) {
-            roomlist = new ArrayList<>();
-            roomdatabase = FirebaseDatabase.getInstance().getReference("Rooms/");
-            rcvMyPost.setLayoutManager(new LinearLayoutManager(ManagePostActivity.this, LinearLayoutManager.VERTICAL, false));
-            manageRoomAdapter = new ManageRoomAdapter(roomlist, ManagePostActivity.this);
-            rcvMyPost.setAdapter(manageRoomAdapter);
+    private void setupRecyclerView() {
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            finish();
+            return;
         }
-        statusRoomInt = 0;
-        fecthRoomData_statusRoom();
+
+        roomList = new ArrayList<>();
+        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        adapter = new ManageRoomAdapter(roomList, this);
+        
+        recyclerView.setLayoutManager(
+            new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void setupListeners() {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                int position = tab.getPosition();
-                switch (position) {
-                    case 0:
-                        statusRoomInt = 0;
-                        break;
-                    case 1:
-                        statusRoomInt = 1;
-                        break;
-                }
-                fecthRoomData_statusRoom();
+                currentStatus = tab.getPosition();
+                loadRooms();
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-
-            }
+            public void onTabUnselected(TabLayout.Tab tab) {}
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
+            public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
-    private void fecthRoomData_statusRoom() {
-        roomdatabase.addValueEventListener(new ValueEventListener() {
+    private void loadRooms() {
+        roomsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                roomlist.clear();
+                roomList.clear();
                 if (snapshot.exists()) {
-                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                        if (dataSnapshot.getKey().equals("Tro") || dataSnapshot.getKey().equals("ChungCuMini")) {
-                            // Lấy dữ liệu từ child "Tro"
-                            if (dataSnapshot.getKey().equals("Tro") && dataSnapshot.exists()) {
-                                for (DataSnapshot troSnapshot : dataSnapshot.getChildren()) {
-                                    if (troSnapshot.exists()) {
-                                        Room room = troSnapshot.getValue(Room.class);
-                                        if (room != null) {
-                                            if (userCurrent.getUid().equals(room.getId_own_post()) && room.getStatus_room() == statusRoomInt) {
-                                                roomlist.add(room);
-                                            }
-                                        }
-                                    }
-                                }
-//                                manageRoomAdapter.notifyDataSetChanged();
-                            }
-                            // Lấy dữ liệu từ child "ChungCu"
-                            else if (dataSnapshot.getKey().equals("ChungCuMini") && dataSnapshot.exists()) {
-                                for (DataSnapshot chungCuSnapshot : dataSnapshot.getChildren()) {
-                                    if (chungCuSnapshot.exists()) {
-                                        Room room = chungCuSnapshot.getValue(Room.class);
-                                        if (room != null) {
-                                            if (userCurrent.getUid().equals(room.getId_own_post()) && room.getStatus_room() == statusRoomInt) {
-                                                roomlist.add(room);
-                                            }
-                                        }
-                                    }
-                                }
-//                                manageRoomAdapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-//                    manageRoomAdapter.notifyDataSetChanged();
-                } else {
-                    // Không có dữ liệu tồn tại
+                    processRoomData(snapshot);
                 }
-                manageRoomAdapter.notifyDataSetChanged();
-                updateRecyclerViewVisibility(roomlist, rcvMyPost, findViewById(R.id.noHasLovePost));
+                adapter.notifyDataSetChanged();
+                updateViewVisibility();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Xử lý lỗi nếu có
+                Toast.makeText(ManagePostActivity.this, 
+                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void updateRecyclerViewVisibility(ArrayList<Room> rooms, RecyclerView rcvLovePost, View noHasLovePostView) {
-        if (rooms.isEmpty()) {
-            rcvLovePost.setVisibility(View.GONE);
-            noHasLovePostView.setVisibility(View.VISIBLE);
-        } else {
-            rcvLovePost.setVisibility(View.VISIBLE);
-            noHasLovePostView.setVisibility(View.GONE);
+    private void processRoomData(DataSnapshot snapshot) {
+        String[] roomTypes = {"Tro", "ChungCuMini"};
+        for (String type : roomTypes) {
+            DataSnapshot typeSnapshot = snapshot.child(type);
+            if (typeSnapshot.exists()) {
+                for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
+                    Room room = roomSnapshot.getValue(Room.class);
+                    if (isValidRoom(room)) {
+                        roomList.add(room);
+                    }
+                }
+            }
         }
+    }
+
+    private boolean isValidRoom(Room room) {
+        return room != null 
+            && currentUser.getUid().equals(room.getId_own_post()) 
+            && room.getStatus_room() == currentStatus;
+    }
+
+    private void updateViewVisibility() {
+        recyclerView.setVisibility(roomList.isEmpty() ? View.GONE : View.VISIBLE);
+        emptyView.setVisibility(roomList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }

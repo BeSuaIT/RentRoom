@@ -66,9 +66,6 @@
             android:name=".Activities.HistoryActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.MyLovePostActivity"
-            android:exported="true" />
-        <activity
             android:name=".Activities.EditPostActivity"
             android:exported="true" />
         <activity
