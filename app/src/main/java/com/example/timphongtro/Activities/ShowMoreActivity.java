@@ -2,6 +2,7 @@ package com.example.timphongtro.Activities;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,55 +22,89 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class ShowMoreActivity extends AppCompatActivity {
-    private RecyclerView roomrecyclerView;
-    private DatabaseReference roomRef;
-    private ShowmoreAdapter showmoreAdapter;
-    private ArrayList<Room> roomArrayList;
-    private ShimmerFrameLayout roomShimmer;
+    private RecyclerView recyclerView;
+    private ShowmoreAdapter adapter;
+    private ShimmerFrameLayout shimmerLayout;
+    private final ArrayList<Room> roomList = new ArrayList<>();
+    private DatabaseReference roomsRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_more);
 
-        roomShimmer = findViewById(R.id.room_shimmer);
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-
-        roomShimmer.startShimmer();
-        roomrecyclerView = findViewById(R.id.rcv_showmore);
-        roomrecyclerView.setHasFixedSize(true);
-        roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
-        roomrecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        roomArrayList = new ArrayList<>();
-        showmoreAdapter = new ShowmoreAdapter(this, roomArrayList);
-        roomrecyclerView.setAdapter(showmoreAdapter);
-        fetchRoomDatabase();
+        initializeViews();
+        setupRecyclerView();
+        loadRooms();
     }
 
-    private void fetchRoomDatabase() {
-        roomRef.addValueEventListener(new ValueEventListener() {
+    private void initializeViews() {
+        recyclerView = findViewById(R.id.rcv_showmore);
+        shimmerLayout = findViewById(R.id.room_shimmer);
+        
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+        
+        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+    }
+
+    private void setupRecyclerView() {
+        adapter = new ShowmoreAdapter(this, roomList);
+        recyclerView.setLayoutManager(
+            new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void loadRooms() {
+        shimmerLayout.startShimmer();
+        
+        roomsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                roomArrayList.clear();
+                roomList.clear();
+                
                 if (snapshot.exists()) {
-                    for (DataSnapshot roomType : snapshot.getChildren()) {
-                        for (DataSnapshot roomSnapshot : roomType.getChildren()) {
-                            Room room = roomSnapshot.getValue(Room.class);
-                            if (room != null) {
-                                roomArrayList.add(room);
-                            }
-                        }
-                    }
+                    processRoomData(snapshot);
                 }
-                roomShimmer.stopShimmer();
-                roomShimmer.setVisibility(View.GONE);
-                showmoreAdapter.notifyDataSetChanged();
+                
+                updateUI();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Toast.makeText(ShowMoreActivity.this, 
+                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                updateUI();
             }
         });
+    }
+
+    private void processRoomData(DataSnapshot snapshot) {
+        for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
+            for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
+                Room room = roomSnapshot.getValue(Room.class);
+                if (room != null && room.getStatus_room() == 0) { // Only show available rooms
+                    roomList.add(room);
+                }
+            }
+        }
+    }
+
+    private void updateUI() {
+        shimmerLayout.stopShimmer();
+        shimmerLayout.setVisibility(View.GONE);
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        shimmerLayout.startShimmer();
+    }
+
+    @Override
+    protected void onPause() {
+        shimmerLayout.stopShimmer();
+        super.onPause();
     }
 }
