@@ -2,7 +2,6 @@ package com.example.timphongtro.Activities;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,12 +21,11 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class ShowMoreActivity extends AppCompatActivity {
-    RecyclerView roomrecyclerView;
-    DatabaseReference roomRef;
-    ShowmoreAdapter showmoreAdapter;
-    ArrayList<Room> roomArrayList;
-    ShimmerFrameLayout roomShimmer;
-    ImageView btn_back;
+    private RecyclerView roomrecyclerView;
+    private DatabaseReference roomRef;
+    private ShowmoreAdapter showmoreAdapter;
+    private ArrayList<Room> roomArrayList;
+    private ShimmerFrameLayout roomShimmer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +33,7 @@ public class ShowMoreActivity extends AppCompatActivity {
         setContentView(R.layout.activity_show_more);
 
         roomShimmer = findViewById(R.id.room_shimmer);
-        btn_back = findViewById(R.id.btn_back);
-        btn_back.setOnClickListener(v -> {
-            finish();
-        });
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
         roomShimmer.startShimmer();
         roomrecyclerView = findViewById(R.id.rcv_showmore);
@@ -60,7 +55,7 @@ public class ShowMoreActivity extends AppCompatActivity {
                     for (DataSnapshot roomType : snapshot.getChildren()) {
                         for (DataSnapshot roomSnapshot : roomType.getChildren()) {
                             Room room = roomSnapshot.getValue(Room.class);
-                            if (room != null && room.getStatus_room() != 1) {
+                            if (room != null) {
                                 roomArrayList.add(room);
                             }
                         }

@@ -23,6 +23,7 @@ import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Activities.PostActivity;
 import com.example.timphongtro.Activities.SearchActivity;
 import com.example.timphongtro.Activities.ServiceActivity;
+import com.example.timphongtro.Activities.ShowMoreActivity;
 import com.example.timphongtro.Adapters.DistrictAdapter;
 import com.example.timphongtro.Models.City;
 import com.example.timphongtro.Models.District;
@@ -68,6 +69,11 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if (user == null) {
+            Intent intent = new Intent(getContext(), LoginActivity.class);
+            startActivity(intent);
+        }
+
         initializeUI(view);
         setupImageSlider(view);
         setupCitySpinner();
@@ -82,11 +88,10 @@ public class HomeFragment extends Fragment {
         districtShimmer = view.findViewById(R.id.district_shimmer);
         roomShimmer = view.findViewById(R.id.room_shimmer);
 
+        view.findViewById(R.id.searchEditText).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
+        view.findViewById(R.id.showMore).setOnClickListener(v -> startActivity(new Intent(getContext(), ShowMoreActivity.class)));
         view.findViewById(R.id.find_room).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
-        view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> {
-            Intent intent = (user != null) ? new Intent(getContext(), PostActivity.class) : new Intent(getContext(), LoginActivity.class);
-            startActivity(intent);
-        });
+        view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> startActivity(new Intent(getContext(), PostActivity.class)));
         setupServiceClickListeners(view);
     }
 
@@ -248,7 +253,7 @@ public class HomeFragment extends Fragment {
                     for (DataSnapshot roomType : snapshot.getChildren()) {
                         for (DataSnapshot roomSnapshot : roomType.getChildren()) {
                             Room room = roomSnapshot.getValue(Room.class);
-                            if (room != null && room.getStatus_room() != 1 && room.getAddress().getCity().equals(selectedSpinner)) {
+                            if (room != null && room.getAddress().getCity().equals(selectedSpinner)) {
                                 roomArrayList.add(room);
                             }
                         }

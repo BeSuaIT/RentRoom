@@ -1,5 +1,6 @@
 package com.example.timphongtro.Activities;
 
+import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -56,6 +57,8 @@ public class SearchActivity extends AppCompatActivity {
 
         fetchCitiesData();
         fetchRoomDatabase();
+
+        handleIncomingSelection();
     }
 
     private void initializeViews() {
@@ -255,5 +258,42 @@ public class SearchActivity extends AppCompatActivity {
         }
 
         searchAdapter.searchDataList(filteredList);
+    }
+
+    private void handleIncomingSelection() {
+        String selectedCity = getIntent().getStringExtra("selectedCity");
+        String selectedDistrict = getIntent().getStringExtra("selectedDistrict");
+
+        if (selectedCity != null && selectedDistrict != null) {
+            citiesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    spinnerCity.post(() -> {
+                        for (int i = 0; i < cityAdapter.getCount(); i++) {
+                            if (cityAdapter.getItem(i).equals(selectedCity)) {
+                                spinnerCity.setSelection(i);
+                                districtAdapter.registerDataSetObserver(new DataSetObserver() {
+                                    @Override
+                                    public void onChanged() {
+                                        districtAdapter.unregisterDataSetObserver(this);
+
+                                        for (int j = 0; j < districtAdapter.getCount(); j++) {
+                                            if (districtAdapter.getItem(j).equals(selectedDistrict)) {
+                                                spinnerDistrict.setSelection(j);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                });
+                                break;
+                            }
+                        }
+                    });
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {}
+            });
+        }
     }
 }

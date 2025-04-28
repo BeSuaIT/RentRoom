@@ -61,29 +61,6 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/pickImgAlbum"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="10dp">
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_groupusers" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginStart="20dp"
-            android:text="@string/findpeople"
-            android:textColor="@color/orange_100"
-            android:textSize="20sp" />
-
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/contract"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

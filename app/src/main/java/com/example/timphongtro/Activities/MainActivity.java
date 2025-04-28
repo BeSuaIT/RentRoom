@@ -14,9 +14,6 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.example.timphongtro.BroadcastReceiver.NetworkChangeReceiver;
 import com.example.timphongtro.Fragments.HomeFragment;
@@ -91,29 +88,17 @@ public class MainActivity extends AppCompatActivity {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_bottom_fab);
 
-        LinearLayout house = dialog.findViewById(R.id.house);
-        LinearLayout groupusers = dialog.findViewById(R.id.pickImgAlbum);
-        LinearLayout contract = dialog.findViewById(R.id.contract);
-        ImageView cancelButton = dialog.findViewById(R.id.cancelButton);
-
-        house.setOnClickListener(v -> {
+        dialog.findViewById(R.id.house).setOnClickListener(v -> {
             dialog.dismiss();
             Intent search = new Intent(this, SearchActivity.class);
             startActivity(search);
         });
-
-        groupusers.setOnClickListener(v -> {
+        dialog.findViewById(R.id.contract).setOnClickListener(v -> {
             dialog.dismiss();
-            Toast.makeText(MainActivity.this, "In Developing", Toast.LENGTH_SHORT).show();
+            Intent post = new Intent(this, PostActivity.class);
+            startActivity(post);
         });
-
-        contract.setOnClickListener(v -> {
-            dialog.dismiss();
-                Intent post = new Intent(this, PostActivity.class);
-                startActivity(post);
-        });
-
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.findViewById(R.id.cancelButton).setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
