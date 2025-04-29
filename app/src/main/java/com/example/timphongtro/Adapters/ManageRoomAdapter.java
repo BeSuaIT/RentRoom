@@ -21,8 +21,6 @@ import com.example.timphongtro.Activities.EditPostActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -69,7 +67,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
 
             holder.textViewDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
+                builder.setTitle("Xác nhận")
                         .setMessage("Bạn chắc chắn muốn xóa không?")
                         .setPositiveButton("Có", (dialog, which) -> {
                             String path = "Tro";
@@ -79,8 +77,6 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
                             }
                             FirebaseDatabase database = FirebaseDatabase.getInstance();
                             DatabaseReference myRef = database.getReference("Rooms/" + path + "/" + room.getId_room());
-                            DatabaseReference myLovePostRef = null;
-                            FirebaseUser userCurrent = FirebaseAuth.getInstance().getCurrentUser();
                             myRef.removeValue().addOnCompleteListener(task -> Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show());
                         }).setNegativeButton("Không", (dialog, which) -> {
                         });
@@ -105,8 +101,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView people_room, price_room, area_room, city, district, detail, title_room;
-        TextView textViewEdit, textViewDelete;
+        TextView people_room, price_room, area_room, city, district, detail, title_room, textViewEdit, textViewDelete;
         CardView cardViewRoom;
         ImageView img_post;
         ConstraintLayout constraintViewDetail;
