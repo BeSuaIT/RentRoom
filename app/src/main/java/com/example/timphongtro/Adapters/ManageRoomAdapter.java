@@ -67,7 +67,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
                 context.startActivity(detailRoom);
             });
 
-            holder.imageViewDelete.setOnClickListener(v -> {
+            holder.textViewDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("Xác nhận") // Thiết lập tiêu đề của Dialog
                         .setMessage("Bạn chắc chắn muốn xóa không?")
@@ -88,7 +88,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
                 alertDialog.show();
             });
 
-            holder.imageViewEdit.setOnClickListener(v -> {
+            holder.textViewEdit.setOnClickListener(v -> {
                 Intent updateRoom = new Intent(context, EditPostActivity.class);
                 updateRoom.putExtra("DataRoom", room.toString());
                 context.startActivity(updateRoom);
@@ -106,8 +106,9 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView people_room, price_room, area_room, city, district, detail, title_room;
+        TextView textViewEdit, textViewDelete;
         CardView cardViewRoom;
-        ImageView img_post, imageViewEdit, imageViewDelete;
+        ImageView img_post;
         ConstraintLayout constraintViewDetail;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -121,8 +122,8 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             people_room = itemView.findViewById(R.id.Size);
             cardViewRoom = itemView.findViewById(R.id.cardViewRoom);
             img_post = itemView.findViewById(R.id.img_post);
-            imageViewEdit = itemView.findViewById(R.id.imageViewEdit);
-            imageViewDelete = itemView.findViewById(R.id.imageViewDelete);
+            textViewEdit = itemView.findViewById(R.id.textViewEdit);
+            textViewDelete = itemView.findViewById(R.id.textViewDelete);
             constraintViewDetail = itemView.findViewById(R.id.constraintViewDetail);
         }
     }
