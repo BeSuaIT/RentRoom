@@ -8,8 +8,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
@@ -23,25 +24,36 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.regex.Pattern;
 
 public class EditProfileActivity extends AppCompatActivity {
-    private static final int PHONE_VERIFICATION_REQUEST = 1;
     private FirebaseDatabase database;
     private FirebaseUser currentUser;
     private DatabaseReference userRef;
     private User user;
-
     private EditText nameEditText, emailEditText, phoneEditText;
     private ImageView backButton;
     private LinearLayout emailContainer;
     private Button updateButton;
+    private ActivityResultLauncher<Intent> phoneVerificationLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
 
+        registerActivityResultLauncher();
         initializeViews();
         initializeFirebase();
         loadUserData();
+    }
+
+    private void registerActivityResultLauncher() {
+        phoneVerificationLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    finish();
+                }
+            }
+        );
     }
 
     private void initializeViews() {
@@ -108,20 +120,18 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void updateUserProfile(String name, String phone) {
-        // Nếu số điện thoại thay đổi
         if (!phone.equals(user.getPhone())) {
             Intent intent = new Intent(this, PhoneVerificationActivity.class);
             intent.putExtra("phone", phone);
-            startActivityForResult(intent, PHONE_VERIFICATION_REQUEST);
+            phoneVerificationLauncher.launch(intent);
             return;
         }
 
-        // Nếu chỉ thay đổi tên
         User updatedUser = new User(
                 user.getEmail(),
                 currentUser.getUid(),
                 name,
-                user.getPhone(), // giữ nguyên số điện thoại cũ
+                user.getPhone(),
                 user.getPermission(),
                 user.getCreatedAt()
         );
@@ -132,16 +142,8 @@ public class EditProfileActivity extends AppCompatActivity {
                     finish();
                 })
                 .addOnFailureListener(e ->
-                        showToast("Cập nhật thất bại")
+                    showToast("Cập nhật thất bại")
                 );
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PHONE_VERIFICATION_REQUEST && resultCode == RESULT_OK) {
-            finish(); // Đóng màn hình edit profile sau khi verify thành công
-        }
     }
 
     private void showToast(String message) {

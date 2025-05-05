@@ -79,7 +79,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
 
     private void sendVerificationCode() {
         PhoneAuthOptions options = PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber("+84" + newPhoneNumber.substring(1)) // Convert 0xxx to +84xxx
+                .setPhoneNumber("+84" + newPhoneNumber.substring(1))
                 .setTimeout(60L, TimeUnit.SECONDS)
                 .setActivity(this)
                 .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
@@ -90,9 +90,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
 
                     @Override
                     public void onVerificationFailed(@NonNull FirebaseException e) {
-                        Toast.makeText(PhoneVerificationActivity.this,
-                                "Lỗi gửi mã: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(PhoneVerificationActivity.this, "Lỗi gửi mã: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override

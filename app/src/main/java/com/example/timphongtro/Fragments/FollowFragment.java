@@ -43,7 +43,7 @@ public class FollowFragment extends Fragment {
     private void initViews(View view) {
         rcvFollowPost = view.findViewById(R.id.rcvFollowPost);
         followedRooms = new ArrayList<>();
-        roomAdapter = new FollowRoomAdapter(requireContext(), followedRooms); // Thay đổi adapter
+        roomAdapter = new FollowRoomAdapter(requireContext(), followedRooms);
         rcvFollowPost.setLayoutManager(new LinearLayoutManager(getContext()));
         rcvFollowPost.setAdapter(roomAdapter);
 
@@ -60,7 +60,6 @@ public class FollowFragment extends Fragment {
                 followedRooms.clear();
                 for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                     String roomId = roomSnapshot.getKey();
-                    // Kiểm tra trong cả 2 loại phòng
                     checkRoomInType(roomId, "Tro");
                     checkRoomInType(roomId, "ChungCuMini");
                 }
@@ -85,7 +84,6 @@ public class FollowFragment extends Fragment {
                 if (snapshot.exists()) {
                     Room room = snapshot.getValue(Room.class);
                     if (room != null) {
-                        // Set the type_room based on the node
                         room.setType_room(type.equals("ChungCuMini") ? 1 : 0);
                         followedRooms.add(room);
                         roomAdapter.notifyDataSetChanged();

@@ -117,8 +117,7 @@ public class HistoryActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 swipeRefresh.setRefreshing(false);
-                Toast.makeText(HistoryActivity.this, 
-                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(HistoryActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -165,8 +164,7 @@ public class HistoryActivity extends AppCompatActivity {
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                     swipeRefresh.setRefreshing(false);
-                    Toast.makeText(HistoryActivity.this, 
-                        "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HistoryActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
     }

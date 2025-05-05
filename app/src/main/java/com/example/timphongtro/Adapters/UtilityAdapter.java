@@ -30,20 +30,25 @@ public class UtilityAdapter extends RecyclerView.Adapter<UtilityAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolderExtension onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_extension,parent,false);
+        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_utility,parent,false);
         return new ViewHolderExtension(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolderExtension holder, int position) {
-        holder.titleExtension.setText(utilities.get(holder.getAdapterPosition()).getName());
-        if(!"".equals(utilities.get(holder.getAdapterPosition()).getImg())){
-            Glide.with(context)
-                    .load(utilities.get(holder.getAdapterPosition()).getImg())
-                    .apply(new RequestOptions()
-                            .centerCrop()
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)) // để lưu ảnh trong bộ nhớ cache.
-                    .into(holder.imageViewExtension);
+        int adapterPosition = holder.getBindingAdapterPosition();
+        if (adapterPosition != RecyclerView.NO_POSITION) {
+            Utility utility = utilities.get(adapterPosition);
+            holder.titleExtension.setText(utility.getName());
+            
+            if (!"".equals(utility.getImg())) {
+                Glide.with(context)
+                        .load(utility.getImg())
+                        .apply(new RequestOptions()
+                                .centerCrop()
+                                .diskCacheStrategy(DiskCacheStrategy.ALL))
+                        .into(holder.imageViewExtension);
+            }
         }
     }
 

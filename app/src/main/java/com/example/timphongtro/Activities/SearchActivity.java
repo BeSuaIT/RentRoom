@@ -164,7 +164,7 @@ public class SearchActivity extends AppCompatActivity {
                 DataSnapshot chungCuMiniSnapshot = snapshot.child("ChungCuMini");
                 for (DataSnapshot roomSnapshot : chungCuMiniSnapshot.getChildren()) {
                     Room room = roomSnapshot.getValue(Room.class);
-                    if (room != null && room.getStatus_room() == 0) {
+                    if (room != null) {
                         roomArrayList.add(room);
                     }
                 }
@@ -172,7 +172,7 @@ public class SearchActivity extends AppCompatActivity {
                 DataSnapshot troSnapshot = snapshot.child("Tro");
                 for (DataSnapshot roomSnapshot : troSnapshot.getChildren()) {
                     Room room = roomSnapshot.getValue(Room.class);
-                    if (room != null && room.getStatus_room() == 0) {
+                    if (room != null) {
                         roomArrayList.add(room);
                     }
                 }

@@ -83,7 +83,7 @@ public class ShowMoreActivity extends AppCompatActivity {
         for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
             for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
                 Room room = roomSnapshot.getValue(Room.class);
-                if (room != null && room.getStatus_room() == 0) { // Only show available rooms
+                if (room != null) {
                     roomList.add(room);
                 }
             }

@@ -94,7 +94,7 @@ public class scheduleVisitRoomActivity extends AppCompatActivity {
         if ("Tro".equals(key) || "ChungCuMini".equals(key)) {
             for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                 Room room = childSnapshot.getValue(Room.class);
-                if (room != null && room.getStatus_room() != 1) {
+                if (room != null) {
                     availableRooms.add(room);
                 }
             }

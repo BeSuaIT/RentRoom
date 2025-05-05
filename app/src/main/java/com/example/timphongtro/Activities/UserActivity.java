@@ -200,24 +200,15 @@ public class UserActivity extends AppCompatActivity {
                 totalLoves = 0;
 
                 if (snapshot.exists()) {
-                    // Loop through room types (Tro, ChungCuMini)
                     for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
-                        // Loop through rooms
                         for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
                             Room room = roomSnapshot.getValue(Room.class);
                             if (room != null && userId.equals(room.getId_own_post())) {
-                                // Count posts
                                 totalPosts++;
-                                
-                                // Count total loves from userLovePost
+
                                 DataSnapshot lovesSnapshot = roomSnapshot.child("userLovePost");
                                 if (lovesSnapshot.exists()) {
                                     totalLoves += lovesSnapshot.getChildrenCount();
-                                }
-
-                                // Only add available rooms to the list
-                                if (room.getStatus_room() != 1) {
-                                    roomArrayList.add(room);
                                 }
                             }
                         }

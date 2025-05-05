@@ -3,7 +3,6 @@ package com.example.timphongtro.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,7 +32,7 @@ public class ManagePostActivity extends AppCompatActivity {
     private ArrayList<Room> roomList;
     private DatabaseReference roomsRef;
     private FirebaseUser currentUser;
-    private int currentStatus = 0; // 0: available, 1: rented
+    private int currentStatus = 0; // 0: phòng trống, 1: đã cho thuê
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,10 +51,7 @@ public class ManagePostActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         
         findViewById(R.id.imageViewBack).setOnClickListener(v -> finish());
-        findViewById(R.id.imageViewPost).setOnClickListener(v -> 
-            startActivity(new Intent(this, PostActivity.class)));
-        findViewById(R.id.fabAddPost).setOnClickListener(v -> 
-            startActivity(new Intent(this, PostActivity.class)));
+        findViewById(R.id.fabAddPost).setOnClickListener(v -> startActivity(new Intent(this, PostActivity.class)));
     }
 
     private void setupRecyclerView() {
