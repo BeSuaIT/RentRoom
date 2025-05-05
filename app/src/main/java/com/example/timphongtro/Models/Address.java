@@ -1,25 +1,23 @@
 package com.example.timphongtro.Models;
 
 public class Address {
-    String city, district, detail, ward, address_combine;
+    String city, district, detail, address_combine;
 
     Address() {
 
     }
 
-    public Address(String city, String district, String detail, String ward, String address_combine) {
+    public Address(String city, String district, String detail, String address_combine) {
         this.city = city;
         this.district = district;
         this.detail = detail;
-        this.ward = ward;
         this.address_combine = address_combine;
     }
 
-    public Address(String city, String district, String detail, String ward) {
+    public Address(String city, String district, String detail) {
         this.city = city;
         this.district = district;
         this.detail = detail;
-        this.ward = ward;
         this.address_combine = detail + ", " + district + ", " + city;
     }
 
@@ -39,14 +37,6 @@ public class Address {
 
     public void setDetail(String detail) {
         this.detail = detail;
-    }
-
-    public String getWard() {
-        return ward;
-    }
-
-    public void setWard(String ward) {
-        this.ward = ward;
     }
 
     public String getAddress_combine() {

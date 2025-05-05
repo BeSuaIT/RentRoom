@@ -1,478 +1,284 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".Activities.ScheduleVisitDetailActivity">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:background="@color/white_100">
 
-        <ScrollView
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/orange_100">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/imageViewBack"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_back"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chi tiết lịch hẹn"
+                    android:textColor="@color/white_100"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Room Preview Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewRoom"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" >
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:padding="10dp">
+                    android:padding="12dp">
 
                     <ImageView
-                        android:id="@+id/imageViewBack"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/ic_back" />
+                        android:id="@+id/imgPost"
+                        android:layout_width="120dp"
+                        android:layout_height="140dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/img_no_image"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
 
                     <TextView
-                        android:id="@+id/textView"
+                        android:id="@+id/PostTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:text="Tiêu đề"
+                        app:layout_constraintStart_toEndOf="@id/imgPost"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <TextView
+                        android:id="@+id/RoomCost"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Chi tiết lịch hẹn"
-                        android:textAlignment="center"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="8dp"
+                        android:textColor="@color/red"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:text="20000"
+                        app:layout_constraintStart_toStartOf="@id/PostTitle"
+                        app:layout_constraintTop_toBottomOf="@id/PostTitle"/>
 
-                </LinearLayout>
+                    <TextView
+                        android:id="@+id/DistrictName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Địa chỉ"
+                        app:layout_constraintStart_toStartOf="@id/RoomCost"
+                        app:layout_constraintTop_toBottomOf="@id/RoomCost"/>
 
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/cardViewRoom"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_margin="5dp"
-                    android:elevation="10dp"
-                    app:cardCornerRadius="10dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/cardView2"
-                            android:layout_width="120dp"
-                            android:layout_height="140dp"
-                            android:layout_margin="5dp"
-                            app:cardCornerRadius="10dp"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent">
-
-                            <ImageView
-                                android:id="@+id/img_post"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/img_no_image">
-
-                            </ImageView>
-
-                        </androidx.cardview.widget.CardView>
-
-                        <TextView
-                            android:id="@+id/PostTitle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:ellipsize="end"
-                            android:maxLines="2"
-                            android:text="Tiêu đề phòng đẹp dai như nhóm trưởng "
-                            android:textAllCaps="true"
-                            android:textColor="@color/black"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@+id/cardView2"
-                            app:layout_constraintTop_toTopOf="@+id/cardView2" />
-
-                        <TextView
-                            android:id="@+id/RoomCost"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="5.700.000"
-                            android:textColor="@color/red"
-                            android:textStyle="bold"
-                            app:layout_constraintStart_toEndOf="@+id/cardView2"
-                            app:layout_constraintTop_toBottomOf="@+id/PostTitle" />
-
-                        <TextView
-                            android:id="@+id/currency"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="đ/tháng"
-                            android:textColor="@color/red"
-                            android:textStyle="bold"
-                            app:layout_constraintStart_toEndOf="@+id/RoomCost"
-                            app:layout_constraintTop_toTopOf="@+id/RoomCost" />
-
-                        <TextView
-                            android:id="@+id/CityAddress"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="Thành Phố: "
-                            app:layout_constraintStart_toEndOf="@+id/cardView2"
-                            app:layout_constraintTop_toBottomOf="@+id/RoomCost" />
-
-                        <TextView
-                            android:id="@+id/CityName"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:text="Hà Nội"
-                            app:layout_constraintStart_toEndOf="@+id/CityAddress"
-                            app:layout_constraintTop_toBottomOf="@+id/RoomCost" />
-
-                        <TextView
-                            android:id="@+id/DistrictAddress"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="Quận: "
-                            app:layout_constraintStart_toEndOf="@+id/cardView2"
-                            app:layout_constraintTop_toBottomOf="@+id/CityAddress" />
-
-                        <TextView
-                            android:id="@+id/DistrictName"
-                            android:layout_width="86dp"
-                            android:layout_height="24dp"
-                            android:text="Nam Từ Liêm"
-                            app:layout_constraintStart_toEndOf="@+id/DistrictAddress"
-                            app:layout_constraintTop_toBottomOf="@+id/CityAddress" />
-
-                        <TextView
-                            android:id="@+id/DetailAddress"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="Số/tên phòng: "
-                            app:layout_constraintStart_toEndOf="@+id/cardView2"
-                            app:layout_constraintTop_toBottomOf="@+id/DistrictAddress" />
-
-                        <TextView
-                            android:id="@+id/DetailName"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="256 Xuân Đỉnh"
-                            app:layout_constraintStart_toEndOf="@+id/DetailAddress"
-                            app:layout_constraintTop_toBottomOf="@+id/DistrictAddress" />
-
-                        <TextView
-                            android:id="@+id/DienTichTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="Diện tích: "
-                            app:layout_constraintStart_toEndOf="@+id/cardView2"
-                            app:layout_constraintTop_toBottomOf="@+id/DetailAddress" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp"
+                        app:layout_constraintStart_toStartOf="@id/DistrictName"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/DistrictName">
 
                         <TextView
                             android:id="@+id/DienTich"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="40m2"
-                            app:layout_constraintStart_toEndOf="@+id/DienTichTitle"
-                            app:layout_constraintTop_toBottomOf="@+id/DetailName" />
-
-                        <TextView
-                            android:id="@+id/SizeTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="Số người: "
-                            app:layout_constraintStart_toEndOf="@+id/DienTich"
-                            app:layout_constraintTop_toBottomOf="@+id/DetailName" />
+                            android:text="Diện tích: 20m2"
+                            android:drawablePadding="4dp"/>
 
                         <TextView
                             android:id="@+id/Size"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="4"
-                            app:layout_constraintStart_toEndOf="@+id/SizeTitle"
-                            app:layout_constraintTop_toBottomOf="@+id/DetailName" />
+                            android:layout_marginStart="16dp"
+                            android:text="Số người: 2"
+                            android:drawablePadding="4dp"/>
 
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                    </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Schedule Info Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Visitor Info -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Thông tin người xem"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:drawableStart="@drawable/ic_user"
+                        android:drawablePadding="8dp"/>
+
+                    <!-- Schedule Time -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Thời gian xem phòng"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:drawableStart="@drawable/ic_clock"
+                        android:drawablePadding="8dp"/>
+
+                    <!-- User Profile -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Chủ phòng"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
 
                     <LinearLayout
+                        android:id="@+id/userPost"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:gravity="center_vertical"
-                        android:orientation="vertical"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                        android:orientation="horizontal">
 
+                        <TextView
+                            android:id="@+id/tvprofileDetail"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/avatar"
+                            android:gravity="center"
+                            android:textColor="@color/white_100"
+                            android:textSize="20sp"/>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:id="@+id/textViewNameUser"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginRight="10dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="10dp"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:drawableStart="@drawable/ic_user"
-                                    android:drawablePadding="9dp"
-                                    android:text="Tên người hẹn: "
-                                    android:textColor="@color/black"
-                                    android:textSize="24dp" />
-
-                                <TextView
-                                    android:id="@+id/tvName"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Admin"
-                                    android:textColor="@color/black"
-                                    android:textSize="24dp" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:layout_marginBottom="10dp"
-                                android:layout_weight="1"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:drawableStart="@drawable/ic_calender"
-                                    android:drawablePadding="9dp"
-                                    android:text="Thời gian hẹn: "
-                                    android:textColor="@color/black"
-                                    android:textSize="18sp" />
-
-                                <TextView
-                                    android:id="@+id/tvTime"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="20/10"
-                                    android:textColor="@color/black"
-                                    android:textSize="18sp" />
-
-                            </LinearLayout>
-
-                            <!--                    <LinearLayout-->
-                            <!--                        android:id="@+id/linearstatus"-->
-                            <!--                        android:layout_width="wrap_content"-->
-                            <!--                        android:layout_height="wrap_content"-->
-                            <!--                        android:layout_marginBottom="10dp"-->
-                            <!--                        android:gravity="center_vertical"-->
-                            <!--                        android:orientation="horizontal">-->
-
-                            <!--                        <TextView-->
-                            <!--                            android:layout_width="wrap_content"-->
-                            <!--                            android:layout_height="wrap_content"-->
-                            <!--                            android:layout_marginRight="10dp"-->
-                            <!--                            android:drawableStart="@drawable/ic_status2"-->
-                            <!--                            android:drawablePadding="9dp"-->
-                            <!--                            android:gravity="center"-->
-                            <!--                            android:text="Trạng lịch hẹn: "-->
-                            <!--                            android:textColor="@color/black" />-->
-
-                            <!--                        <TextView-->
-                            <!--                            android:id="@+id/tvStatus"-->
-                            <!--                            android:layout_width="wrap_content"-->
-                            <!--                            android:layout_height="wrap_content"-->
-                            <!--                            android:layout_weight="1"-->
-                            <!--                            android:background="@drawable/send"-->
-                            <!--                            android:gravity="center"-->
-                            <!--                            android:padding="10dp"-->
-                            <!--                            android:text="Đã gửi"-->
-                            <!--                            android:textColor="@color/white" />-->
-                            <!--                    </LinearLayout>-->
-
-                            <LinearLayout
-                                android:id="@+id/userPost"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="20dp"
-                                android:layout_marginBottom="20dp"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <LinearLayout
-                                        android:id="@+id/circleImageView"
-                                        android:layout_width="50dp"
-                                        android:layout_height="50dp"
-                                        android:layout_marginLeft="10dp"
-                                        android:layout_marginRight="5dp"
-                                        android:background="@drawable/avatar"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:id="@+id/tvprofileDetail"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:textAlignment="center"
-                                            android:textColor="@color/white_100"
-                                            android:textSize="30sp" />
-                                    </LinearLayout>
-
-                                    <!--                        <ImageView-->
-                                    <!--                            android:id="@+id/imageViewAvatar"-->
-                                    <!--                            android:layout_width="50dp"-->
-                                    <!--                            android:layout_height="50dp"-->
-                                    <!--                            android:src="@drawable/a" />-->
-
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginLeft="5dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:id="@+id/textViewNameUser"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginRight="10dp"
-                                            android:textColor="@color/black"
-                                            android:textSize="20sp" />
-
-                                        <ImageView
-                                            android:id="@+id/imageView2"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            app:srcCompat="@drawable/ic_king" />
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginRight="10dp"
-                                        android:gravity="right|center_vertical"
-                                        android:orientation="vertical">
-
-                                        <ImageView
-                                            android:id="@+id/imageView7"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            app:srcCompat="@drawable/ic_next" />
-                                    </LinearLayout>
-
-                                </LinearLayout>
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="100dp"
-                                android:layout_marginBottom="10dp"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:id="@+id/textView7"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginBottom="10dp"
-                                    android:drawableStart="@drawable/ic_pencil"
-                                    android:drawablePadding="9dp"
-                                    android:text="Ghi chú: "
-                                    android:textSize="16sp" />
-
-                                <ScrollView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content">
-
-                                    <TextView
-                                        android:id="@+id/tvNote"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:text="Ghi chú blabla sub string đi"
-                                        android:textSize="16sp" />
-                                </ScrollView>
-
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:layout_marginStart="12dp"
+                            android:textSize="16sp"/>
 
                     </LinearLayout>
 
+                    <!-- Notes Section -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Ghi chú"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"/>
+
                 </LinearLayout>
-            </LinearLayout>
-        </ScrollView>
 
-    </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom Action Buttons -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white_100"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_gravity="bottom"
+        app:cardElevation="8dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRefuse"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:layout_weight="1"
-            android:text="Từ chối"
-            android:textColor="@color/orange_100"
-            android:textSize="16sp"
-            app:strokeColor="@color/orange_100" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAccept"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:layout_marginRight="10dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/orange_100"
-            android:text="Xác nhận"
-            android:textColor="@color/white_100"
-            android:textSize="16sp"
-            app:cornerRadius="10dp"
-            app:iconPadding="0dp"
-            app:strokeColor="@color/orange_100" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefuse"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Từ chối"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
 
-    </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAccept"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Xác nhận"
+                style="@style/Widget.Material3.Button"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

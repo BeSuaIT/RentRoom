@@ -727,7 +727,7 @@ public class EditPostActivity extends AppCompatActivity {
         if ("".equals(detail)) {
             address = new Address(city, district);
         } else {
-            address = new Address(city, district, detail, ward, address_combine);
+            address = new Address(city, district, detail, address_combine);
         }
 
         String gender_room;

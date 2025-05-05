@@ -3,22 +3,17 @@ package com.example.timphongtro.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.button.MaterialButton;
+import com.example.timphongtro.databinding.ActivityScheduleVisitDetailBinding;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,146 +21,152 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
+import java.text.DecimalFormat;
+
 public class ScheduleVisitDetailActivity extends AppCompatActivity {
-    ScheduleVisitRoomClass schedule;
-    TextView tvName, tvTime, tvNote, PostTitle, RoomCost, CityName, DistrictName, DetailName, DienTich, Size, tvprofileDetail, textViewNameUser;
-    ImageView img_post,imageViewBack;
-    User user;
-    Room room;
-    LinearLayout userPost;
-    CardView cardViewRoom;
-    MaterialButton btnRefuse,btnAccept;
+    private ScheduleVisitRoomClass schedule;
+    private Room room;
+    private User user;
+    private DatabaseReference scheduleRef;
+    private ActivityScheduleVisitDetailBinding binding;
+    private DecimalFormat decimalFormat;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_schedule_visit_detail);
+        binding = ActivityScheduleVisitDetailBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        //Schedule
-        tvName = findViewById(R.id.tvName);
-        tvTime = findViewById(R.id.tvTime);
-        tvNote = findViewById(R.id.tvNote);
-        btnRefuse = findViewById(R.id.btnRefuse);
-        btnAccept = findViewById(R.id.btnAccept);
-//        tvStatus = findViewById(R.id.tvStatus);
+        decimalFormat = new DecimalFormat("#,###");
+        
+        setupViews();
+        loadScheduleData();
+    }
 
-        //Room
-        PostTitle = findViewById(R.id.PostTitle);
-        RoomCost = findViewById(R.id.RoomCost);
-        CityName = findViewById(R.id.CityName);
-        DistrictName = findViewById(R.id.DistrictName);
-        DetailName = findViewById(R.id.DetailName);
-        DienTich = findViewById(R.id.DienTich);
-        Size = findViewById(R.id.Size);
-        img_post = findViewById(R.id.img_post);
-        cardViewRoom = findViewById(R.id.cardViewRoom);
-        //User
-        tvprofileDetail = findViewById(R.id.tvprofileDetail);
-        textViewNameUser = findViewById(R.id.textViewNameUser);
-        userPost = findViewById(R.id.userPost);
-        imageViewBack = findViewById(R.id.imageViewBack);
+    private void setupViews() {
+        binding.imageViewBack.setOnClickListener(v -> finish());
+        binding.cardViewRoom.setOnClickListener(v -> navigateToRoomDetail());
+        binding.userPost.setOnClickListener(v -> navigateToUserProfile());
+        
+        setupActionButtons();
+    }
 
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            String scheduleString = bundle.getString("scheduleData");
-            int showbtn = bundle.getInt("showbtn");
-            Gson gson = new Gson();
-            schedule = gson.fromJson(scheduleString, ScheduleVisitRoomClass.class);
-            tvName.setText(schedule.getName());
-            tvTime.setText(schedule.getTimeVisitRoom());
-            tvNote.setText(schedule.getNote());
-//            tvStatus.setText(schedule.getStatus());
-            String typeRoom = "Tro";
-            if (schedule.getTypeRoom() == 1) {
-                typeRoom = "ChungCuMini";
-            }
+    private void setupActionButtons() {
+        boolean showButtons = getIntent().getIntExtra("showbtn", 1) == 1;
+        binding.btnRefuse.setVisibility(showButtons ? View.VISIBLE : View.GONE);
+        binding.btnAccept.setVisibility(showButtons ? View.VISIBLE : View.GONE);
 
-            if(showbtn == 0){
-                btnRefuse.setVisibility(View.INVISIBLE);
-                btnAccept.setVisibility(View.INVISIBLE);
-            }
+        binding.btnRefuse.setOnClickListener(v -> updateScheduleStatus("2", "Bạn từ chối thành công"));
+        binding.btnAccept.setOnClickListener(v -> updateScheduleStatus("1", "Bạn xác nhận thành công"));
+    }
 
-            DatabaseReference scheduleRef = FirebaseDatabase.getInstance().getReference("MeetingSchedules/");
-            btnRefuse.setOnClickListener(v -> scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("2").addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void unused) {
-                    Toast.makeText(ScheduleVisitDetailActivity.this, "Bạn từ chối thành công", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-            }));
-
-            btnAccept.setOnClickListener(v -> scheduleRef.child(schedule.getIdSchedule()).child("status").setValue("1").addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void unused) {
-                    Toast.makeText(ScheduleVisitDetailActivity.this, "Bạn xác nhận thành công", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-            }));
-
-            DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Rooms/" + typeRoom + "/" + schedule.getIdRoom());
-            roomRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        room = snapshot.getValue(Room.class);
-                        if (room != null) {
-                            PostTitle.setText(room.getTitle_room());
-                            RoomCost.setText(String.valueOf(room.getPrice_room()));
-                            DistrictName.setText(room.getAddress().getDistrict());
-                            DetailName.setText(room.getAddress().getDetail());
-                            DienTich.setText(room.getArea_room());
-                            Size.setText(String.valueOf(room.getPerson_in_room()));
-                            Glide.with(ScheduleVisitDetailActivity.this)
-                                    .load(room.getFirstImage())
-                                    .into(img_post);
-                        }
-
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
-                }
-            });
-
-            DatabaseReference userOwnPostRef = FirebaseDatabase.getInstance().getReference("Users/" + schedule.getIdFrom());
-            userOwnPostRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        user = snapshot.getValue(User.class);
-                        if (user != null) {
-                            tvprofileDetail.setText(getFirstLetter(user.getName()));
-                            textViewNameUser.setText(user.getName());
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
-                }
-            });
-
-            userPost.setOnClickListener(v -> {
-                Intent userDetail = new Intent(ScheduleVisitDetailActivity.this, UserActivity.class);
-                userDetail.putExtra("id_own_post", schedule.getIdFrom());
-                startActivity(userDetail);
-            });
-
-
-            cardViewRoom.setOnClickListener(v -> {
-                if (room != null) {
-                    String roomString = room.toString();
-                    Intent roomDetail = new Intent(ScheduleVisitDetailActivity.this, DetailRoomActivity.class);
-                    roomDetail.putExtra("DataRoom", roomString);
-                    startActivity(roomDetail);
-                }
-            });
-
-            imageViewBack.setOnClickListener(v -> finish());
+    private void loadScheduleData() {
+        String scheduleString = getIntent().getStringExtra("scheduleData");
+        if (scheduleString == null) {
+            finish();
+            return;
         }
+
+        schedule = new Gson().fromJson(scheduleString, ScheduleVisitRoomClass.class);
+        updateScheduleUI();
+        loadRoomData();
+        loadUserData();
+    }
+
+    private void updateScheduleUI() {
+        binding.tvName.setText(schedule.getName());
+        binding.tvTime.setText(schedule.getTimeVisitRoom());
+        binding.tvNote.setText(schedule.getNote());
+    }
+
+    private void loadRoomData() {
+        String typeRoom = schedule.getTypeRoom() == 1 ? "ChungCuMini" : "Tro";
+        DatabaseReference roomRef = FirebaseDatabase.getInstance()
+            .getReference("Rooms")
+            .child(typeRoom)
+            .child(schedule.getIdRoom());
+
+        roomRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                room = snapshot.getValue(Room.class);
+                if (room != null) {
+                    updateRoomUI();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                showToast("Lỗi: " + error.getMessage());
+            }
+        });
+    }
+
+    private void updateRoomUI() {
+        binding.PostTitle.setText(room.getTitle_room());
+        String formattedPrice = decimalFormat.format(room.getPrice_room()) + " đ/tháng";
+        binding.RoomCost.setText(formattedPrice);
+        binding.DistrictName.setText(room.getAddress().getAddress_combine());
+        binding.DienTich.setText("Diện tích: " + room.getArea_room());
+        binding.Size.setText("Số người: " + room.getPerson_in_room());
+        
+        Glide.with(this)
+            .load(room.getFirstImage())
+            .into(binding.imgPost);
+    }
+
+    private void loadUserData() {
+        DatabaseReference userOwnPostRef = FirebaseDatabase.getInstance()
+            .getReference("Users")
+            .child(schedule.getIdFrom());
+
+        userOwnPostRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                user = snapshot.getValue(User.class);
+                if (user != null) {
+                    binding.tvprofileDetail.setText(getFirstLetter(user.getName()));
+                    binding.textViewNameUser.setText(user.getName());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                showToast("Lỗi: " + error.getMessage());
+            }
+        });
+    }
+
+    private void updateScheduleStatus(String status, String message) {
+        scheduleRef = FirebaseDatabase.getInstance()
+            .getReference("MeetingSchedules")
+            .child(schedule.getIdSchedule());
+            
+        scheduleRef.child("status").setValue(status)
+            .addOnSuccessListener(unused -> {
+                showToast(message);
+                finish();
+            })
+            .addOnFailureListener(e -> showToast("Lỗi: " + e.getMessage()));
+    }
+
+    private void navigateToRoomDetail() {
+        if (room != null) {
+            Intent intent = new Intent(this, DetailRoomActivity.class);
+            intent.putExtra("DataRoom", room.toString());
+            startActivity(intent);
+        }
+    }
+
+    private void navigateToUserProfile() {
+        Intent intent = new Intent(this, UserActivity.class);
+        intent.putExtra("id_own_post", schedule.getIdFrom());
+        startActivity(intent);
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     public static String getFirstLetter(String input) {
