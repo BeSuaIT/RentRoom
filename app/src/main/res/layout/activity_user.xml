@@ -55,16 +55,30 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/circleImageView"
+                <FrameLayout
+                    android:id="@+id/profileContainer"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    android:background="@drawable/avatar"
-                    android:gravity="center"
-                    android:textColor="@color/white_100"
-                    android:textSize="32sp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent">
+                    
+                    <TextView
+                        android:id="@+id/profileTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/avatar"
+                        android:gravity="center"
+                        android:textColor="@color/white_100"
+                        android:textSize="32sp" />
+                        
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/profileImageView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone"
+                        app:shapeAppearanceOverlay="@style/CircularImageView" />
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/username"
@@ -75,8 +89,8 @@
                     android:textSize="20sp"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/circleImageView"
-                    app:layout_constraintTop_toTopOf="@id/circleImageView"
+                    app:layout_constraintStart_toEndOf="@id/profileContainer"
+                    app:layout_constraintTop_toTopOf="@id/profileContainer"
                     tools:text="Admin" />
 
                 <LinearLayout
@@ -88,7 +102,7 @@
                     android:baselineAligned="false"
                     android:orientation="horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/circleImageView"
+                    app:layout_constraintStart_toEndOf="@+id/profileContainer"
                     app:layout_constraintTop_toBottomOf="@id/username">
 
                     <LinearLayout
@@ -149,7 +163,7 @@
                     android:padding="8dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/circleImageView">
+                    app:layout_constraintTop_toBottomOf="@id/profileContainer">
 
                     <ImageView
                         android:layout_width="24dp"

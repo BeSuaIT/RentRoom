@@ -6,23 +6,33 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.timphongtro.Adapters.RoomAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,7 +43,9 @@ import java.util.ArrayList;
 
 public class UserActivity extends AppCompatActivity {
 
-    private TextView username, phone, email, circleImageView, postCount, loveCount;
+    private TextView username, phone, email, postCount, loveCount;
+    private TextView profileTextView;
+    private ShapeableImageView profileImageView;
     private RecyclerView rcvUser;
     private RoomAdapter roomAdapter;
     private FirebaseDatabase database;
@@ -68,7 +80,8 @@ public class UserActivity extends AppCompatActivity {
         email = findViewById(R.id.email);
         postCount = findViewById(R.id.postCount);
         loveCount = findViewById(R.id.loveCount);
-        circleImageView = findViewById(R.id.circleImageView);
+        profileTextView = findViewById(R.id.profileTextView);
+        profileImageView = findViewById(R.id.profileImageView);
         rcvUser = findViewById(R.id.rcvUser);
         emailLinear = findViewById(R.id.emailLinear);
         phoneLinear = findViewById(R.id.phoneLinear);
@@ -106,7 +119,9 @@ public class UserActivity extends AppCompatActivity {
                         username.setText(user.getName());
                         phone.setText(user.getPhone());
                         email.setText(user.getEmail());
-                        circleImageView.setText(getFirstLetter(user.getName()));
+                        
+                        // Update profile image display
+                        updateProfileImage(user);
                     }
                 }
 
@@ -118,15 +133,54 @@ public class UserActivity extends AppCompatActivity {
             });
     }
 
-    public static String getFirstLetter(String input) {
+    // Sửa lại phương thức updateProfileImage
+    private void updateProfileImage(User user) {
+        String avatarUrl = user.getAvatarUrl();
+        
+        // Đặt text cho profileTextView trước
+        profileTextView.setText(getFirstLetter(user.getName()));
+        
+        if (!TextUtils.isEmpty(avatarUrl)) {
+            // Trước tiên, đảm bảo hiển thị text cho đến khi ảnh load xong
+            profileImageView.setVisibility(View.INVISIBLE); // Invisible thay vì GONE để giữ layout
+            profileTextView.setVisibility(View.VISIBLE);
+            
+            Glide.with(this)
+                .load(avatarUrl)
+                .placeholder(R.drawable.avatar)
+                .error(R.drawable.avatar)
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        // Nếu load ảnh thất bại, hiển thị text
+                        profileImageView.setVisibility(View.GONE);
+                        profileTextView.setVisibility(View.VISIBLE);
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        // Khi ảnh đã sẵn sàng, ẩn text và hiển thị ảnh
+                        profileTextView.setVisibility(View.GONE);
+                        profileImageView.setVisibility(View.VISIBLE);
+                        return false;
+                    }
+                })
+                .into(profileImageView);
+        } else {
+            // Không có avatar, chỉ hiển thị text
+            profileImageView.setVisibility(View.GONE);
+            profileTextView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private String getFirstLetter(String input) {
         String[] words = input.split(" ");
         StringBuilder result = new StringBuilder();
 
         if (words.length == 1) {
-            // Nếu chuỗi chỉ có 1 từ, lấy chữ đầu từ đó
             result.append(words[0].charAt(0));
         } else {
-            // Nếu chuỗi có nhiều từ, lấy chữ cái đầu của từ thứ 1 và 2
             for (int i = 0; i < 2; i++) {
                 result.append(words[i].charAt(0));
             }

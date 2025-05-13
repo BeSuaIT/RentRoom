@@ -3,29 +3,37 @@ package com.example.timphongtro.Models;
 public class User {
     private String email, uid, phone, name, permission;
     private long createdAt;
+    private String avatarUrl;
+
     public User() {
     }
 
-    public User(String email, String uid, String name, String phone, String permission, Long createdAt) {
+    public User(String email, String uid, String name, String phone, String permission, Long createdAt, String avatarUrl) {
         this.email = email;
         this.uid = uid;
         this.name = name;
         this.phone = phone;
         this.permission = permission;
         this.createdAt = createdAt;
+        this.avatarUrl = avatarUrl;
     }
+
     public Long getCreatedAt() {
         return createdAt;
     }
+
     public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
+
     public String getPermission() {
         return permission;
     }
+
     public void setPermission(String permission) {
         this.permission = permission;
     }
+
     public String getPhone() {
         return phone;
     }
@@ -56,5 +64,13 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }
