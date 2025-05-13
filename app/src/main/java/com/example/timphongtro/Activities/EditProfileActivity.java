@@ -48,6 +48,8 @@ public class EditProfileActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private ActivityResultLauncher<String> imagePickerLauncher;
     private StorageReference storageRef;
+    // Thêm biến ValueEventListener để có thể remove nó sau này
+    private ValueEventListener userValueEventListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,7 +157,8 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void loadUserData() {
-        userRef.addValueEventListener(new ValueEventListener() {
+        // Tạo một listener và lưu tham chiếu
+        userValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
@@ -164,7 +167,11 @@ public class EditProfileActivity extends AppCompatActivity {
                         nameEditText.setText(user.getName());
                         emailEditText.setText(user.getEmail());
                         phoneEditText.setText(user.getPhone());
-                        updateProfileImage();
+                        
+                        // Kiểm tra activity có bị destroy chưa
+                        if (!isFinishing() && !isDestroyed()) {
+                            updateProfileImage();
+                        }
                     }
                 }
             }
@@ -173,10 +180,19 @@ public class EditProfileActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 showToast("Lỗi tải dữ liệu");
             }
-        });
+        };
+        
+        // Đính kèm listener
+        userRef.addValueEventListener(userValueEventListener);
     }
 
+    // Cập nhật phương thức updateProfileImage để thêm kiểm tra
     private void updateProfileImage() {
+        // Kiểm tra activity có bị destroy chưa
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        
         String avatarUrl = user.getAvatarUrl();
         if (!TextUtils.isEmpty(avatarUrl)) {
             profileTextView.setVisibility(View.GONE);
@@ -188,6 +204,26 @@ public class EditProfileActivity extends AppCompatActivity {
             profileImageView.setVisibility(View.GONE);
             profileTextView.setVisibility(View.VISIBLE);
             profileTextView.setText(getFirstLetter(user.getName()));
+        }
+    }
+
+    // Hủy đăng ký listener khi activity bị destroy
+    @Override
+    protected void onDestroy() {
+        if (userRef != null && userValueEventListener != null) {
+            userRef.removeEventListener(userValueEventListener);
+        }
+        super.onDestroy();
+    }
+
+    // Tương tự, cập nhật phương thức updateProfileImagePreview
+    private void updateProfileImagePreview() {
+        if (selectedImageUri != null && !isFinishing() && !isDestroyed()) {
+            profileTextView.setVisibility(View.GONE);
+            profileImageView.setVisibility(View.VISIBLE);
+            Glide.with(this)
+                .load(selectedImageUri)
+                .into(profileImageView);
         }
     }
 
@@ -205,16 +241,6 @@ public class EditProfileActivity extends AppCompatActivity {
             }
         }
         return result.toString().toUpperCase();
-    }
-
-    private void updateProfileImagePreview() {
-        if (selectedImageUri != null) {
-            profileTextView.setVisibility(View.GONE);
-            profileImageView.setVisibility(View.VISIBLE);
-            Glide.with(this)
-                .load(selectedImageUri)
-                .into(profileImageView);
-        }
     }
 
     private void uploadProfileImage(String name, String phone) {
