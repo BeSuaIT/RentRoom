@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -30,6 +31,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.interfaces.ItemClickListener;
@@ -39,10 +41,12 @@ import com.example.timphongtro.Adapters.FurnitureAdapter;
 import com.example.timphongtro.Adapters.ZoomImageAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
+import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -85,6 +89,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     private Calendar bookingDate;
     private FurnitureAdapter furnitureAdapter;
     private UtilityAdapter utilityAdapter;
+    private ShapeableImageView userProfileImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +128,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         userNameTextView = findViewById(R.id.userNameTextView);
         userProfileTextView = findViewById(R.id.userProfileTextView);
         followButton = findViewById(R.id.followButton);
+        userProfileImageView = findViewById(R.id.userProfileImageView);
 
         imageViewBack.setOnClickListener(v -> finish());
         callButton.setOnClickListener(v -> handleCallButtonClick());
@@ -427,19 +433,22 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void loadUserPostInfo() {
         userPostReference = firebaseDatabase.getReference("Users/" + room.getId_own_post());
-        userPostReference.child("name").addValueEventListener(new ValueEventListener() {
+        
+        userPostReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    String name = snapshot.getValue(String.class);
-                    userNameTextView.setText(name);
-                    userProfileTextView.setText(getFirstLetter(name));
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                        userNameTextView.setText(user.getName());
+                        updateUserProfileImage(user);
+                    }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                // Handle error
             }
         });
 
@@ -448,6 +457,25 @@ public class DetailRoomActivity extends AppCompatActivity {
             typeRoom = "Tro/";
         }
         roomDatabaseRef = firebaseDatabase.getReference("Rooms/" + typeRoom + room.getId_room());
+    }
+
+    private void updateUserProfileImage(User user) {
+        String avatarUrl = user.getAvatarUrl();
+        if (!TextUtils.isEmpty(avatarUrl)) {
+            userProfileTextView.setVisibility(View.GONE);
+            userProfileImageView.setVisibility(View.VISIBLE);
+            
+            // Load image with Glide
+            Glide.with(this)
+                .load(avatarUrl)
+                .placeholder(R.drawable.avatar)
+                .error(R.drawable.avatar)
+                .into(userProfileImageView);
+        } else {
+            userProfileImageView.setVisibility(View.GONE);
+            userProfileTextView.setVisibility(View.VISIBLE);
+            userProfileTextView.setText(getFirstLetter(user.getName()));
+        }
     }
 
     private void handleFollowButtonClick() {
@@ -506,19 +534,24 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     public static String getFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+        
         String[] words = input.split(" ");
         StringBuilder result = new StringBuilder();
 
         if (words.length == 1) {
-            // Nếu chuỗi chỉ có 1 từ, lấy chữ đầu từ đó
-            result.append(words[0].charAt(0));
+            if (words[0].length() > 0) {
+                result.append(words[0].charAt(0));
+            }
         } else {
-            // Nếu chuỗi có nhiều từ, lấy chữ cái đầu của từ thứ 1 và 2
-            for (int i = 0; i < 2; i++) {
-                result.append(words[i].charAt(0));
+            for (int i = 0; i < Math.min(words.length, 2); i++) {
+                if (words[i].length() > 0) {
+                    result.append(words[i].charAt(0));
+                }
             }
         }
-
         return result.toString().toUpperCase();
     }
 }
