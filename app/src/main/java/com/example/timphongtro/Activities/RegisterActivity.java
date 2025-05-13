@@ -121,7 +121,8 @@ public class RegisterActivity extends AppCompatActivity {
             nameEditText.getText().toString(),
             "",
             "user",
-            System.currentTimeMillis()
+            System.currentTimeMillis(),
+                ""
         );
 
         databaseReference.child(user.getUid()).setValue(userData)

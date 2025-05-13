@@ -15,11 +15,13 @@ import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.fragment.app.Fragment;
 
 import android.os.CancellationSignal;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.BillActivity;
 import com.example.timphongtro.Activities.CartActivity;
 import com.example.timphongtro.Activities.EditProfileActivity;
@@ -29,6 +31,8 @@ import com.example.timphongtro.Activities.ManagePostActivity;
 import com.example.timphongtro.Activities.UserActivity;
 import com.example.timphongtro.Activities.scheduleVisitRoomActivity;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Models.User;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -42,13 +46,13 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private FirebaseDatabase firebaseDatabase;
-    private String name;
     private DatabaseReference databaseReference;
-    private TextView nameTextView, profileInitialTextView, emailTextView,
+    private TextView nameTextView, emailTextView,
             signOutButton, manageRoomsButton, scheduleButton,
             historyButton, myProfileButton, billButton, cartButton;
+    private TextView profileInitialTextView;
+    private ShapeableImageView profileImageView;
     private CardView profileCard;
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -64,9 +68,9 @@ public class ProfileFragment extends Fragment {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
+        // Initialize views
         nameTextView = view.findViewById(R.id.txtviewInfo);
         emailTextView = view.findViewById(R.id.txtviewEmail);
-
         signOutButton = view.findViewById(R.id.signOutButton);
         manageRoomsButton = view.findViewById(R.id.manageRoomsButton);
         scheduleButton = view.findViewById(R.id.scheduleButton);
@@ -74,10 +78,11 @@ public class ProfileFragment extends Fragment {
         billButton = view.findViewById(R.id.billButton);
         cartButton = view.findViewById(R.id.cartButton);
         profileInitialTextView = view.findViewById(R.id.profileInitialTextView);
+        profileImageView = view.findViewById(R.id.profileImageView);
         profileCard = view.findViewById(R.id.profileCard);
         myProfileButton = view.findViewById(R.id.myProfileButton);
 
-        if(firebaseUser != null){
+        if (firebaseUser != null) {
             myProfileButton.setOnClickListener(v -> {
                 Intent userProfileIntent = new Intent(getActivity().getApplicationContext(), UserActivity.class);
                 userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
@@ -163,62 +168,68 @@ public class ProfileFragment extends Fragment {
             });
 
             firebaseDatabase = FirebaseDatabase.getInstance();
-
             databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
-            databaseReference.child("name").addValueEventListener(new ValueEventListener() {
+
+            // Load full user data instead of just the name
+            databaseReference.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        name = snapshot.getValue(String.class);
-                        nameTextView.setText(name);
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                        nameTextView.setText(user.getName());
+                        emailTextView.setText(user.getEmail());
+                        updateProfileImage(user);
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-
+                    // Handle error
                 }
             });
-
-
-            if (firebaseUser != null) {
-                String email = firebaseUser.getEmail();
-                emailTextView.setText(email);
-                databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
-                databaseReference.child("name").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            name = snapshot.getValue(String.class);
-                            if (!"".equals(name)) {
-                                nameTextView.setText(name);
-                                profileInitialTextView.setText(getFirstLetter(name));
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-            }
         }
-
     }
 
+    // Add this method to handle the profile image
+    private void updateProfileImage(User user) {
+        String avatarUrl = user.getAvatarUrl();
+        if (!TextUtils.isEmpty(avatarUrl)) {
+            profileInitialTextView.setVisibility(View.GONE);
+            profileImageView.setVisibility(View.VISIBLE);
+
+            // Load image with Glide
+            Glide.with(requireContext())
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.avatar)
+                    .error(R.drawable.avatar)
+                    .into(profileImageView);
+        } else {
+            profileImageView.setVisibility(View.GONE);
+            profileInitialTextView.setVisibility(View.VISIBLE);
+            profileInitialTextView.setText(getFirstLetter(user.getName()));
+        }
+    }
+
+    // Keep the existing getFirstLetter method
     public static String getFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+
         String[] words = input.split(" ");
         StringBuilder result = new StringBuilder();
 
         if (words.length == 1) {
-            result.append(words[0].charAt(0));
+            if (words[0].length() > 0) {
+                result.append(words[0].charAt(0));
+            }
         } else {
-            for (int i = 0; i < 2; i++) {
-                result.append(words[i].charAt(0));
+            for (int i = 0; i < Math.min(words.length, 2); i++) {
+                if (words[i].length() > 0) {
+                    result.append(words[i].charAt(0));
+                }
             }
         }
-
         return result.toString().toUpperCase();
     }
 }
