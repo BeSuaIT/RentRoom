@@ -48,7 +48,6 @@ public class EditProfileActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private ActivityResultLauncher<String> imagePickerLauncher;
     private StorageReference storageRef;
-    // Thêm biến ValueEventListener để có thể remove nó sau này
     private ValueEventListener userValueEventListener;
 
     @Override
@@ -157,7 +156,6 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void loadUserData() {
-        // Tạo một listener và lưu tham chiếu
         userValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -167,8 +165,6 @@ public class EditProfileActivity extends AppCompatActivity {
                         nameEditText.setText(user.getName());
                         emailEditText.setText(user.getEmail());
                         phoneEditText.setText(user.getPhone());
-                        
-                        // Kiểm tra activity có bị destroy chưa
                         if (!isFinishing() && !isDestroyed()) {
                             updateProfileImage();
                         }
@@ -181,14 +177,11 @@ public class EditProfileActivity extends AppCompatActivity {
                 showToast("Lỗi tải dữ liệu");
             }
         };
-        
-        // Đính kèm listener
+
         userRef.addValueEventListener(userValueEventListener);
     }
 
-    // Cập nhật phương thức updateProfileImage để thêm kiểm tra
     private void updateProfileImage() {
-        // Kiểm tra activity có bị destroy chưa
         if (isFinishing() || isDestroyed()) {
             return;
         }
@@ -207,7 +200,6 @@ public class EditProfileActivity extends AppCompatActivity {
         }
     }
 
-    // Hủy đăng ký listener khi activity bị destroy
     @Override
     protected void onDestroy() {
         if (userRef != null && userValueEventListener != null) {
@@ -216,7 +208,6 @@ public class EditProfileActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    // Tương tự, cập nhật phương thức updateProfileImagePreview
     private void updateProfileImagePreview() {
         if (selectedImageUri != null && !isFinishing() && !isDestroyed()) {
             profileTextView.setVisibility(View.GONE);
