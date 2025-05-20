@@ -375,7 +375,6 @@ public class PostActivity extends AppCompatActivity {
         String city = spinnerCity.getSelectedItem().toString();
         String district = spinnerDistrict.getSelectedItem().toString();
         String detail = edtAddress.getText().toString();
-        String ward = "";
         String address_combine = detail + ", " + district + ", " + city;
         int status_room = 0;
         String id_own_post = userCurrent.getUid();
