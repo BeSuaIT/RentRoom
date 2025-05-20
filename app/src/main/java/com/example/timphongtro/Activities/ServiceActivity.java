@@ -108,12 +108,4 @@ public class ServiceActivity extends AppCompatActivity {
             }
         });
     }
-
-    private void openServiceActivity(String item) {
-        Intent intent = new Intent(ServiceActivity.this, CartActivity.class);
-        Intent intent1 = new Intent(ServiceActivity.this, ServiceDetailActivity.class);
-        intent.putExtra("item", item);
-        intent1.putExtra("item", item);
-        startActivity(intent);
-    }
 }
