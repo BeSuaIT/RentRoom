@@ -32,6 +32,8 @@ import com.example.timphongtro.Activities.UserActivity;
 import com.example.timphongtro.Activities.scheduleVisitRoomActivity;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Models.User;
+import com.facebook.AccessToken;
+import com.facebook.login.LoginManager;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -68,7 +70,17 @@ public class ProfileFragment extends Fragment {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        // Initialize views
+        if (firebaseUser == null) {
+            navigateToLogin();
+            return;
+        }
+
+        initializeViews(view);
+        setupClickListeners();
+        loadUserData();
+    }
+
+    private void initializeViews(View view) {
         nameTextView = view.findViewById(R.id.txtviewInfo);
         emailTextView = view.findViewById(R.id.txtviewEmail);
         signOutButton = view.findViewById(R.id.signOutButton);
@@ -81,123 +93,103 @@ public class ProfileFragment extends Fragment {
         profileImageView = view.findViewById(R.id.profileImageView);
         profileCard = view.findViewById(R.id.profileCard);
         myProfileButton = view.findViewById(R.id.myProfileButton);
+    }
 
-        if (firebaseUser != null) {
-            myProfileButton.setOnClickListener(v -> {
-                Intent userProfileIntent = new Intent(getActivity().getApplicationContext(), UserActivity.class);
-                userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
-                startActivity(userProfileIntent);
-            });
-            historyButton.setOnClickListener(v -> {
-                Intent historyIntent = new Intent(getActivity(), HistoryActivity.class);
-                startActivity(historyIntent);
-            });
+    private void setupClickListeners() {
+        myProfileButton.setOnClickListener(v -> {
+            Intent userProfileIntent = new Intent(requireActivity(), UserActivity.class);
+            userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
+            startActivity(userProfileIntent);
+        });
+        historyButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), HistoryActivity.class)));
+        manageRoomsButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), ManagePostActivity.class)));
+        cartButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), CartActivity.class)));
+        billButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), BillActivity.class)));
+        scheduleButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), scheduleVisitRoomActivity.class)));
+        profileCard.setOnClickListener(v -> startActivity(new Intent(requireActivity(), EditProfileActivity.class)));
+        signOutButton.setOnClickListener(v -> handleSignOut());
+    }
 
-            manageRoomsButton.setOnClickListener(v -> {
-                if (firebaseUser != null) {
-                    Intent managePostIntent = new Intent(getActivity(), ManagePostActivity.class);
-                    startActivity(managePostIntent);
-                } else {
-                    Intent intent = new Intent(getActivity(), LoginActivity.class);
-                    startActivity(intent);
+    private void navigateToLogin() {
+        Intent loginIntent = new Intent(requireActivity(), LoginActivity.class);
+        loginIntent.putExtra("previous_activity", requireActivity().getClass().getName());
+        startActivity(loginIntent);
+        requireActivity().getSupportFragmentManager().beginTransaction()
+            .replace(R.id.frame_layout, new HomeFragment())
+            .commit();
+    }
+
+    private void loadUserData() {
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
+        
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+                if (user != null) {
+                    nameTextView.setText(user.getName());
+                    emailTextView.setText(user.getEmail());
+                    updateProfileImage(user);
                 }
-            });
+            }
 
-            cartButton.setOnClickListener(v -> {
-                Intent cartActivityIntent = new Intent(getActivity(), CartActivity.class);
-                startActivity(cartActivityIntent);
-            });
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+    }
 
-            billButton.setOnClickListener(v -> {
-                Intent billActivityIntent = new Intent(getActivity(), BillActivity.class);
-                startActivity(billActivityIntent);
-            });
+    private void handleSignOut() {
+        CredentialManager credentialManager = CredentialManager.create(requireContext());
+        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+        CancellationSignal cancellationSignal = new CancellationSignal();
 
-            scheduleButton.setOnClickListener(v -> {
-                Intent scheduleIntent = new Intent(getActivity(), scheduleVisitRoomActivity.class);
-                startActivity(scheduleIntent);
-            });
-
-            profileCard.setOnClickListener(v -> {
-                Intent editProfileIntent = new Intent(getActivity(), EditProfileActivity.class);
-                startActivity(editProfileIntent);
-            });
-
-            signOutButton.setOnClickListener(v -> {
-                CredentialManager credentialManager = CredentialManager.create(requireContext());
-                ClearCredentialStateRequest request = new ClearCredentialStateRequest();
-                CancellationSignal cancellationSignal = new CancellationSignal();
-
-                credentialManager.clearCredentialStateAsync(
-                        request,
-                        cancellationSignal,
-                        getActivity().getMainExecutor(),
-                        new CredentialManagerCallback<Void, ClearCredentialException>() {
-                            @Override
-                            public void onResult(Void unused) {
-                                if (com.facebook.AccessToken.getCurrentAccessToken() != null) {
-                                    com.facebook.login.LoginManager.getInstance().logOut();
-                                }
-
-                                firebaseAuth.signOut();
-
-                                Intent loginActivityIntent = new Intent(getActivity(), LoginActivity.class);
-                                loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(loginActivityIntent);
-                                if (getActivity() != null) {
-                                    getActivity().finish();
-                                }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            credentialManager.clearCredentialStateAsync(
+                    request,
+                    cancellationSignal,
+                    requireActivity().getMainExecutor(),
+                    new CredentialManagerCallback<Void, ClearCredentialException>() {
+                        @Override
+                        public void onResult(Void unused) {
+                            if (AccessToken.getCurrentAccessToken() != null) {
+                                LoginManager.getInstance().logOut();
                             }
 
-                            @Override
-                            public void onError(@NonNull ClearCredentialException e) {
-                                if (com.facebook.AccessToken.getCurrentAccessToken() != null) {
-                                    com.facebook.login.LoginManager.getInstance().logOut();
-                                }
-                                firebaseAuth.signOut();
+                            firebaseAuth.signOut();
 
-                                Intent loginActivityIntent = new Intent(getActivity(), LoginActivity.class);
-                                loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(loginActivityIntent);
-                                if (getActivity() != null) {
-                                    getActivity().finish();
-                                }
-                            }
+                            Intent loginActivityIntent = new Intent(requireActivity(), LoginActivity.class);
+                            loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(loginActivityIntent);
+                            requireActivity();
+                            requireActivity().finish();
                         }
-                );
-            });
 
-            firebaseDatabase = FirebaseDatabase.getInstance();
-            databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
+                        @Override
+                        public void onError(@NonNull ClearCredentialException e) {
+                            if (AccessToken.getCurrentAccessToken() != null) {
+                                LoginManager.getInstance().logOut();
+                            }
+                            firebaseAuth.signOut();
 
-            // Load full user data instead of just the name
-            databaseReference.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    User user = snapshot.getValue(User.class);
-                    if (user != null) {
-                        nameTextView.setText(user.getName());
-                        emailTextView.setText(user.getEmail());
-                        updateProfileImage(user);
+                            Intent loginActivityIntent = new Intent(requireActivity(), LoginActivity.class);
+                            loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(loginActivityIntent);
+                            requireActivity();
+                            requireActivity().finish();
+                        }
                     }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    // Handle error
-                }
-            });
+            );
         }
     }
 
-    // Add this method to handle the profile image
     private void updateProfileImage(User user) {
         String avatarUrl = user.getAvatarUrl();
         if (!TextUtils.isEmpty(avatarUrl)) {
             profileInitialTextView.setVisibility(View.GONE);
             profileImageView.setVisibility(View.VISIBLE);
 
-            // Load image with Glide
             Glide.with(requireContext())
                     .load(avatarUrl)
                     .placeholder(R.drawable.avatar)
@@ -210,7 +202,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    // Keep the existing getFirstLetter method
     public static String getFirstLetter(String input) {
         if (input == null || input.isEmpty()) {
             return "";
@@ -220,12 +211,12 @@ public class ProfileFragment extends Fragment {
         StringBuilder result = new StringBuilder();
 
         if (words.length == 1) {
-            if (words[0].length() > 0) {
+            if (!words[0].isEmpty()) {
                 result.append(words[0].charAt(0));
             }
         } else {
             for (int i = 0; i < Math.min(words.length, 2); i++) {
-                if (words[i].length() > 0) {
+                if (!words[i].isEmpty()) {
                     result.append(words[i].charAt(0));
                 }
             }

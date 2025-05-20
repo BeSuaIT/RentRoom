@@ -3,7 +3,6 @@ package com.example.timphongtro.Fragments;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
@@ -14,9 +13,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.example.timphongtro.Activities.CartActivity;
-import com.example.timphongtro.Activities.LoginActivity;
 import com.example.timphongtro.Activities.ServiceActivity;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -55,13 +54,11 @@ public class ServiceFragment extends Fragment {
 
     private void setupClickListeners() {
         button_cart.setOnClickListener(v -> {
-            Intent intent;
             if (user != null) {
-                intent = new Intent(requireContext(), CartActivity.class);
+                startActivity(new Intent(requireContext(), CartActivity.class));
             } else {
-                intent = new Intent(requireContext(), LoginActivity.class);
+                AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
             }
-            startActivity(intent);
         });
 
         chothuenoithat.setOnClickListener(v -> openServiceActivity("chothuenoithat"));

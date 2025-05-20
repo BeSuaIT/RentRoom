@@ -1,5 +1,6 @@
 package com.example.timphongtro.Adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -95,18 +96,23 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
                         } else {
                             cartRef.child(service.getServiceId()).setValue(1);
                         }
-                        Toast.makeText(context, service.getTitle() + " added!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, service.getTitle() + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Toast.makeText(context, "Failed to add item", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Không thể thêm vào giỏ hàng", Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
                 Intent intent = new Intent(context, LoginActivity.class);
+                Activity activityFromView = getActivity(holder.itemView.getContext());
+                if (activityFromView != null) {
+                    intent.putExtra("previous_activity", activityFromView.getClass().getName());
+                }
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
+                Toast.makeText(context, "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -121,6 +127,17 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
     @Override
     public int getItemCount() {
         return serviceList.size();
+    }
+
+    private Activity getActivity(Context context) {
+        if (context == null) {
+            return null;
+        } else if (context instanceof Activity) {
+            return (Activity) context;
+        } else if (context instanceof android.content.ContextWrapper) {
+            return getActivity(((android.content.ContextWrapper) context).getBaseContext());
+        }
+        return null;
     }
 
     public static class ServiceViewHolder extends RecyclerView.ViewHolder {

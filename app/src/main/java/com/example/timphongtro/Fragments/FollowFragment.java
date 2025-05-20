@@ -1,5 +1,6 @@
 package com.example.timphongtro.Fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 import com.example.timphongtro.Adapters.FollowRoomAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Activities.LoginActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -35,9 +37,25 @@ public class FollowFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_follow, container, false);
+        
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            navigateToLogin();
+            return view;
+        }
+        
         initViews(view);
         loadFollowedRooms();
         return view;
+    }
+
+    private void navigateToLogin() {
+        Intent loginIntent = new Intent(requireActivity(), LoginActivity.class);
+        loginIntent.putExtra("previous_activity", requireActivity().getClass().getName());
+        startActivity(loginIntent);
+        requireActivity().getSupportFragmentManager().beginTransaction()
+            .replace(R.id.frame_layout, new HomeFragment())
+            .commit();
     }
 
     private void initViews(View view) {
@@ -53,11 +71,17 @@ public class FollowFragment extends Fragment {
 
     private void loadFollowedRooms() {
         if (currentUser == null) return;
-
+        
         followPostsRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 followedRooms.clear();
+                
+                if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
+                    roomAdapter.notifyDataSetChanged();
+                    return;
+                }
+                
                 for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                     String roomId = roomSnapshot.getKey();
                     checkRoomInType(roomId, "Tro");

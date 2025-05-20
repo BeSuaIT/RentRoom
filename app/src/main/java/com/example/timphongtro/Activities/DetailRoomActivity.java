@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.ClipData;
@@ -147,6 +148,22 @@ public class DetailRoomActivity extends AppCompatActivity {
     private void setupFirebaseReferences() {
         firebaseDatabase = FirebaseDatabase.getInstance();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        updateUIBasedOnLoginState();
+    }
+
+    private void updateUIBasedOnLoginState() {
+        if (currentUser == null) {
+            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+            imageViewLove.setOnClickListener(v -> showLoginRequiredDialog("yêu thích"));
+            followButton.setOnClickListener(v -> showLoginRequiredDialog("theo dõi"));
+            scheduleVisitButton.setOnClickListener(v -> showLoginRequiredDialog("đặt lịch xem"));
+        } else {
+            imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
+            followButton.setOnClickListener(v -> handleFollowButtonClick());
+            scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
+        }
     }
 
     private void loadRoomData() {
@@ -158,8 +175,15 @@ public class DetailRoomActivity extends AppCompatActivity {
             setupImageSlider();
             setupAdapters();
             loadUserPostInfo();
-            checkLoveRoom();
-            checkFollowStatus();
+
+            if (currentUser != null) {
+                checkLoveRoom();
+                checkFollowStatus();
+            } else {
+                loveTextView.setText("Chưa có lượt yêu thích");
+                imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+                followButton.setIcon(getDrawable(R.drawable.ic_follow));
+            }
         }
     }
 
@@ -239,6 +263,11 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void handleLoveButtonClick() {
+        if (currentUser == null) {
+            showLoginRequiredDialog("yêu thích");
+            return;
+        }
+        
         isRoomLoved = true;
         roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
             @Override
@@ -253,6 +282,19 @@ public class DetailRoomActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
             }
         });
+    }
+
+    private void showLoginRequiredDialog(String feature) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Yêu cầu đăng nhập")
+               .setMessage("Bạn cần đăng nhập để " + feature + " phòng này")
+               .setPositiveButton("Đăng nhập", (dialog, which) -> {
+                   Intent intent = new Intent(this, LoginActivity.class);
+                   intent.putExtra("previous_activity", DetailRoomActivity.class.getName());
+                   startActivity(intent);
+               })
+               .setNegativeButton("Hủy", null)
+               .show();
     }
 
     private void toggleLoveStatus(DataSnapshot snapshot, int currentLoveCount) {
@@ -279,6 +321,12 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void checkLoveRoom() {
+        if (currentUser == null) {
+            loveTextView.setText("Chưa có lượt yêu thích");
+            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+            return;
+        }
+
         roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -345,6 +393,11 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void showBottomDialog() {
+        if (currentUser == null) {
+            showLoginRequiredDialog("đặt lịch xem");
+            return;
+        }
+
         scheduleVisitDialog = new BottomSheetDialog(DetailRoomActivity.this);
         scheduleVisitDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         scheduleVisitDialog.setContentView(R.layout.dialog_book_room);
@@ -448,7 +501,6 @@ public class DetailRoomActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Handle error
             }
         });
 
@@ -464,8 +516,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(avatarUrl)) {
             userProfileTextView.setVisibility(View.GONE);
             userProfileImageView.setVisibility(View.VISIBLE);
-            
-            // Load image with Glide
+
             Glide.with(this)
                 .load(avatarUrl)
                 .placeholder(R.drawable.avatar)

@@ -1,5 +1,6 @@
 package com.example.timphongtro.Fragments;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -31,6 +32,7 @@ import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Adapters.RoomAdapter;
 import com.example.timphongtro.Activities.LoginActivity;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -69,11 +71,6 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        if (user == null) {
-            Intent intent = new Intent(getContext(), LoginActivity.class);
-            startActivity(intent);
-        }
-
         initializeUI(view);
         setupImageSlider(view);
         setupCitySpinner();
@@ -83,19 +80,31 @@ public class HomeFragment extends Fragment {
         fetchRoomDatabase();
     }
 
-    // Xử lý UI
-    private void initializeUI(View view) {
-        districtShimmer = view.findViewById(R.id.district_shimmer);
-        roomShimmer = view.findViewById(R.id.room_shimmer);
-
-        view.findViewById(R.id.searchEditText).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
-        view.findViewById(R.id.showMore).setOnClickListener(v -> startActivity(new Intent(getContext(), ShowMoreActivity.class)));
-        view.findViewById(R.id.find_room).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
-        view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> startActivity(new Intent(getContext(), PostActivity.class)));
-        setupServiceClickListeners(view);
+private boolean checkLoginRequired(String feature) {
+    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    if (currentUser == null) {
+        AuthUtils.showLoginRequiredDialog(this, feature);
+        return false;
     }
+    return true;
+}
 
-    // Xử lý các sự kiện click cho các dịch vụ
+private void initializeUI(View view) {
+    districtShimmer = view.findViewById(R.id.district_shimmer);
+    roomShimmer = view.findViewById(R.id.room_shimmer);
+
+    view.findViewById(R.id.searchEditText).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
+    view.findViewById(R.id.showMore).setOnClickListener(v -> startActivity(new Intent(getContext(), ShowMoreActivity.class)));
+    view.findViewById(R.id.find_room).setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
+    view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> {
+        if (checkLoginRequired("Đăng tin phòng trọ")) {
+            startActivity(new Intent(getContext(), PostActivity.class));
+        }
+    });
+    
+    setupServiceClickListeners(view);
+}
+
     private void setupServiceClickListeners(View view) {
         view.findViewById(R.id.doi_binh_ga).setOnClickListener(v -> openServiceActivity("doibinhga"));
         view.findViewById(R.id.doi_binh_nuoc).setOnClickListener(v -> openServiceActivity("doibinhnuoc"));
@@ -105,7 +114,6 @@ public class HomeFragment extends Fragment {
         view.findViewById(R.id.cho_thue_noi_that).setOnClickListener(v -> openServiceActivity("chothuenoithat"));
     }
 
-    // Xử lý slider ảnh
     private void setupImageSlider(View view) {
         StorageReference storageReference = storage.getReference().child("HomeImageSlider");
         ImageSlider imageSlider = view.findViewById(R.id.imageSlider);
@@ -121,7 +129,6 @@ public class HomeFragment extends Fragment {
         }).addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi không load được ảnh", Toast.LENGTH_SHORT).show());
     }
 
-    // Xử lý spinner thành phố
     private void setupCitySpinner() {
         spinner = requireView().findViewById(R.id.city_spinner);
 
@@ -138,7 +145,6 @@ public class HomeFragment extends Fragment {
         spinner.setAdapter(spinnerAdapter);
     }
 
-    // Xử lý RecyclerView quận
     private void setupDistrictRecyclerView(View view) {
         RecyclerView rcv_district = view.findViewById(R.id.rcv_district);
         rcv_district.setHasFixedSize(true);
@@ -148,7 +154,6 @@ public class HomeFragment extends Fragment {
         rcv_district.setAdapter(districtAdapter);
     }
 
-    // Xử lý RecyclerView phòng
     private void setupRoomRecyclerView(View view) {
         RecyclerView rcv_room = view.findViewById(R.id.rcv_room);
         rcv_room.setHasFixedSize(true);
@@ -158,7 +163,6 @@ public class HomeFragment extends Fragment {
         rcv_room.setAdapter(roomAdapter);
     }
 
-    // Lấy dữ liệu thành phố từ Firebase
     private void fetchCityData() {
         spinnerRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -182,8 +186,7 @@ public class HomeFragment extends Fragment {
                                 District district = ds.getValue(District.class);
                                 if (district != null) districts.add(district);
                             }
-
-                            // Chỉ thêm thành phố nếu có quận
+                            // Chỉ thêm thành phố vào danh sách nếu có quận
                             if (!districts.isEmpty()) {
                                 cityArrayList.add(new City(cityId, cityName, districts));
                                 spinnerArrayList.add(cityName);
@@ -204,7 +207,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // Cập nhật UI cho Spinner
     private void updateSpinnerUI() {
         if (getContext() == null) return;
 
@@ -233,7 +235,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // Cập nhật danh sách quận
     private void updateDistrictList(ArrayList<District> districts) {
         districtArrayList.clear();
         districtArrayList.addAll(districts);
@@ -242,7 +243,6 @@ public class HomeFragment extends Fragment {
         districtAdapter.notifyDataSetChanged();
     }
 
-    // Lấy dữ liệu phòng từ Firebase
     private void fetchRoomDatabase() {
         DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
         roomRef.addValueEventListener(new ValueEventListener() {
@@ -271,7 +271,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // Mở activity dịch vụ
     private void openServiceActivity(String item) {
         Intent intent = new Intent(getContext(), ServiceActivity.class);
         intent.putExtra("item", item);

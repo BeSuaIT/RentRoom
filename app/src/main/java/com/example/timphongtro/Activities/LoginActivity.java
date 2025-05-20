@@ -2,6 +2,7 @@ package com.example.timphongtro.Activities;
 
 import static android.widget.Toast.LENGTH_SHORT;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.credentials.Credential;
@@ -17,6 +18,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -57,16 +59,47 @@ public class LoginActivity extends AppCompatActivity {
     private GetGoogleIdOption getGoogleIdOption;
     private CallbackManager callbackManager;
     private LoginManager loginManager;
+    private static final String EXTRA_PREVIOUS_ACTIVITY = "previous_activity";
+    private String previousActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        previousActivity = getIntent().getStringExtra(EXTRA_PREVIOUS_ACTIVITY);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBackToPreviousScreen();
+            }
+        });
+
         initFirebase();
         setupGoogleSignIn();
         initViews();
         checkCurrentUser();
+    }
+
+    private void navigateBackToPreviousScreen() {
+        if (previousActivity != null) {
+            try {
+                Class<?> activityClass = Class.forName(previousActivity);
+                Intent intent = new Intent(this, activityClass);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            } catch (ClassNotFoundException e) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            }
+        } else {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        }
+        finish();
     }
 
     private void initFirebase() {
@@ -119,9 +152,7 @@ public class LoginActivity extends AppCompatActivity {
                     hideLoadingDialog();
                     if (task.isSuccessful() && task.getResult().getUser() != null) {
                         if (task.getResult().getUser().isEmailVerified()) {
-                            showToast("Đăng nhập thành công");
-                            startActivity(new Intent(this, MainActivity.class));
-                            finish();
+                            handleSuccessfulLogin();
                         } else {
                             showToast("Email chưa được xác minh");
                             firebaseAuth.signOut();
@@ -248,12 +279,7 @@ public class LoginActivity extends AppCompatActivity {
                     updates.put("name", user.getDisplayName());
 
                     databaseReference.child(user.getUid()).updateChildren(updates)
-                            .addOnSuccessListener(unused -> {
-                                hideLoadingDialog();
-                                showToast("Đăng nhập thành công");
-                                startActivity(new Intent(this, MainActivity.class));
-                                finish();
-                            })
+                            .addOnSuccessListener(unused -> handleSuccessfulLogin())
                             .addOnFailureListener(e -> {
                                 hideLoadingDialog();
                                 showToast("Lỗi cập nhật dữ liệu: " + e.getMessage());
@@ -269,12 +295,7 @@ public class LoginActivity extends AppCompatActivity {
                     userMap.put("createdAt", System.currentTimeMillis());
 
                     databaseReference.child(user.getUid()).setValue(userMap)
-                            .addOnSuccessListener(unused -> {
-                                hideLoadingDialog();
-                                showToast("Đăng nhập thành công");
-                                startActivity(new Intent(this, MainActivity.class));
-                                finish();
-                            })
+                            .addOnSuccessListener(unused -> handleSuccessfulLogin())
                             .addOnFailureListener(e -> {
                                 hideLoadingDialog();
                                 showToast("Lỗi lưu dữ liệu: " + e.getMessage());
@@ -318,5 +339,11 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         callbackManager.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void handleSuccessfulLogin() {
+        hideLoadingDialog();
+        showToast("Đăng nhập thành công");
+        navigateBackToPreviousScreen();
     }
 }

@@ -15,6 +15,7 @@ import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -41,11 +42,15 @@ public class ServiceDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service_detail);
 
+        initializeViews();
+        loadServiceData();
+        setupClickListeners();
+    }
+
+    private void initializeViews() {
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
-        Bundle bundle = getIntent().getExtras();
-        ImageSlider imageSlider = findViewById(R.id.ServiceImage);
-        ArrayList<SlideModel> slideModels = new ArrayList<>();
+
         service_title = findViewById(R.id.service_title);
         service_price = findViewById(R.id.service_price);
         service_sold_count = findViewById(R.id.service_sold_count);
@@ -53,51 +58,63 @@ public class ServiceDetailActivity extends AppCompatActivity {
         btn_add_to_cart = findViewById(R.id.btn_add_to_cart);
         button_cart = findViewById(R.id.button_cart);
         imageView_back = findViewById(R.id.imageView_back);
+    }
 
-        button_cart.setOnClickListener(v -> {
-            Intent intent;
-            if (user != null) {
-                intent = new Intent(ServiceDetailActivity.this, CartActivity.class);
-            } else {
-                intent = new Intent(ServiceDetailActivity.this, LoginActivity.class);
-            }
-            startActivity(intent);
-        });
+    private void setupClickListeners() {
         imageView_back.setOnClickListener(v -> finish());
+        
+        button_cart.setOnClickListener(v -> {
+            if (user != null) {
+                startActivity(new Intent(ServiceDetailActivity.this, CartActivity.class));
+            } else {
+                AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
+            }
+        });
 
         btn_add_to_cart.setOnClickListener(v -> {
             if (user != null) {
-                String userID = user.getUid();
-                String sellerId = service.getId_seller();
-                DatabaseReference cartRef = FirebaseDatabase.getInstance()
-                        .getReference("Carts")
-                        .child(userID)
-                        .child(sellerId);
-
-                cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            int currentAmount = dataSnapshot.getValue(Integer.class);
-                            cartRef.child(service.getServiceId()).setValue(currentAmount + 1);
-                        } else {
-                            cartRef.child(service.getServiceId()).setValue(1);
-                        }
-                        Toast.makeText(ServiceDetailActivity.this, service.getTitle() + " added!", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Toast.makeText(ServiceDetailActivity.this, "Failed to add item", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                addServiceToCart();
             } else {
-                Intent intent = new Intent(ServiceDetailActivity.this, LoginActivity.class);
-                startActivity(intent);
+                AuthUtils.showLoginRequiredDialog(this, "sản phẩm", "thêm vào giỏ hàng");
             }
         });
+    }
 
-        if (bundle != null){
+    private void addServiceToCart() {
+        String userID = user.getUid();
+        String sellerId = service.getId_seller();
+        DatabaseReference cartRef = FirebaseDatabase.getInstance()
+                .getReference("Carts")
+                .child(userID)
+                .child(sellerId);
+
+        cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    int currentAmount = dataSnapshot.getValue(Integer.class);
+                    cartRef.child(service.getServiceId()).setValue(currentAmount + 1);
+                } else {
+                    cartRef.child(service.getServiceId()).setValue(1);
+                }
+                Toast.makeText(ServiceDetailActivity.this, service.getTitle() + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(ServiceDetailActivity.this, "Không thể thêm vào giỏ hàng", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadServiceData() {
+        ArrayList<SlideModel> slideModels = new ArrayList<>();
+        ImageSlider imageSlider = findViewById(R.id.ServiceImage);
+        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
+        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
             String serviceString = bundle.getString("ServiceData");
             Gson gson = new Gson();
             service = gson.fromJson(serviceString, Service.class);

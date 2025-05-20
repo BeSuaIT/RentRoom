@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.timphongtro.Adapters.ServiceAdapter;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -71,10 +73,11 @@ public class ServiceActivity extends AppCompatActivity {
         back_button.setOnClickListener(v -> finish());
         
         cart_button.setOnClickListener(v -> {
-            Intent intent = user != null ? 
-                new Intent(this, CartActivity.class) : 
-                new Intent(this, LoginActivity.class);
-            startActivity(intent);
+            if (user != null) {
+                startActivity(new Intent(this, CartActivity.class));
+            } else {
+                AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
+            }
         });
     }
 

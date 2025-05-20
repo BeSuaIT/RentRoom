@@ -21,9 +21,13 @@ import com.example.timphongtro.Fragments.FollowFragment;
 import com.example.timphongtro.Fragments.ProfileFragment;
 import com.example.timphongtro.Fragments.ServiceFragment;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.example.timphongtro.databinding.ActivityMainBinding;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import androidx.appcompat.app.AlertDialog;
 
 public class MainActivity extends AppCompatActivity {
     private NetworkChangeReceiver networkChangeReceiver;
@@ -54,17 +58,67 @@ public class MainActivity extends AppCompatActivity {
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.home) {
                 replaceFragment(new HomeFragment());
+                return true;
             } else if (item.getItemId() == R.id.service) {
                 replaceFragment(new ServiceFragment());
+                return true;
             } else if (item.getItemId() == R.id.notification) {
-                replaceFragment(new FollowFragment());
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser != null) {
+                    replaceFragment(new FollowFragment());
+                } else {
+                    // Thay thế bằng AuthUtils
+                    AuthUtils.showLoginRequiredDialog(this, "Theo dõi", "xem tính năng");
+                    return false;
+                }
+                return true;
             } else if (item.getItemId() == R.id.profile) {
-                replaceFragment(new ProfileFragment());
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser != null) {
+                    replaceFragment(new ProfileFragment());
+                } else {
+                    // Thay thế bằng AuthUtils
+                    AuthUtils.showLoginRequiredDialog(this, "Hồ sơ", "xem tính năng");
+                    return false;
+                }
+                return true;
             }
             return true;
         });
 
         binding.fab.setOnClickListener(v -> showBottomDialog());
+    }
+
+    private void showBottomDialog() {
+        final BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_bottom_fab);
+
+        dialog.findViewById(R.id.house).setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent search = new Intent(this, SearchActivity.class);
+            startActivity(search);
+        });
+        dialog.findViewById(R.id.contract).setOnClickListener(v -> {
+            dialog.dismiss();
+            // Kiểm tra đăng nhập trước khi đăng bài
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                Intent post = new Intent(this, PostActivity.class);
+                startActivity(post);
+            } else {
+                AuthUtils.showLoginRequiredDialog(this, "đăng tin phòng trọ", "đăng");
+            }
+        });
+        dialog.findViewById(R.id.cancelButton).setOnClickListener(v -> dialog.dismiss());
+
+        // Các phần còn lại giữ nguyên
+        dialog.show();
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
+        dialog.setCancelable(true);
     }
 
     @Override
@@ -81,31 +135,6 @@ public class MainActivity extends AppCompatActivity {
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(binding.frameLayout.getId(), fragment);
         fragmentTransaction.commit();
-    }
-
-    private void showBottomDialog() {
-        final BottomSheetDialog dialog = new BottomSheetDialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_bottom_fab);
-
-        dialog.findViewById(R.id.house).setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent search = new Intent(this, SearchActivity.class);
-            startActivity(search);
-        });
-        dialog.findViewById(R.id.contract).setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent post = new Intent(this, PostActivity.class);
-            startActivity(post);
-        });
-        dialog.findViewById(R.id.cancelButton).setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.BOTTOM);
-        dialog.setCancelable(true);
     }
 
     @Override
