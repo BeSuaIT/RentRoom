@@ -1,6 +1,5 @@
 package com.example.timphongtro.Fragments;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -30,7 +29,6 @@ import com.example.timphongtro.Models.City;
 import com.example.timphongtro.Models.District;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Adapters.RoomAdapter;
-import com.example.timphongtro.Activities.LoginActivity;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
 import com.facebook.shimmer.ShimmerFrameLayout;

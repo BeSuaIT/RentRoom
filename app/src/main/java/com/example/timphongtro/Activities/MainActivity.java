@@ -27,7 +27,6 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import androidx.appcompat.app.AlertDialog;
 
 public class MainActivity extends AppCompatActivity {
     private NetworkChangeReceiver networkChangeReceiver;
@@ -67,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
                 if (currentUser != null) {
                     replaceFragment(new FollowFragment());
                 } else {
-                    // Thay thế bằng AuthUtils
                     AuthUtils.showLoginRequiredDialog(this, "Theo dõi", "xem tính năng");
                     return false;
                 }
@@ -77,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
                 if (currentUser != null) {
                     replaceFragment(new ProfileFragment());
                 } else {
-                    // Thay thế bằng AuthUtils
                     AuthUtils.showLoginRequiredDialog(this, "Hồ sơ", "xem tính năng");
                     return false;
                 }
@@ -101,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.findViewById(R.id.contract).setOnClickListener(v -> {
             dialog.dismiss();
-            // Kiểm tra đăng nhập trước khi đăng bài
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser != null) {
                 Intent post = new Intent(this, PostActivity.class);
@@ -112,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.findViewById(R.id.cancelButton).setOnClickListener(v -> dialog.dismiss());
 
-        // Các phần còn lại giữ nguyên
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
