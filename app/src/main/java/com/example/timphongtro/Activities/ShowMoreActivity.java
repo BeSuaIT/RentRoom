@@ -43,8 +43,7 @@ public class ShowMoreActivity extends AppCompatActivity {
         shimmerLayout = findViewById(R.id.room_shimmer);
         
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        
-        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        roomsRef = FirebaseDatabase.getInstance().getReference("Posts");
     }
 
     private void setupRecyclerView() {
@@ -80,12 +79,10 @@ public class ShowMoreActivity extends AppCompatActivity {
     }
 
     private void processRoomData(DataSnapshot snapshot) {
-        for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
-            for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
-                Room room = roomSnapshot.getValue(Room.class);
-                if (room != null) {
-                    roomList.add(room);
-                }
+        for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+            Room room = roomSnapshot.getValue(Room.class);
+            if (room != null) {
+                roomList.add(room);
             }
         }
     }
@@ -93,6 +90,7 @@ public class ShowMoreActivity extends AppCompatActivity {
     private void updateUI() {
         shimmerLayout.stopShimmer();
         shimmerLayout.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
         adapter.notifyDataSetChanged();
     }
 
