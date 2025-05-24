@@ -84,8 +84,7 @@ public class FollowFragment extends Fragment {
                 
                 for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                     String roomId = roomSnapshot.getKey();
-                    checkRoomInType(roomId, "Tro");
-                    checkRoomInType(roomId, "ChungCuMini");
+                    loadRoomFromPosts(roomId);
                 }
             }
 
@@ -96,19 +95,17 @@ public class FollowFragment extends Fragment {
         });
     }
 
-    private void checkRoomInType(String roomId, String type) {
-        DatabaseReference roomsRef = FirebaseDatabase.getInstance()
-                .getReference("Rooms")
-                .child(type)
+    private void loadRoomFromPosts(String roomId) {
+        DatabaseReference postsRef = FirebaseDatabase.getInstance()
+                .getReference("Posts")
                 .child(roomId);
 
-        roomsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     Room room = snapshot.getValue(Room.class);
                     if (room != null) {
-                        room.setType_room(type.equals("ChungCuMini") ? 1 : 0);
                         followedRooms.add(room);
                         roomAdapter.notifyDataSetChanged();
                     }

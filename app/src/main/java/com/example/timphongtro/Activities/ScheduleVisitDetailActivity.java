@@ -81,10 +81,8 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
     }
 
     private void loadRoomData() {
-        String typeRoom = schedule.getTypeRoom() == 1 ? "ChungCuMini" : "Tro";
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
-            .getReference("Rooms")
-            .child(typeRoom)
+            .getReference("Posts")
             .child(schedule.getIdRoom());
 
         roomRef.addValueEventListener(new ValueEventListener() {

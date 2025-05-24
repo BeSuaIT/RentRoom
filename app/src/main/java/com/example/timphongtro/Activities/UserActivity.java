@@ -89,7 +89,7 @@ public class UserActivity extends AppCompatActivity {
         findViewById(R.id.imageView_back).setOnClickListener(v -> finish());
         
         database = FirebaseDatabase.getInstance();
-        postRef = database.getReference("Rooms");
+        postRef = database.getReference("Posts");
         roomArrayList = new ArrayList<>();
 
         phoneLinear.setOnClickListener(v -> {
@@ -119,8 +119,7 @@ public class UserActivity extends AppCompatActivity {
                         username.setText(user.getName());
                         phone.setText(user.getPhone());
                         email.setText(user.getEmail());
-                        
-                        // Update profile image display
+
                         updateProfileImage(user);
                     }
                 }
@@ -133,16 +132,13 @@ public class UserActivity extends AppCompatActivity {
             });
     }
 
-    // Sửa lại phương thức updateProfileImage
     private void updateProfileImage(User user) {
         String avatarUrl = user.getAvatarUrl();
-        
-        // Đặt text cho profileTextView trước
+
         profileTextView.setText(getFirstLetter(user.getName()));
         
         if (!TextUtils.isEmpty(avatarUrl)) {
-            // Trước tiên, đảm bảo hiển thị text cho đến khi ảnh load xong
-            profileImageView.setVisibility(View.INVISIBLE); // Invisible thay vì GONE để giữ layout
+            profileImageView.setVisibility(View.INVISIBLE);
             profileTextView.setVisibility(View.VISIBLE);
             
             Glide.with(this)
@@ -152,7 +148,6 @@ public class UserActivity extends AppCompatActivity {
                 .listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        // Nếu load ảnh thất bại, hiển thị text
                         profileImageView.setVisibility(View.GONE);
                         profileTextView.setVisibility(View.VISIBLE);
                         return false;
@@ -160,7 +155,6 @@ public class UserActivity extends AppCompatActivity {
 
                     @Override
                     public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        // Khi ảnh đã sẵn sàng, ẩn text và hiển thị ảnh
                         profileTextView.setVisibility(View.GONE);
                         profileImageView.setVisibility(View.VISIBLE);
                         return false;
@@ -168,7 +162,6 @@ public class UserActivity extends AppCompatActivity {
                 })
                 .into(profileImageView);
         } else {
-            // Không có avatar, chỉ hiển thị text
             profileImageView.setVisibility(View.GONE);
             profileTextView.setVisibility(View.VISIBLE);
         }
@@ -254,22 +247,20 @@ public class UserActivity extends AppCompatActivity {
                 totalLoves = 0;
 
                 if (snapshot.exists()) {
-                    for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
-                        for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
-                            Room room = roomSnapshot.getValue(Room.class);
-                            if (room != null && userId.equals(room.getId_own_post())) {
-                                totalPosts++;
+                    for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                        Room room = roomSnapshot.getValue(Room.class);
+                        if (room != null && userId.equals(room.getId_own_post())) {
+                            roomArrayList.add(room);
+                            totalPosts++;
 
-                                DataSnapshot lovesSnapshot = roomSnapshot.child("userLovePost");
-                                if (lovesSnapshot.exists()) {
-                                    totalLoves += lovesSnapshot.getChildrenCount();
-                                }
+                            DataSnapshot lovesSnapshot = roomSnapshot.child("userLovePost");
+                            if (lovesSnapshot.exists()) {
+                                totalLoves += lovesSnapshot.getChildrenCount();
                             }
                         }
                     }
                 }
 
-                // Update UI
                 postCount.setText(String.valueOf(totalPosts));
                 loveCount.setText(String.valueOf(totalLoves));
                 roomAdapter.notifyDataSetChanged();

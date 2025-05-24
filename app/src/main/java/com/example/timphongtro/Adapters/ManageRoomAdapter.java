@@ -59,6 +59,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             holder.city.setText(address.getCity());
             holder.district.setText(address.getDistrict());
             holder.detail.setText(address.getDetail());
+            
             holder.constraintViewDetail.setOnClickListener(v -> {
                 Intent detailRoom = new Intent(context, DetailRoomActivity.class);
                 detailRoom.putExtra("DataRoom", room.toString());
@@ -70,14 +71,21 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
                 builder.setTitle("Xác nhận")
                         .setMessage("Bạn chắc chắn muốn xóa không?")
                         .setPositiveButton("Có", (dialog, which) -> {
-                            String path = "Tro";
-                            int type_room = room.getType_room();
-                            if (type_room == 1) {
-                                path = "ChungCuMini";
-                            }
                             FirebaseDatabase database = FirebaseDatabase.getInstance();
-                            DatabaseReference myRef = database.getReference("Rooms/" + path + "/" + room.getId_room());
-                            myRef.removeValue().addOnCompleteListener(task -> Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show());
+                            DatabaseReference myRef = database.getReference("Posts/" + room.getId_room());
+                            myRef.removeValue().addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    int currentPosition = holder.getBindingAdapterPosition();
+                                    if (currentPosition != RecyclerView.NO_POSITION) {
+                                        list.remove(currentPosition);
+                                        notifyItemRemoved(currentPosition);
+                                        notifyItemRangeChanged(currentPosition, list.size());
+                                    }
+                                    Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(context, "Xóa bài thất bại", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }).setNegativeButton("Không", (dialog, which) -> {
                         });
                 AlertDialog alertDialog = builder.create();

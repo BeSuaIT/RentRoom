@@ -57,8 +57,6 @@ public class HomeFragment extends Fragment {
     private ArrayAdapter<String> spinnerAdapter;
     private ArrayList<City> cityArrayList;
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
-    private final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    private final FirebaseUser user = firebaseAuth.getCurrentUser();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -173,7 +171,6 @@ private void initializeUI(View view) {
                         String cityName = citySnapshot.child("name").getValue(String.class);
                         String cityId = citySnapshot.child("id_city").getValue(String.class);
 
-                        // Kiểm tra xem thành phố có node Districts và có quận hay không
                         DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
                         if (cityName != null && cityId != null &&
                                 districtsSnapshot.exists() &&
@@ -184,7 +181,7 @@ private void initializeUI(View view) {
                                 District district = ds.getValue(District.class);
                                 if (district != null) districts.add(district);
                             }
-                            // Chỉ thêm thành phố vào danh sách nếu có quận
+
                             if (!districts.isEmpty()) {
                                 cityArrayList.add(new City(cityId, cityName, districts));
                                 spinnerArrayList.add(cityName);
@@ -242,18 +239,18 @@ private void initializeUI(View view) {
     }
 
     private void fetchRoomDatabase() {
-        DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Posts");
         roomRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 roomArrayList.clear();
                 if (snapshot.exists()) {
-                    for (DataSnapshot roomType : snapshot.getChildren()) {
-                        for (DataSnapshot roomSnapshot : roomType.getChildren()) {
-                            Room room = roomSnapshot.getValue(Room.class);
-                            if (room != null && room.getAddress().getCity().equals(selectedSpinner)) {
-                                roomArrayList.add(room);
-                            }
+                    for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                        Room room = roomSnapshot.getValue(Room.class);
+                        if (room != null && room.getAddress() != null && 
+                            room.getAddress().getCity() != null &&
+                            room.getAddress().getCity().equals(selectedSpinner)) {
+                            roomArrayList.add(room);
                         }
                     }
                 }

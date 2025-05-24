@@ -40,7 +40,7 @@ public class SearchActivity extends AppCompatActivity {
     private ArrayList<City> cityList;
     private ArrayAdapter<String> cityAdapter, districtAdapter;
     private String selectedCity = "", selectedDistrict = "";
-    private int selectedRoomType = -1; // -1: all, 0: Phòng trọ, 1: Chung cư mini
+    private String selectedRoomType = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +52,7 @@ public class SearchActivity extends AppCompatActivity {
         setupFilters();
         setupRecyclerView();
 
-        roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        roomRef = FirebaseDatabase.getInstance().getReference("Posts");
         citiesRef = FirebaseDatabase.getInstance().getReference("Cities");
 
         fetchCitiesData();
@@ -121,11 +121,11 @@ public class SearchActivity extends AppCompatActivity {
     private void setupFilters() {
         radioGroupRoomType.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioBtnMini) {
-                selectedRoomType = 1;
+                selectedRoomType = "Chung cư Mini";
             } else if (checkedId == R.id.radioBtnRoom) {
-                selectedRoomType = 0;
+                selectedRoomType = "Trọ";
             } else if (checkedId == R.id.radioBtnAll) {
-                selectedRoomType = -1;
+                selectedRoomType = "";
             }
             applyFilters();
         });
@@ -161,16 +161,7 @@ public class SearchActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 roomArrayList.clear();
 
-                DataSnapshot chungCuMiniSnapshot = snapshot.child("ChungCuMini");
-                for (DataSnapshot roomSnapshot : chungCuMiniSnapshot.getChildren()) {
-                    Room room = roomSnapshot.getValue(Room.class);
-                    if (room != null) {
-                        roomArrayList.add(room);
-                    }
-                }
-
-                DataSnapshot troSnapshot = snapshot.child("Tro");
-                for (DataSnapshot roomSnapshot : troSnapshot.getChildren()) {
+                for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                     Room room = roomSnapshot.getValue(Room.class);
                     if (room != null) {
                         roomArrayList.add(room);
@@ -240,8 +231,9 @@ public class SearchActivity extends AppCompatActivity {
                     room.getAddress().getDistrict().toLowerCase().contains(searchText);
             boolean matchesCity = selectedCity.isEmpty() || room.getAddress().getCity().equals(selectedCity);
             boolean matchesDistrict = selectedDistrict.isEmpty() || room.getAddress().getDistrict().equals(selectedDistrict);
-            boolean matchesRoomType = selectedRoomType == -1 || room.getType_room() == selectedRoomType;
+            boolean matchesRoomType = selectedRoomType.isEmpty() || room.getType_room().equals(selectedRoomType);
             boolean matchesGender;
+
             if (!isMaleChecked && !isFemaleChecked) {
                 matchesGender = true;
             } else if (isMaleChecked && !isFemaleChecked) {

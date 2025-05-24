@@ -62,7 +62,7 @@ public class ManagePostActivity extends AppCompatActivity {
         }
 
         roomList = new ArrayList<>();
-        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        roomsRef = FirebaseDatabase.getInstance().getReference("Posts");
         adapter = new ManageRoomAdapter(roomList, this);
         
         recyclerView.setLayoutManager(
@@ -92,7 +92,12 @@ public class ManagePostActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 roomList.clear();
                 if (snapshot.exists()) {
-                    processRoomData(snapshot);
+                    for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                        Room room = roomSnapshot.getValue(Room.class);
+                        if (isValidRoom(room)) {
+                            roomList.add(room);
+                        }
+                    }
                 }
                 adapter.notifyDataSetChanged();
                 updateViewVisibility();
@@ -104,21 +109,6 @@ public class ManagePostActivity extends AppCompatActivity {
                     "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    private void processRoomData(DataSnapshot snapshot) {
-        String[] roomTypes = {"Tro", "ChungCuMini"};
-        for (String type : roomTypes) {
-            DataSnapshot typeSnapshot = snapshot.child(type);
-            if (typeSnapshot.exists()) {
-                for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
-                    Room room = roomSnapshot.getValue(Room.class);
-                    if (isValidRoom(room)) {
-                        roomList.add(room);
-                    }
-                }
-            }
-        }
     }
 
     private boolean isValidRoom(Room room) {

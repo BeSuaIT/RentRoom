@@ -7,23 +7,15 @@ public class ScheduleVisitRoomClass {
     private String phone;
     private String note;
     private String timeVisitRoom;
-
     private String idTo;
     private String idFrom;
-
     private String status; //0 la tao, 1 la chap nhan, 2 la tu choi
-
     private String idRoom;
-
-    private int typeRoom;
-
     private String idSchedule;
-
     public ScheduleVisitRoomClass() {
     }
 
-    public ScheduleVisitRoomClass(int typeRoom,String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, String status, String idRoom) {
-        this.typeRoom = typeRoom;
+    public ScheduleVisitRoomClass(String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, String status, String idRoom) {
         this.idSchedule = idSchedule;
         this.idTo = idTo;
         this.idRoom = idRoom;
@@ -33,14 +25,6 @@ public class ScheduleVisitRoomClass {
         this.phone = phone;
         this.note = note;
         this.timeVisitRoom = timeVisitRoom;
-    }
-
-    public int getTypeRoom() {
-        return typeRoom;
-    }
-
-    public void setTypeRoom(int typeRoom) {
-        this.typeRoom = typeRoom;
     }
 
     public String getIdSchedule() {

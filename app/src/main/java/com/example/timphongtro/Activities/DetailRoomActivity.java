@@ -189,9 +189,8 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void displayRoomDetails() {
         if (room == null) return;
-        
-        String typeRoomStr = room.getType_room() == 0 ? "Trọ" : "Chung cư mini";
-        roomTypeTextView.setText(typeRoomStr);
+
+        roomTypeTextView.setText(room.getType_room());
         roomTitleTextView.setText(room.getTitle_room());
         long price = room.getPrice_room();
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
@@ -470,7 +469,18 @@ public class DetailRoomActivity extends AppCompatActivity {
         }
 
         if (isValid) {
-            ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(room.getType_room(), uuid.toString(), nameEditText.getText().toString(), phone, noteEditText.getText().toString(), scheduleTime.getText().toString(), room.getId_own_post(), currentUser.getUid(), "0", room.getId_room()); // status create
+            ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(
+                uuid.toString(), 
+                nameEditText.getText().toString(), 
+                phone, 
+                noteEditText.getText().toString(), 
+                scheduleTime.getText().toString(), 
+                room.getId_own_post(), 
+                currentUser.getUid(), 
+                "0", 
+                room.getId_room()
+            );
+            
             if (!currentUser.getUid().equals(room.getId_own_post())) {
                 visitScheduleDatabaseRef.setValue(schedule).addOnSuccessListener(unused -> {
                     scheduleVisitDialog.dismiss();
@@ -504,11 +514,7 @@ public class DetailRoomActivity extends AppCompatActivity {
             }
         });
 
-        String typeRoom = "ChungCuMini/";
-        if (room.getType_room() == 0) {
-            typeRoom = "Tro/";
-        }
-        roomDatabaseRef = firebaseDatabase.getReference("Rooms/" + typeRoom + room.getId_room());
+        roomDatabaseRef = firebaseDatabase.getReference("Posts/" + room.getId_room());
     }
 
     private void updateUserProfileImage(User user) {

@@ -404,9 +404,9 @@ public class PostActivity extends AppCompatActivity {
         long deposit_room = Long.parseLong(edtDeposit.getText().toString());
         long price_room = Long.parseLong(edtPrice.getText().toString());
 
-        int type_room = 0;
+        String type_room = "Trọ";
         if (radioGroup.getCheckedRadioButtonId() == R.id.radiobtnChungCu) {
-            type_room = 1;
+            type_room = "Chung cư Mini";
         }
 
         String area_room = edtArea.getText().toString();
@@ -433,8 +433,7 @@ public class PostActivity extends AppCompatActivity {
 
     private void uploadRoomToFirebase(Room room) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        String path_type = room.getType_room() == 1 ? "ChungCuMini" : "Tro";
-        DatabaseReference myRef = database.getReference("Rooms/" + path_type);
+        DatabaseReference myRef = database.getReference("Posts");
 
         Map<String, Object> roomMap = new HashMap<>();
         roomMap.put("id_own_post", room.getId_own_post());
@@ -458,6 +457,7 @@ public class PostActivity extends AppCompatActivity {
         roomMap.put("roomFurniture", room.getRoomFurniture());
         roomMap.put("roomUtilities", room.getRoomUtilities());
         roomMap.put("images", room.getImages());
+        roomMap.put("timestamp", System.currentTimeMillis());
 
         myRef.child(room.getId_room()).setValue(roomMap)
                 .addOnSuccessListener(unused -> {

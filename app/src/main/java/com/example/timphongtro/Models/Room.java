@@ -5,10 +5,10 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 
 public class Room {
-    private String id_own_post, id_room, title_room, area_room, description_room, gender_room, phone;
+    private String id_own_post, id_room, title_room, area_room, description_room, gender_room, phone, type_room;
     private long price_room, deposit_room, price_electric, price_water, price_internet;
     private Address address;
-    private int park_slot, person_in_room, status_room, type_room, floor, loveCount;
+    private int park_slot, person_in_room, status_room, floor, loveCount;
     private ArrayList<String> images;
     private Object userLovePost;
     private ArrayList<Furniture> roomFurniture;
@@ -18,7 +18,7 @@ public class Room {
     }
 
     public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room,
-                String description_room, String gender_room, int park_slot, int person_in_room, int status_room, int type_room, String phone,
+                String description_room, String gender_room, int park_slot, int person_in_room, int status_room, String type_room, String phone,
                 int floor, ArrayList<String> images, ArrayList<Furniture> roomFurniture, ArrayList<Utility> roomUtilities,
                 long price_electric, long price_water, long price_internet) {
         this.id_own_post = id_own_post;
@@ -156,11 +156,11 @@ public class Room {
         this.status_room = status_room;
     }
 
-    public int getType_room() {
+    public String getType_room() {
         return type_room;
     }
 
-    public void setType_room(int type_room) {
+    public void setType_room(String type_room) {
         this.type_room = type_room;
     }
 
@@ -183,6 +183,7 @@ public class Room {
     public String getFirstImage() {
         return images != null && !images.isEmpty() ? images.get(0) : "";
     }
+    
     public ArrayList<Furniture> getRoomFurniture() {
         return roomFurniture;
     }
