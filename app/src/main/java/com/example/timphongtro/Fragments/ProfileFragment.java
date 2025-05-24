@@ -27,6 +27,7 @@ import com.example.timphongtro.Activities.CartActivity;
 import com.example.timphongtro.Activities.EditProfileActivity;
 import com.example.timphongtro.Activities.HistoryActivity;
 import com.example.timphongtro.Activities.LoginActivity;
+import com.example.timphongtro.Activities.MainActivity;
 import com.example.timphongtro.Activities.ManagePostActivity;
 import com.example.timphongtro.Activities.UserActivity;
 import com.example.timphongtro.Activities.scheduleVisitRoomActivity;
@@ -153,35 +154,31 @@ public class ProfileFragment extends Fragment {
                     new CredentialManagerCallback<Void, ClearCredentialException>() {
                         @Override
                         public void onResult(Void unused) {
-                            if (AccessToken.getCurrentAccessToken() != null) {
-                                LoginManager.getInstance().logOut();
-                            }
-
-                            firebaseAuth.signOut();
-
-                            Intent loginActivityIntent = new Intent(requireActivity(), LoginActivity.class);
-                            loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(loginActivityIntent);
-                            requireActivity();
-                            requireActivity().finish();
+                            performSignOut();
                         }
 
                         @Override
                         public void onError(@NonNull ClearCredentialException e) {
-                            if (AccessToken.getCurrentAccessToken() != null) {
-                                LoginManager.getInstance().logOut();
-                            }
-                            firebaseAuth.signOut();
-
-                            Intent loginActivityIntent = new Intent(requireActivity(), LoginActivity.class);
-                            loginActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(loginActivityIntent);
-                            requireActivity();
-                            requireActivity().finish();
+                            performSignOut();
                         }
                     }
             );
+        } else {
+            performSignOut();
         }
+    }
+
+    private void performSignOut() {
+        if (AccessToken.getCurrentAccessToken() != null) {
+            LoginManager.getInstance().logOut();
+        }
+
+        firebaseAuth.signOut();
+
+        Intent mainActivityIntent = new Intent(requireActivity(), MainActivity.class);
+        mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(mainActivityIntent);
+        requireActivity().finish();
     }
 
     private void updateProfileImage(User user) {
