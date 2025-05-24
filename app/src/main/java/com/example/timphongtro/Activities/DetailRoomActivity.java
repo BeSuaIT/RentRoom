@@ -44,6 +44,7 @@ import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -102,6 +103,26 @@ public class DetailRoomActivity extends AppCompatActivity {
         loadRoomData();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshUserState();
+    }
+
+    private void refreshUserState() {
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        updateUIBasedOnLoginState();
+
+        if (currentUser != null && room != null) {
+            checkLoveRoom();
+            checkFollowStatus();
+        } else if (room != null) {
+            loveTextView.setText("Chưa có lượt yêu thích");
+            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+        }
+    }
+
     private void initializeViews() {
         roomImageSlider = findViewById(R.id.roomImageSlider);
         roomTypeTextView = findViewById(R.id.roomTypeTextView);
@@ -132,7 +153,6 @@ public class DetailRoomActivity extends AppCompatActivity {
         userProfileImageView = findViewById(R.id.userProfileImageView);
 
         imageViewBack.setOnClickListener(v -> finish());
-        callButton.setOnClickListener(v -> handleCallButtonClick());
         scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
         imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
         followButton.setOnClickListener(v -> handleFollowButtonClick());
@@ -141,8 +161,23 @@ public class DetailRoomActivity extends AppCompatActivity {
             intent.putExtra("id_own_post", room.getId_own_post());
             startActivity(intent);
         });
-        phoneTextView.setOnClickListener(v -> copyToClipboard(phoneTextView.getText().toString(), "Lưu vào số điện thoại Clipboard"));
-        addressCombinedTextView.setOnClickListener(v -> copyToClipboard(addressCombinedTextView.getText().toString(), "Lưu địa chỉ vào Clipboard"));
+        phoneTextView.setOnClickListener(v -> {
+            FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (realTimeUser == null) {
+                AuthUtils.showLoginRequiredDialog(this, "sao chép số điện thoại");
+                return;
+            }
+            copyToClipboard(phoneTextView.getText().toString(), "Đã sao chép số điện thoại");
+        });
+        addressCombinedTextView.setOnClickListener(v -> {
+            FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (realTimeUser == null) {
+                AuthUtils.showLoginRequiredDialog(this, "sao chép địa chỉ");
+                return;
+            }
+            copyToClipboard(addressCombinedTextView.getText().toString(), "Đã sao chép địa chỉ");
+        });
+        callButton.setOnClickListener(v -> handleCallButtonClick());
     }
 
     private void setupFirebaseReferences() {
@@ -198,7 +233,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         String priceNumber = decimalFormat.format(price) + " đ/tháng";
         priceTextView.setText(priceNumber);
         addressCombinedTextView.setText(room.getAddress().getAddress_combine());
-        phoneTextView.setText(room.getPhone());
+        phoneTextView.setText(maskPhoneNumber(room.getPhone()));
         floorTextView.setText(String.valueOf(room.getFloor()));
         roomAreaTextView.setText(room.getArea_room());
         depositTextView.setText(decimalFormat.format(room.getDeposit_room()));
@@ -208,6 +243,18 @@ public class DetailRoomActivity extends AppCompatActivity {
         internetPriceTextView.setText(decimalFormat.format(room.getPrice_internet()));
         electricPriceTextView.setText(decimalFormat.format(room.getPrice_electric()));
         roomDescriptionTextView.setText(room.getDescription_room());
+    }
+
+    private String maskPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.length() < 7) {
+            return phoneNumber;
+        }
+        
+        String firstPart = phoneNumber.substring(0, 3);
+        String lastPart = phoneNumber.substring(phoneNumber.length() - 2);
+        String middlePart = "*".repeat(phoneNumber.length() - 5);
+        
+        return firstPart + middlePart + lastPart;
     }
 
     private void setupImageSlider() {
@@ -224,7 +271,6 @@ public class DetailRoomActivity extends AppCompatActivity {
             roomImageSlider.setItemClickListener(new ItemClickListener() {
                 @Override
                 public void doubleClick(int i) {
-
                 }
 
                 @Override
@@ -245,27 +291,14 @@ public class DetailRoomActivity extends AppCompatActivity {
         utilityRecyclerView.setAdapter(utilityAdapter);
     }
 
-    private void handleCallButtonClick() {
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.CALL_PHONE},
-                    CALL_PHONE_PERMISSION_REQUEST_CODE);
-        } else {
-            Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("tel:" + room.getPhone()));
-
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            }
-        }
-    }
-
     private void handleLoveButtonClick() {
-        if (currentUser == null) {
+        FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (realTimeUser == null) {
             showLoginRequiredDialog("yêu thích");
             return;
         }
+
+        currentUser = realTimeUser;
         
         isRoomLoved = true;
         roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
@@ -392,11 +425,14 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void showBottomDialog() {
-        if (currentUser == null) {
+        FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (realTimeUser == null) {
             showLoginRequiredDialog("đặt lịch xem");
             return;
         }
 
+        currentUser = realTimeUser;
+        
         scheduleVisitDialog = new BottomSheetDialog(DetailRoomActivity.this);
         scheduleVisitDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         scheduleVisitDialog.setContentView(R.layout.dialog_book_room);
@@ -536,12 +572,14 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void handleFollowButtonClick() {
-        if (currentUser == null) {
-            Toast.makeText(this, "Vui lòng đăng nhập để theo dõi", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, LoginActivity.class));
+        FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (realTimeUser == null) {
+            showLoginRequiredDialog("theo dõi");
             return;
         }
 
+        currentUser = realTimeUser;
+        
         DatabaseReference followRef = FirebaseDatabase.getInstance()
                 .getReference("FollowPosts")
                 .child(currentUser.getUid())
@@ -610,5 +648,95 @@ public class DetailRoomActivity extends AppCompatActivity {
             }
         }
         return result.toString().toUpperCase();
+    }
+
+    private void handleCallButtonClick() {
+        FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (realTimeUser == null) {
+            AuthUtils.showLoginRequiredDialog(this, "gọi điện");
+            return;
+        }
+
+        currentUser = realTimeUser;
+        checkCurrentUserPhoneAndMakeCall();
+    }
+
+    private void checkCurrentUserPhoneAndMakeCall() {
+        DatabaseReference currentUserRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(currentUser.getUid());
+        
+        currentUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    User currentUserData = snapshot.getValue(User.class);
+                    if (currentUserData != null && 
+                        !TextUtils.isEmpty(currentUserData.getPhone()) && 
+                        !currentUserData.getPhone().equals("Chưa cập nhật")) {
+
+                        checkPermissionAndCall();
+                    } else {
+                        showUpdatePhoneDialog();
+                    }
+                } else {
+                    Toast.makeText(DetailRoomActivity.this, 
+                        "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(DetailRoomActivity.this, 
+                    "Lỗi kiểm tra thông tin người dùng", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showUpdatePhoneDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("Cần cập nhật số điện thoại")
+            .setMessage("Bạn cần cập nhật số điện thoại trong hồ sơ để có thể sử dụng tính năng gọi điện")
+            .setPositiveButton("Cập nhật ngay", (dialog, which) -> {
+                Intent intent = new Intent(this, EditProfileActivity.class);
+                startActivity(intent);
+            })
+            .setNegativeButton("Để sau", null)
+            .show();
+    }
+
+    private void checkPermissionAndCall() {
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.CALL_PHONE},
+                    CALL_PHONE_PERMISSION_REQUEST_CODE);
+        } else {
+            makePhoneCall();
+        }
+    }
+
+    private void makePhoneCall() {
+        String originalPhoneNumber = room.getPhone();
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + originalPhoneNumber));
+
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Không thể thực hiện cuộc gọi", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CALL_PHONE_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                makePhoneCall();
+            } else {
+                Toast.makeText(this, "Quyền gọi điện bị từ chối", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

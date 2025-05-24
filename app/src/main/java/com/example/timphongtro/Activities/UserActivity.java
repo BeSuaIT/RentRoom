@@ -1,13 +1,10 @@
 package com.example.timphongtro.Activities;
 
-import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -18,8 +15,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,7 +27,10 @@ import com.example.timphongtro.Adapters.RoomAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -52,7 +50,9 @@ public class UserActivity extends AppCompatActivity {
     private DatabaseReference postRef;
     private ArrayList<Room> roomArrayList;
     private LinearLayout phoneLinear, emailLinear;
-    private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
+    private String originalPhoneNumber = "";
+    private String originalEmail = "";
+    private FirebaseUser currentUser;
     private int totalPosts = 0;
     private int totalLoves = 0;
 
@@ -92,14 +92,22 @@ public class UserActivity extends AppCompatActivity {
         postRef = database.getReference("Posts");
         roomArrayList = new ArrayList<>();
 
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         phoneLinear.setOnClickListener(v -> {
-            String phoneNumber = phone.getText().toString();
-            showOptionsDialog("Số điện thoại", phoneNumber);
+            if (currentUser == null) {
+                AuthUtils.showLoginRequiredDialog(this, "sao chép số điện thoại");
+                return;
+            }
+            copyToClipboard("Số điện thoại", originalPhoneNumber);
         });
 
         emailLinear.setOnClickListener(v -> {
-            String emailAddress = email.getText().toString();
-            copyToClipboard("Email", emailAddress);
+            if (currentUser == null) {
+                AuthUtils.showLoginRequiredDialog(this, "sao chép email");
+                return;
+            }
+            copyToClipboard("Email", originalEmail);
         });
     }
 
@@ -117,10 +125,14 @@ public class UserActivity extends AppCompatActivity {
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
                         username.setText(user.getName());
-                        phone.setText(user.getPhone());
-                        email.setText(user.getEmail());
+
+                        phone.setText(maskPhoneNumber(user.getPhone()));
+                        email.setText(maskEmail(user.getEmail()));
 
                         updateProfileImage(user);
+
+                        originalPhoneNumber = user.getPhone();
+                        originalEmail = user.getEmail();
                     }
                 }
 
@@ -181,61 +193,11 @@ public class UserActivity extends AppCompatActivity {
         return result.toString().toUpperCase();
     }
 
-    private void showOptionsDialog(String title, final String content) {
-        new AlertDialog.Builder(this)
-            .setTitle(title)
-            .setItems(new String[]{"Gọi điện", "Sao chép"}, (dialog, which) -> {
-                switch (which) {
-                    case 0:
-                        if (checkCallPermission()) {
-                            makePhoneCall(content);
-                        }
-                        break;
-                    case 1:
-                        copyToClipboard(title, content);
-                        break;
-                }
-            })
-            .show();
-    }
-
     private void copyToClipboard(String label, String content) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(label, content);
         clipboard.setPrimaryClip(clip);
         Toast.makeText(this, "Đã sao chép " + label.toLowerCase(), Toast.LENGTH_SHORT).show();
-    }
-
-    private boolean checkCallPermission() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CALL_PHONE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.CALL_PHONE},
-                    CALL_PHONE_PERMISSION_REQUEST_CODE);
-            return false;
-        }
-        return true;
-    }
-
-    private void makePhoneCall(String phoneNumber) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + phoneNumber));
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CALL_PHONE_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                makePhoneCall(phone.getText().toString());
-            } else {
-                Toast.makeText(this, "Quyền gọi điện bị từ chối", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     private void loadUserPosts(String userId) {
@@ -272,5 +234,34 @@ public class UserActivity extends AppCompatActivity {
                     "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private String maskPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.length() < 7 || phoneNumber.equals("Chưa cập nhật")) {
+            return phoneNumber;
+        }
+        
+        String firstPart = phoneNumber.substring(0, 3);
+        String lastPart = phoneNumber.substring(phoneNumber.length() - 2);
+        String middlePart = "*".repeat(phoneNumber.length() - 5);
+        
+        return firstPart + middlePart + lastPart;
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@") || email.equals("Chưa cập nhật")) {
+            return email;
+        }
+        
+        String[] parts = email.split("@");
+        String localPart = parts[0];
+        String domain = parts[1];
+        
+        if (localPart.length() <= 3) {
+            return email;
+        }
+        
+        String maskedLocal = localPart.substring(0, 2) + "*".repeat(localPart.length() - 2);
+        return maskedLocal + "@" + domain;
     }
 }
