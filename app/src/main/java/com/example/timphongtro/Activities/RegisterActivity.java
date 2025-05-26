@@ -120,21 +120,23 @@ public class RegisterActivity extends AppCompatActivity {
             user.getUid(),
             nameEditText.getText().toString(),
             "",
-            "user",
+            "",
             System.currentTimeMillis(),
-                ""
+            ""
         );
 
         databaseReference.child(user.getUid()).setValue(userData)
             .addOnSuccessListener(unused -> {
                 hideLoadingDialog();
-                showToast("Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản");
-                firebaseAuth.signOut();
-
-                Intent intent = new Intent(this, LoginActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                Intent intent = new Intent(this, WaitingVerificationActivity.class);
+                intent.putExtra("email", user.getEmail());
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
+            })
+            .addOnFailureListener(e -> {
+                hideLoadingDialog();
+                showToast("Lỗi lưu thông tin người dùng");
             });
     }
 

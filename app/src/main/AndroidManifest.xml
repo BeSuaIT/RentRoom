@@ -26,6 +26,12 @@
         android:theme="@style/Base.Theme.TimPhongTro"
         tools:targetApi="31">
         <activity
+            android:name=".Activities.RoleSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.WaitingVerificationActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activities.PhoneVerificationActivity"
             android:exported="false" />
         <activity

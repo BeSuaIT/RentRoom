@@ -1,19 +1,19 @@
 package com.example.timphongtro.Models;
 
 public class User {
-    private String email, uid, phone, name, permission;
+    private String email, uid, phone, name, role;
     private long createdAt;
     private String avatarUrl;
 
     public User() {
     }
 
-    public User(String email, String uid, String name, String phone, String permission, Long createdAt, String avatarUrl) {
+    public User(String email, String uid, String name, String phone, String role, Long createdAt, String avatarUrl) {
         this.email = email;
         this.uid = uid;
         this.name = name;
         this.phone = phone;
-        this.permission = permission;
+        this.role = role;
         this.createdAt = createdAt;
         this.avatarUrl = avatarUrl;
     }
@@ -27,11 +27,11 @@ public class User {
     }
 
     public String getPermission() {
-        return permission;
+        return role;
     }
 
-    public void setPermission(String permission) {
-        this.permission = permission;
+    public void setPermission(String role) {
+        this.role = role;
     }
 
     public String getPhone() {

@@ -290,7 +290,7 @@ public class LoginActivity extends AppCompatActivity {
                     userMap.put("email", user.getEmail());
                     userMap.put("name", user.getDisplayName());
                     userMap.put("phone", "");
-                    userMap.put("permission", "user");
+                    userMap.put("role", "Người thuê");
                     userMap.put("createdAt", System.currentTimeMillis());
 
                     databaseReference.child(user.getUid()).setValue(userMap)

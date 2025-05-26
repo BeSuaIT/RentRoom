@@ -131,28 +131,27 @@ public class HistoryActivity extends AppCompatActivity {
             return;
         }
 
-        FirebaseDatabase.getInstance().getReference("Rooms")
+        FirebaseDatabase.getInstance().getReference("Posts")
             .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     rooms.clear();
-                    
-                    for (DataSnapshot typeSnapshot : snapshot.getChildren()) {
-                        for (DataSnapshot roomSnapshot : typeSnapshot.getChildren()) {
-                            String roomId = roomSnapshot.getKey();
-                            if (timestamps.containsKey(roomId)) {
-                                Room room = roomSnapshot.getValue(Room.class);
-                                if (room != null) {
-                                    rooms.add(room);
-                                }
+
+                    for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                        String roomId = roomSnapshot.getKey();
+                        if (timestamps.containsKey(roomId)) {
+                            Room room = roomSnapshot.getValue(Room.class);
+                            if (room != null) {
+                                rooms.add(room);
                             }
                         }
                     }
 
-                    // Sort by timestamp
                     rooms.sort((r1, r2) -> {
                         Long t1 = timestamps.get(r1.getId_room());
                         Long t2 = timestamps.get(r2.getId_room());
+                        if (t1 == null) t1 = 0L;
+                        if (t2 == null) t2 = 0L;
                         return t2.compareTo(t1);
                     });
 
