@@ -3,7 +3,7 @@ package com.example.timphongtro.Models;
 public class Address {
     String city, district, detail, address_combine;
 
-    Address() {
+    public Address() {
 
     }
 
@@ -12,13 +12,6 @@ public class Address {
         this.district = district;
         this.detail = detail;
         this.address_combine = address_combine;
-    }
-
-    public Address(String city, String district, String detail) {
-        this.city = city;
-        this.district = district;
-        this.detail = detail;
-        this.address_combine = detail + ", " + district + ", " + city;
     }
 
     public Address(String city, String district) {
@@ -58,6 +51,5 @@ public class Address {
     public String getDistrict() {
         return district;
     }
-
 
 }
