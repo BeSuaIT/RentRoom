@@ -26,11 +26,11 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public String getPermission() {
+    public String getRole() {
         return role;
     }
 
-    public void setPermission(String role) {
+    public void setRole(String role) {
         this.role = role;
     }
 
