@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private NetworkChangeReceiver networkChangeReceiver;
     private boolean isReceiverRegistered = false;
     private ActivityMainBinding binding;
+    private FirebaseAuth.AuthStateListener authStateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +48,35 @@ public class MainActivity extends AppCompatActivity {
 
         networkChangeReceiver = new NetworkChangeReceiver();
 
-        setupNavigation();
+        // Kiểm tra user trước khi setup navigation
+        checkCurrentUserAndSetup();
+        setupAuthListener();
+    }
+
+    private void checkCurrentUserAndSetup() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            // Kiểm tra user có tồn tại trên database không
+            AuthUtils.checkUserExistsOnStartup(this, currentUser, exists -> {
+                setupNavigation();
+                // Nếu user không tồn tại, AuthUtils sẽ tự động clear login data
+            });
+        } else {
+            setupNavigation();
+        }
+    }
+
+    private void setupAuthListener() {
+        authStateListener = firebaseAuth -> {
+            FirebaseUser user = firebaseAuth.getCurrentUser();
+            if (user == null) {
+                // User đã bị đăng xuất, reset về HomeFragment
+                runOnUiThread(() -> {
+                    replaceFragment(new HomeFragment());
+                    binding.bottomNavigationView.setSelectedItemId(R.id.home);
+                });
+            }
+        };
     }
 
     private void setupNavigation() {
@@ -64,7 +93,16 @@ public class MainActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.notification) {
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                 if (currentUser != null) {
-                    replaceFragment(new FollowFragment());
+                    // Kiểm tra user tồn tại trước khi vào FollowFragment
+                    AuthUtils.isUserExists(currentUser, exists -> {
+                        if (exists) {
+                            replaceFragment(new FollowFragment());
+                        } else {
+                            // User không tồn tại, clear login và show dialog
+                            AuthUtils.clearAllLoginData(this);
+                            AuthUtils.showLoginRequiredDialog(this, "Theo dõi", "xem tính năng");
+                        }
+                    });
                 } else {
                     AuthUtils.showLoginRequiredDialog(this, "Theo dõi", "xem tính năng");
                     return false;
@@ -73,7 +111,16 @@ public class MainActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.profile) {
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                 if (currentUser != null) {
-                    replaceFragment(new ProfileFragment());
+                    // Kiểm tra user tồn tại trước khi vào ProfileFragment
+                    AuthUtils.isUserExists(currentUser, exists -> {
+                        if (exists) {
+                            replaceFragment(new ProfileFragment());
+                        } else {
+                            // User không tồn tại, clear login và show dialog
+                            AuthUtils.clearAllLoginData(this);
+                            AuthUtils.showLoginRequiredDialog(this, "Hồ sơ", "xem tính năng");
+                        }
+                    });
                 } else {
                     AuthUtils.showLoginRequiredDialog(this, "Hồ sơ", "xem tính năng");
                     return false;
@@ -96,16 +143,27 @@ public class MainActivity extends AppCompatActivity {
             Intent search = new Intent(this, SearchActivity.class);
             startActivity(search);
         });
+        
         dialog.findViewById(R.id.contract).setOnClickListener(v -> {
             dialog.dismiss();
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser != null) {
-                Intent post = new Intent(this, PostActivity.class);
-                startActivity(post);
+                // Kiểm tra user tồn tại trước khi vào PostActivity
+                AuthUtils.isUserExists(currentUser, exists -> {
+                    if (exists) {
+                        Intent post = new Intent(this, PostActivity.class);
+                        startActivity(post);
+                    } else {
+                        // User không tồn tại, clear login và show dialog
+                        AuthUtils.clearAllLoginData(this);
+                        AuthUtils.showLoginRequiredDialog(this, "đăng tin phòng trọ", "đăng");
+                    }
+                });
             } else {
                 AuthUtils.showLoginRequiredDialog(this, "đăng tin phòng trọ", "đăng");
             }
         });
+        
         dialog.findViewById(R.id.cancelButton).setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
@@ -117,8 +175,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        FirebaseAuth.getInstance().addAuthStateListener(authStateListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (authStateListener != null) {
+            FirebaseAuth.getInstance().removeAuthStateListener(authStateListener);
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        
+        // Kiểm tra lại user mỗi khi resume
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            AuthUtils.checkUserExistsOnStartup(this, currentUser, exists -> {
+                if (!exists) {
+                    // User không tồn tại, reset về HomeFragment
+                    runOnUiThread(() -> {
+                        replaceFragment(new HomeFragment());
+                        binding.bottomNavigationView.setSelectedItemId(R.id.home);
+                    });
+                }
+            });
+        }
+        
         if (!isReceiverRegistered) {
             registerReceiver(networkChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
             isReceiverRegistered = true;
