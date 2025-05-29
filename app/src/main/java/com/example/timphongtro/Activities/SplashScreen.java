@@ -4,22 +4,33 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.DataCleanupManager;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SplashScreen extends AppCompatActivity {
+    private static final String TAG = "SplashScreen";
     private static final int SPLASH_TIMER = 3000;
     private ImageView logoImage;
     private TextView appName;
+    private boolean navigationDone = false;
+    private long startTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
 
+        startTime = System.currentTimeMillis();
+        
         initializeViews();
         startAnimations();
         checkUserAndNavigate();
@@ -39,10 +50,61 @@ public class SplashScreen extends AppCompatActivity {
     }
 
     private void checkUserAndNavigate() {
-        new Handler().postDelayed(() -> {
-            Intent intent = new Intent(SplashScreen.this, MainActivity.class);
-            startActivity(intent);
-            finish();
-        }, SPLASH_TIMER);
+        DataCleanupManager cleanupManager = new DataCleanupManager();
+        
+        if (cleanupManager.shouldPerformCleanup(this)) {
+            Log.d(TAG, "Starting database cleanup...");
+            cleanupManager.performDatabaseCleanup(new DataCleanupManager.CleanupCallback() {
+                @Override
+                public void onCleanupCompleted() {
+                    Log.d(TAG, "Database cleanup completed");
+                    cleanupManager.markCleanupCompleted(SplashScreen.this);
+                    proceedWithUserCheck();
+                }
+
+                @Override
+                public void onCleanupFailed(String error) {
+                    Log.e(TAG, "Database cleanup failed: " + error);
+                    proceedWithUserCheck();
+                }
+            });
+        } else {
+            Log.d(TAG, "No cleanup needed, proceeding with user check");
+            proceedWithUserCheck();
+        }
+    }
+
+    private void proceedWithUserCheck() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            AuthUtils.checkUserExistsOnStartup(this, currentUser, exists -> {
+                if (!navigationDone) {
+                    long elapsedTime = System.currentTimeMillis() - startTime;
+                    long remainingTime = Math.max(SPLASH_TIMER - elapsedTime, 500);
+                    
+                    new Handler().postDelayed(() -> {
+                        if (!navigationDone) {
+                            navigateToMain();
+                        }
+                    }, remainingTime);
+                }
+            });
+        } else {
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            long remainingTime = Math.max(SPLASH_TIMER - elapsedTime, 500);
+            
+            new Handler().postDelayed(() -> {
+                if (!navigationDone) {
+                    navigateToMain();
+                }
+            }, remainingTime);
+        }
+    }
+
+    private void navigateToMain() {
+        navigationDone = true;
+        Intent intent = new Intent(SplashScreen.this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
