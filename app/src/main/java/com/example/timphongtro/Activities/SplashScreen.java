@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -17,7 +16,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class SplashScreen extends AppCompatActivity {
-    private static final String TAG = "SplashScreen";
     private static final int SPLASH_TIMER = 3000;
     private ImageView logoImage;
     private TextView appName;
@@ -53,23 +51,14 @@ public class SplashScreen extends AppCompatActivity {
         DataCleanupManager cleanupManager = new DataCleanupManager();
         
         if (cleanupManager.shouldPerformCleanup(this)) {
-            Log.d(TAG, "Starting database cleanup...");
-            cleanupManager.performDatabaseCleanup(new DataCleanupManager.CleanupCallback() {
-                @Override
-                public void onCleanupCompleted() {
-                    Log.d(TAG, "Database cleanup completed");
-                    cleanupManager.markCleanupCompleted(SplashScreen.this);
+            cleanupManager.performDatabaseCleanup(
+                () -> {
+                    cleanupManager.markCleanupCompleted(this);
                     proceedWithUserCheck();
-                }
-
-                @Override
-                public void onCleanupFailed(String error) {
-                    Log.e(TAG, "Database cleanup failed: " + error);
-                    proceedWithUserCheck();
-                }
-            });
+                },
+                error -> proceedWithUserCheck()
+            );
         } else {
-            Log.d(TAG, "No cleanup needed, proceeding with user check");
             proceedWithUserCheck();
         }
     }
