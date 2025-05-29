@@ -30,13 +30,40 @@ public class RoleSelectionActivity extends AppCompatActivity {
         databaseReference = FirebaseDatabase.getInstance().getReference("Users");
 
         FirebaseUser user = firebaseAuth.getCurrentUser();
-        if (user == null || !user.isEmailVerified()) {
+        if (user == null) {
             navigateToLogin();
             return;
         }
 
-        initViews();
-        setupBackPressHandler();
+        if (!user.isEmailVerified()) {
+            Intent intent = new Intent(this, WaitingVerificationActivity.class);
+            intent.putExtra("email", user.getEmail());
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
+        checkUserRole(user);
+    }
+
+    private void checkUserRole(FirebaseUser user) {
+        databaseReference.child(user.getUid()).child("role").get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (task.getResult().exists() && 
+                        task.getResult().getValue() != null &&
+                        !task.getResult().getValue().toString().isEmpty()) {
+                        navigateToMain();
+                    } else {
+                        initViews();
+                        setupBackPressHandler();
+                    }
+                } else {
+                    initViews();
+                    setupBackPressHandler();
+                }
+            });
     }
 
     private void setupBackPressHandler() {
@@ -73,7 +100,16 @@ public class RoleSelectionActivity extends AppCompatActivity {
             return;
         }
 
-        // Get selected role using RadioGroup
+        if (!user.isEmailVerified()) {
+            Toast.makeText(this, "Email chưa được xác minh", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, WaitingVerificationActivity.class);
+            intent.putExtra("email", user.getEmail());
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         int selectedId = roleRadioGroup.getCheckedRadioButtonId();
         
         if (selectedId == -1) {

@@ -273,33 +273,9 @@ public class LoginActivity extends AppCompatActivity {
         databaseReference.child(user.getUid()).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 if (task.getResult().exists()) {
-                    HashMap<String, Object> updates = new HashMap<>();
-                    updates.put("email", user.getEmail());
-                    updates.put("name", user.getDisplayName());
-
-                    databaseReference.child(user.getUid()).updateChildren(updates)
-                            .addOnSuccessListener(unused -> handleSuccessfulLogin())
-                            .addOnFailureListener(e -> {
-                                hideLoadingDialog();
-                                showToast("Lỗi cập nhật dữ liệu: " + e.getMessage());
-                                firebaseAuth.signOut();
-                            });
+                    checkUserRoleAndNavigate(user);
                 } else {
-                    HashMap<String, Object> userMap = new HashMap<>();
-                    userMap.put("uid", user.getUid());
-                    userMap.put("email", user.getEmail());
-                    userMap.put("name", user.getDisplayName());
-                    userMap.put("phone", "");
-                    userMap.put("role", "Người thuê");
-                    userMap.put("createdAt", System.currentTimeMillis());
-
-                    databaseReference.child(user.getUid()).setValue(userMap)
-                            .addOnSuccessListener(unused -> handleSuccessfulLogin())
-                            .addOnFailureListener(e -> {
-                                hideLoadingDialog();
-                                showToast("Lỗi lưu dữ liệu: " + e.getMessage());
-                                firebaseAuth.signOut();
-                            });
+                    createNewUserAndNavigateToRegistration(user);
                 }
             } else {
                 hideLoadingDialog();
@@ -307,6 +283,80 @@ public class LoginActivity extends AppCompatActivity {
                 firebaseAuth.signOut();
             }
         });
+    }
+
+    private void checkUserRoleAndNavigate(FirebaseUser user) {
+        databaseReference.child(user.getUid()).child("role").get().addOnCompleteListener(task -> {
+            hideLoadingDialog();
+            if (task.isSuccessful()) {
+                if (task.getResult().exists() && task.getResult().getValue() != null) {
+                    showToast("Đăng nhập thành công");
+                    navigateBackToPreviousScreen();
+                } else {
+                    showToast("Vui lòng chọn vai trò để hoàn tất đăng ký");
+                    navigateToRoleSelection();
+                }
+            } else {
+                showToast("Lỗi kiểm tra thông tin người dùng");
+                firebaseAuth.signOut();
+            }
+        });
+    }
+
+    private void createNewUserAndNavigateToRegistration(FirebaseUser user) {
+        HashMap<String, Object> userMap = new HashMap<>();
+        userMap.put("uid", user.getUid());
+        userMap.put("email", user.getEmail());
+        userMap.put("name", user.getDisplayName() != null ? user.getDisplayName() : "");
+        userMap.put("phone", "");
+        userMap.put("role", "");
+        userMap.put("createdAt", System.currentTimeMillis());
+        userMap.put("avatar", user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "");
+
+        databaseReference.child(user.getUid()).setValue(userMap)
+                .addOnSuccessListener(unused -> {
+                    hideLoadingDialog();
+
+                    if (user.isEmailVerified()) {
+                        showToast("Vui lòng chọn vai trò để hoàn tất đăng ký");
+                        navigateToRoleSelection();
+                    } else {
+                        sendVerificationEmailAndNavigate(user);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    hideLoadingDialog();
+                    showToast("Lỗi lưu dữ liệu: " + e.getMessage());
+                    firebaseAuth.signOut();
+                });
+    }
+
+    private void sendVerificationEmailAndNavigate(FirebaseUser user) {
+        user.sendEmailVerification()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        showToast("Email xác minh đã được gửi");
+                        navigateToWaitingVerification(user.getEmail());
+                    } else {
+                        showToast("Lỗi gửi email xác minh");
+                        firebaseAuth.signOut();
+                    }
+                });
+    }
+
+    private void navigateToWaitingVerification(String email) {
+        Intent intent = new Intent(this, WaitingVerificationActivity.class);
+        intent.putExtra("email", email);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void navigateToRoleSelection() {
+        Intent intent = new Intent(this, RoleSelectionActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void setError(EditText editText, String error) {

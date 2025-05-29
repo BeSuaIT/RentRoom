@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class WaitingVerificationActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
@@ -77,7 +78,24 @@ public class WaitingVerificationActivity extends AppCompatActivity {
             user.reload().addOnCompleteListener(task -> {
                 if (task.isSuccessful() && user.isEmailVerified()) {
                     stopVerificationCheck();
-                    navigateToRoleSelection();
+
+                    FirebaseDatabase.getInstance().getReference("Users")
+                        .child(user.getUid())
+                        .child("role")
+                        .get()
+                        .addOnCompleteListener(roleTask -> {
+                            if (roleTask.isSuccessful()) {
+                                if (roleTask.getResult().exists() && 
+                                    roleTask.getResult().getValue() != null &&
+                                    !roleTask.getResult().getValue().toString().isEmpty()) {
+                                    navigateToMain();
+                                } else {
+                                    navigateToRoleSelection();
+                                }
+                            } else {
+                                navigateToRoleSelection();
+                            }
+                        });
                 }
             });
         }
@@ -87,6 +105,13 @@ public class WaitingVerificationActivity extends AppCompatActivity {
         if (verificationHandler != null && verificationChecker != null) {
             verificationHandler.removeCallbacks(verificationChecker);
         }
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void navigateToRoleSelection() {

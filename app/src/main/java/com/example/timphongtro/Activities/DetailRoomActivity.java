@@ -111,16 +111,35 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void refreshUserState() {
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        updateUIBasedOnLoginState();
 
-        if (currentUser != null && room != null) {
-            checkLoveRoom();
-            checkFollowStatus();
-        } else if (room != null) {
-            loveTextView.setText("Chưa có lượt yêu thích");
-            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+        if (currentUser != null) {
+            AuthUtils.checkUserExistsOnStartup(this, currentUser, exists -> {
+                if (!exists) {
+                    currentUser = null;
+                    updateUIBasedOnLoginState();
+                    
+                    if (room != null) {
+                        setFollowButtonToDefault();
+                    }
+                } else {
+                    updateUIBasedOnLoginState();
+                    
+                    if (room != null) {
+                        checkLoveRoom();
+                        checkFollowStatus();
+                    }
+                }
+            });
+        } else {
+            updateUIBasedOnLoginState();
+            if (room != null) {
+                setFollowButtonToDefault();
+            }
         }
+    }
+
+    private void setFollowButtonToDefault() {
+        followButton.setIcon(getDrawable(R.drawable.ic_follow));
     }
 
     private void initializeViews() {
@@ -189,12 +208,16 @@ public class DetailRoomActivity extends AppCompatActivity {
 
     private void updateUIBasedOnLoginState() {
         if (currentUser == null) {
-            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-            followButton.setIcon(getDrawable(R.drawable.ic_follow));
+            // Chưa đăng nhập: set click listeners để hiển thị dialog yêu cầu đăng nhập
             imageViewLove.setOnClickListener(v -> showLoginRequiredDialog("yêu thích"));
             followButton.setOnClickListener(v -> showLoginRequiredDialog("theo dõi"));
             scheduleVisitButton.setOnClickListener(v -> showLoginRequiredDialog("đặt lịch xem"));
+            
+            // Icon mặc định
+            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
+            followButton.setIcon(getDrawable(R.drawable.ic_follow));
         } else {
+            // Đã đăng nhập: set click listeners cho các chức năng
             imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
             followButton.setOnClickListener(v -> handleFollowButtonClick());
             scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
@@ -211,13 +234,14 @@ public class DetailRoomActivity extends AppCompatActivity {
             setupAdapters();
             loadUserPostInfo();
 
+            // Luôn hiển thị lượt yêu thích
+            checkLoveRoom();
+            
+            // Chỉ check follow status nếu đã đăng nhập
             if (currentUser != null) {
-                checkLoveRoom();
                 checkFollowStatus();
             } else {
-                loveTextView.setText("Chưa có lượt yêu thích");
-                imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-                followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                setFollowButtonToDefault();
             }
         }
     }
@@ -298,21 +322,29 @@ public class DetailRoomActivity extends AppCompatActivity {
             return;
         }
 
-        currentUser = realTimeUser;
-        
-        isRoomLoved = true;
-        roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (isRoomLoved) {
-                    int currentLoveCount = (int) snapshot.getChildrenCount();
-                    toggleLoveStatus(snapshot, currentLoveCount);
+        AuthUtils.isUserExists(realTimeUser, exists -> {
+            if (!exists) {
+                AuthUtils.clearAllLoginData(this);
+                showLoginRequiredDialog("yêu thích");
+                return;
+            }
+            
+            currentUser = realTimeUser;
+            
+            isRoomLoved = true;
+            roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (isRoomLoved) {
+                        int currentLoveCount = (int) snapshot.getChildrenCount();
+                        toggleLoveStatus(snapshot, currentLoveCount);
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
+            });
         });
     }
 
@@ -353,12 +385,6 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void checkLoveRoom() {
-        if (currentUser == null) {
-            loveTextView.setText("Chưa có lượt yêu thích");
-            imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
-            return;
-        }
-
         roomDatabaseRef.child("userLovePost").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -366,18 +392,21 @@ public class DetailRoomActivity extends AppCompatActivity {
                     int loveCount = (int) snapshot.getChildrenCount();
                     loveTextView.setText("Lượt yêu thích: " + loveCount);
 
-                    if (snapshot.hasChild(currentUser.getUid())) {
+                    if (currentUser != null && snapshot.hasChild(currentUser.getUid())) {
                         imageViewLove.setImageResource(R.drawable.ic_love_fill);
                     } else {
                         imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
                     }
                 } else {
                     loveTextView.setText("Chưa có lượt yêu thích");
+                    imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                loveTextView.setText("Chưa có lượt yêu thích");
+                imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
             }
         });
     }
@@ -431,8 +460,19 @@ public class DetailRoomActivity extends AppCompatActivity {
             return;
         }
 
-        currentUser = realTimeUser;
-        
+        AuthUtils.isUserExists(realTimeUser, exists -> {
+            if (!exists) {
+                AuthUtils.clearAllLoginData(this);
+                showLoginRequiredDialog("đặt lịch xem");
+                return;
+            }
+            
+            currentUser = realTimeUser;
+            openScheduleDialog();
+        });
+    }
+
+    private void openScheduleDialog() {
         scheduleVisitDialog = new BottomSheetDialog(DetailRoomActivity.this);
         scheduleVisitDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         scheduleVisitDialog.setContentView(R.layout.dialog_book_room);
@@ -578,29 +618,37 @@ public class DetailRoomActivity extends AppCompatActivity {
             return;
         }
 
-        currentUser = realTimeUser;
-        
-        DatabaseReference followRef = FirebaseDatabase.getInstance()
-                .getReference("FollowPosts")
-                .child(currentUser.getUid())
-                .child(room.getId_room());
-
-        followRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                if (task.getResult().exists()) {
-                    followRef.removeValue()
-                        .addOnSuccessListener(unused -> {
-                            followButton.setIcon(getDrawable(R.drawable.ic_follow));
-                            Toast.makeText(this, "Đã bỏ theo dõi", Toast.LENGTH_SHORT).show();
-                        });
-                } else {
-                    followRef.setValue(true)
-                        .addOnSuccessListener(unused -> {
-                            followButton.setIcon(getDrawable(R.drawable.ic_unfollow));
-                            Toast.makeText(this, "Đã theo dõi phòng này", Toast.LENGTH_SHORT).show();
-                        });
-                }
+        AuthUtils.isUserExists(realTimeUser, exists -> {
+            if (!exists) {
+                AuthUtils.clearAllLoginData(this);
+                showLoginRequiredDialog("theo dõi");
+                return;
             }
+            
+            currentUser = realTimeUser;
+            
+            DatabaseReference followRef = FirebaseDatabase.getInstance()
+                    .getReference("FollowPosts")
+                    .child(currentUser.getUid())
+                    .child(room.getId_room());
+
+            followRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (task.getResult().exists()) {
+                        followRef.removeValue()
+                            .addOnSuccessListener(unused -> {
+                                followButton.setIcon(getDrawable(R.drawable.ic_follow));
+                                Toast.makeText(this, "Đã bỏ theo dõi", Toast.LENGTH_SHORT).show();
+                            });
+                    } else {
+                        followRef.setValue(true)
+                            .addOnSuccessListener(unused -> {
+                                followButton.setIcon(getDrawable(R.drawable.ic_unfollow));
+                                Toast.makeText(this, "Đã theo dõi phòng này", Toast.LENGTH_SHORT).show();
+                            });
+                    }
+                }
+            });
         });
     }
 
@@ -657,8 +705,17 @@ public class DetailRoomActivity extends AppCompatActivity {
             return;
         }
 
-        currentUser = realTimeUser;
-        checkCurrentUserPhoneAndMakeCall();
+        // Kiểm tra user tồn tại trước khi gọi điện
+        AuthUtils.isUserExists(realTimeUser, exists -> {
+            if (!exists) {
+                AuthUtils.clearAllLoginData(this);
+                AuthUtils.showLoginRequiredDialog(this,"gọi điện", "có thể");
+                return;
+            }
+            
+            currentUser = realTimeUser;
+            checkCurrentUserPhoneAndMakeCall();
+        });
     }
 
     private void checkCurrentUserPhoneAndMakeCall() {
