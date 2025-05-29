@@ -164,7 +164,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         phoneTextView.setOnClickListener(v -> {
             FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
             if (realTimeUser == null) {
-                AuthUtils.showLoginRequiredDialog(this, "sao chép số điện thoại");
+                AuthUtils.showLoginRequiredDialog(this, "sao chép số điện thoại", "có thể");
                 return;
             }
             copyToClipboard(phoneTextView.getText().toString(), "Đã sao chép số điện thoại");
@@ -172,7 +172,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         addressCombinedTextView.setOnClickListener(v -> {
             FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
             if (realTimeUser == null) {
-                AuthUtils.showLoginRequiredDialog(this, "sao chép địa chỉ");
+                AuthUtils.showLoginRequiredDialog(this,"sao chép địa chỉ", "có thể");
                 return;
             }
             copyToClipboard(addressCombinedTextView.getText().toString(), "Đã sao chép địa chỉ");
@@ -653,7 +653,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     private void handleCallButtonClick() {
         FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
         if (realTimeUser == null) {
-            AuthUtils.showLoginRequiredDialog(this, "gọi điện");
+            AuthUtils.showLoginRequiredDialog(this,"gọi điện", "có thể");
             return;
         }
 

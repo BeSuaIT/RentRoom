@@ -96,7 +96,7 @@ public class UserActivity extends AppCompatActivity {
 
         phoneLinear.setOnClickListener(v -> {
             if (currentUser == null) {
-                AuthUtils.showLoginRequiredDialog(this, "sao chép số điện thoại");
+                AuthUtils.showLoginRequiredDialog(this,"sao chép số điện thoại", "có thể");
                 return;
             }
             copyToClipboard("Số điện thoại", originalPhoneNumber);
@@ -104,7 +104,7 @@ public class UserActivity extends AppCompatActivity {
 
         emailLinear.setOnClickListener(v -> {
             if (currentUser == null) {
-                AuthUtils.showLoginRequiredDialog(this, "sao chép email");
+                AuthUtils.showLoginRequiredDialog(this,"sao chép email", "có thể");
                 return;
             }
             copyToClipboard("Email", originalEmail);

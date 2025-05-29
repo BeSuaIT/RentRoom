@@ -79,16 +79,6 @@ public class AuthUtils {
     }
 
     /**
-     * Hiển thị dialog thông báo yêu cầu đăng nhập với hành động mặc định
-     * 
-     * @param context Context bất kỳ
-     * @param feature Tên tính năng yêu cầu đăng nhập
-     */
-    public static void showLoginRequiredDialog(Context context, String feature) {
-        showLoginRequiredDialog(context, feature, "sử dụng");
-    }
-
-    /**
      * Hiển thị dialog thông báo yêu cầu đăng nhập từ một Fragment
      * 
      * @param fragment Fragment hiện tại
@@ -132,7 +122,7 @@ public class AuthUtils {
      */
     public static void checkUserExistsOnStartup(Context context, FirebaseUser user, UserExistsCallback callback) {
         if (user == null) {
-            callback.onResult(true); // Không có user thì không cần kiểm tra
+            callback.onResult(true);
             return;
         }
 
@@ -190,14 +180,11 @@ public class AuthUtils {
                 callback.onResult(exists);
                 
                 if (!exists) {
-                    // Tài khoản không tồn tại, đăng xuất và chuyển về LoginActivity
                     clearAllLoginData(context);
                     
                     Toast.makeText(context, 
                         "Tài khoản không tồn tại. Vui lòng đăng nhập lại", 
                         Toast.LENGTH_LONG).show();
-                    
-                    // Chuyển về LoginActivity
                     Activity activity = getActivity(context);
                     if (activity != null) {
                         Intent intent = new Intent(context, LoginActivity.class);
@@ -223,19 +210,15 @@ public class AuthUtils {
      */
     public static void clearAllLoginData(Context context) {
         try {
-            // Clear Firebase Auth
             FirebaseAuth.getInstance().signOut();
         } catch (Exception e) {
-            // Firebase Auth might not be initialized
         }
         
         try {
-            // Clear Facebook Login nếu có
             if (AccessToken.getCurrentAccessToken() != null) {
                 LoginManager.getInstance().logOut();
             }
         } catch (Exception e) {
-            // Facebook SDK might not be initialized
         }
         
         try {
@@ -250,7 +233,6 @@ public class AuthUtils {
             SharedPreferences loginPrefs = context.getSharedPreferences("login_prefs", Context.MODE_PRIVATE);
             loginPrefs.edit().clear().apply();
         } catch (Exception e) {
-            // SharedPreferences might not be accessible
         }
         
         // Note: CredentialManager không cần clear thủ công vì nó tự động xóa khi Firebase Auth sign out
@@ -264,8 +246,6 @@ public class AuthUtils {
      */
     public static void signOut(Context context) {
         clearAllLoginData(context);
-        
-        // Chuyển về LoginActivity sau khi đăng xuất
         Activity activity = getActivity(context);
         if (activity != null) {
             Intent intent = new Intent(context, LoginActivity.class);

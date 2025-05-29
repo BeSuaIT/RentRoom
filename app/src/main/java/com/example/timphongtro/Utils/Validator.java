@@ -35,22 +35,18 @@ public class Validator {
      * @return true nếu email hợp lệ, false nếu không hợp lệ
      */
     public static boolean isValidEmail(String email) {
-        // Kiểm tra email không rỗng
         if (TextUtils.isEmpty(email)) {
             return false;
         }
 
-        // Kiểm tra với mẫu cơ bản của Android
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             return false;
         }
 
-        // Kiểm tra với mẫu regex chi tiết hơn
         if (!EMAIL_PATTERN.matcher(email).matches()) {
             return false;
         }
 
-        // Kiểm tra tên miền không phải là dịch vụ email dùng một lần
         String domain = email.substring(email.indexOf("@") + 1).toLowerCase();
         return !isDisposableEmailDomain(domain);
     }
@@ -75,7 +71,4 @@ public class Validator {
         }
         return false;
     }
-    
-    // Có thể thêm các phương thức xác thực khác ở đây như:
-    // isValidPassword(), isValidPhoneNumber(), isValidUsername(), v.v.
 }
