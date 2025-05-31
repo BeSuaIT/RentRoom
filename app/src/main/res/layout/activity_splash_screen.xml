@@ -10,7 +10,7 @@
         android:id="@+id/logoImage"
         android:layout_width="180dp"
         android:layout_height="180dp"
-        android:src="@drawable/ic_timphongtro"
+        android:src="@drawable/logo_rentroom"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

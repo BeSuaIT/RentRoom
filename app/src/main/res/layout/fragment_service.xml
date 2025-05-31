@@ -52,7 +52,7 @@
 
                 <ImageView
                     style="@style/ServiceItemImage"
-                    android:src="@drawable/ic_chothuenoithat" />
+                    android:src="@drawable/img_furniture" />
 
                 <TextView
                     style="@style/ServiceItemText"
@@ -69,7 +69,7 @@
 
                 <ImageView
                     style="@style/ServiceItemImage"
-                    android:src="@drawable/ic_tuvanthietkephong" />
+                    android:src="@drawable/img_tuvan" />
 
                 <TextView
                     style="@style/ServiceItemText"
@@ -86,7 +86,7 @@
 
                 <ImageView
                     style="@style/ServiceItemImage"
-                    android:src="@drawable/ic_suachuadiennuoc" />
+                    android:src="@drawable/img_toolbox" />
 
                 <TextView
                     style="@style/ServiceItemText"
@@ -103,7 +103,7 @@
 
                 <ImageView
                     style="@style/ServiceItemImage"
-                    android:src="@drawable/ic_giatla" />
+                    android:src="@drawable/img_washingmachine" />
 
                 <TextView
                     style="@style/ServiceItemText"
@@ -120,7 +120,7 @@
 
                 <ImageView
                     style="@style/ServiceItemImage"
-                    android:src="@drawable/ic_doibinhnuoc" />
+                    android:src="@drawable/img_binhnuoc" />
 
                 <TextView
                     style="@style/ServiceItemText"
@@ -137,7 +137,7 @@
 
                 <ImageView
                     style="@style/ServiceItemImage"
-                    android:src="@drawable/ic_doibinhga" />
+                    android:src="@drawable/img_gas" />
 
                 <TextView
                     style="@style/ServiceItemText"
