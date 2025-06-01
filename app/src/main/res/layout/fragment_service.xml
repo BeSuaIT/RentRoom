@@ -41,106 +41,245 @@
         android:layout_height="wrap_content"
         android:columnCount="2"
         android:padding="12dp"
+        android:useDefaultMargins="true"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3">
-
+        
         <androidx.cardview.widget.CardView
-            style="@style/ServiceCardView">
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white_100">
 
             <LinearLayout
                 android:id="@+id/chothuenoithat"
-                style="@style/ServiceItemLayout">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    style="@style/ServiceItemImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/img_furniture" />
 
                 <TextView
-                    style="@style/ServiceItemText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
                     android:text="Cho thuê nội thất" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            style="@style/ServiceCardView">
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white_100">
 
             <LinearLayout
                 android:id="@+id/tuvanthietkephong"
-                style="@style/ServiceItemLayout">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    style="@style/ServiceItemImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/img_tuvan" />
 
                 <TextView
-                    style="@style/ServiceItemText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
                     android:text="Tư vấn thiết kế phòng" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            style="@style/ServiceCardView">
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white_100">
 
             <LinearLayout
                 android:id="@+id/suachuadiennuoc"
-                style="@style/ServiceItemLayout">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    style="@style/ServiceItemImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/img_toolbox" />
 
                 <TextView
-                    style="@style/ServiceItemText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
                     android:text="Sửa chữa điện nước" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            style="@style/ServiceCardView">
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white_100">
 
             <LinearLayout
                 android:id="@+id/giatla"
-                style="@style/ServiceItemLayout">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    style="@style/ServiceItemImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/img_washingmachine" />
 
                 <TextView
-                    style="@style/ServiceItemText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
                     android:text="Giặt là" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            style="@style/ServiceCardView">
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white_100">
 
             <LinearLayout
                 android:id="@+id/doibinhnuoc"
-                style="@style/ServiceItemLayout">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    style="@style/ServiceItemImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/img_binhnuoc" />
 
                 <TextView
-                    style="@style/ServiceItemText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
                     android:text="Đổi bình nước" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            style="@style/ServiceCardView">
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white_100">
 
             <LinearLayout
                 android:id="@+id/doibinhga"
-                style="@style/ServiceItemLayout">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
-                    style="@style/ServiceItemImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/img_gas" />
 
                 <TextView
-                    style="@style/ServiceItemText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textColor="@color/black"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
                     android:text="Đổi bình ga" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>

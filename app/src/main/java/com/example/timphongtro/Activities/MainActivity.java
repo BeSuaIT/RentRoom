@@ -50,6 +50,26 @@ public class MainActivity extends AppCompatActivity {
 
         checkCurrentUserAndSetup();
         setupAuthListener();
+        handleIncomingIntent();
+    }
+
+    private void handleIncomingIntent() {
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("selected_tab")) {
+            String selectedTab = intent.getStringExtra("selected_tab");
+            
+            if ("service".equals(selectedTab)) {
+                replaceFragment(new ServiceFragment());
+                binding.bottomNavigationView.setSelectedItemId(R.id.service);
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingIntent();
     }
 
     private void checkCurrentUserAndSetup() {

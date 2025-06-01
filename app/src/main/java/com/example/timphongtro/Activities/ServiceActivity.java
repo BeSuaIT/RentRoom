@@ -4,8 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,22 +38,18 @@ public class ServiceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service);
-        
-        // Initialize views and firebase
+
         initializeViews();
         initializeFirebase();
 
-        // Get intent data
         item = getIntent().getStringExtra("item");
         if (item == null) {
             finish();
             return;
         }
 
-        // Setup click listeners
         setupClickListeners();
-
-        // Initialize RecyclerView and load data
+        setupBackPressedCallback();
         initializeRecyclerView();
         loadServicesFromDatabase();
     }
@@ -70,7 +66,9 @@ public class ServiceActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        back_button.setOnClickListener(v -> finish());
+        back_button.setOnClickListener(v -> {
+            navigateBackToService();
+        });
         
         cart_button.setOnClickListener(v -> {
             if (user != null) {
@@ -79,6 +77,23 @@ public class ServiceActivity extends AppCompatActivity {
                 AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
             }
         });
+    }
+
+    private void setupBackPressedCallback() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBackToService();
+            }
+        });
+    }
+
+    private void navigateBackToService() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("selected_tab", "service");
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private void initializeRecyclerView() {

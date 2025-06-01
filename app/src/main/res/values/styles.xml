@@ -14,8 +14,8 @@
     </style>
 
     <style name="ShortcutIconStyle">
-        <item name="android:layout_width">50dp</item>
-        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
     </style>
 
     <style name="ShortcutTextStyle">

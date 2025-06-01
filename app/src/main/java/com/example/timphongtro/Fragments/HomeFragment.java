@@ -139,8 +139,11 @@ public class HomeFragment extends Fragment {
             startActivity(new Intent(getContext(), SearchActivity.class)));
         view.findViewById(R.id.showMore).setOnClickListener(v -> 
             startActivity(new Intent(getContext(), ShowMoreActivity.class)));
-        view.findViewById(R.id.cart).setOnClickListener(v ->
-            startActivity(new Intent(getContext(), CartActivity.class)));
+        view.findViewById(R.id.cart).setOnClickListener(v -> {
+            if (checkLoginRequired("Xem giỏ hàng")) {
+                startActivity(new Intent(getContext(), CartActivity.class));
+            }
+        });
         view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> {
             if (checkLoginRequired("Đăng tin phòng trọ")) {
                 checkUserRoleForPosting();
