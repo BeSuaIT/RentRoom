@@ -3,16 +3,21 @@ package com.example.timphongtro.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.Models.User;
-import com.example.timphongtro.databinding.ActivityMeetingDetailBinding;
+import com.example.timphongtro.R;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -23,41 +28,66 @@ import com.google.gson.Gson;
 import java.text.DecimalFormat;
 
 public class MeetingDetailActivity extends AppCompatActivity {
+    private ImageView imageViewBack;
+    private CardView cardViewRoom;
+    private LinearLayout userPost;
+    private Button btnRefuse, btnAccept;
+    private ImageView imgPost;
+    private TextView PostTitle, RoomCost, DistrictName, DienTich, Size;
+    private TextView tvName, tvTime, tvNote;
+    private TextView tvprofileDetail, textViewNameUser;
     private ScheduleVisitRoomClass schedule;
     private Room room;
     private User user;
     private DatabaseReference scheduleRef;
-    private ActivityMeetingDetailBinding binding;
     private DecimalFormat decimalFormat;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMeetingDetailBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_meeting_detail);
 
         decimalFormat = new DecimalFormat("#,###");
         
+        initializeViews();
         setupViews();
         loadScheduleData();
     }
 
+    private void initializeViews() {
+        imageViewBack = findViewById(R.id.imageViewBack);
+        cardViewRoom = findViewById(R.id.cardViewRoom);
+        userPost = findViewById(R.id.userPost);
+        btnRefuse = findViewById(R.id.btnRefuse);
+        btnAccept = findViewById(R.id.btnAccept);
+        imgPost = findViewById(R.id.imgPost);
+        PostTitle = findViewById(R.id.PostTitle);
+        RoomCost = findViewById(R.id.RoomCost);
+        DistrictName = findViewById(R.id.DistrictName);
+        DienTich = findViewById(R.id.DienTich);
+        Size = findViewById(R.id.Size);
+        tvName = findViewById(R.id.tvName);
+        tvTime = findViewById(R.id.tvTime);
+        tvNote = findViewById(R.id.tvNote);
+        tvprofileDetail = findViewById(R.id.tvprofileDetail);
+        textViewNameUser = findViewById(R.id.textViewNameUser);
+    }
+
     private void setupViews() {
-        binding.imageViewBack.setOnClickListener(v -> finish());
-        binding.cardViewRoom.setOnClickListener(v -> navigateToRoomDetail());
-        binding.userPost.setOnClickListener(v -> navigateToUserProfile());
+        imageViewBack.setOnClickListener(v -> finish());
+        cardViewRoom.setOnClickListener(v -> navigateToRoomDetail());
+        userPost.setOnClickListener(v -> navigateToUserProfile());
         
         setupActionButtons();
     }
 
     private void setupActionButtons() {
         boolean showButtons = getIntent().getIntExtra("showbtn", 1) == 1;
-        binding.btnRefuse.setVisibility(showButtons ? View.VISIBLE : View.GONE);
-        binding.btnAccept.setVisibility(showButtons ? View.VISIBLE : View.GONE);
+        btnRefuse.setVisibility(showButtons ? View.VISIBLE : View.GONE);
+        btnAccept.setVisibility(showButtons ? View.VISIBLE : View.GONE);
 
-        binding.btnRefuse.setOnClickListener(v -> updateScheduleStatus("2", "Bạn từ chối thành công"));
-        binding.btnAccept.setOnClickListener(v -> updateScheduleStatus("1", "Bạn xác nhận thành công"));
+        btnRefuse.setOnClickListener(v -> updateScheduleStatus("2", "Bạn từ chối thành công"));
+        btnAccept.setOnClickListener(v -> updateScheduleStatus("1", "Bạn xác nhận thành công"));
     }
 
     private void loadScheduleData() {
@@ -74,9 +104,9 @@ public class MeetingDetailActivity extends AppCompatActivity {
     }
 
     private void updateScheduleUI() {
-        binding.tvName.setText(schedule.getName());
-        binding.tvTime.setText(schedule.getTimeVisitRoom());
-        binding.tvNote.setText(schedule.getNote());
+        tvName.setText(schedule.getName());
+        tvTime.setText(schedule.getTimeVisitRoom());
+        tvNote.setText(schedule.getNote());
     }
 
     private void loadRoomData() {
@@ -101,16 +131,16 @@ public class MeetingDetailActivity extends AppCompatActivity {
     }
 
     private void updateRoomUI() {
-        binding.PostTitle.setText(room.getTitle_room());
+        PostTitle.setText(room.getTitle_room());
         String formattedPrice = decimalFormat.format(room.getPrice_room()) + " đ/tháng";
-        binding.RoomCost.setText(formattedPrice);
-        binding.DistrictName.setText(room.getAddress().getAddress_combine());
-        binding.DienTich.setText("Diện tích: " + room.getArea_room());
-        binding.Size.setText("Số người: " + room.getPerson_in_room());
+        RoomCost.setText(formattedPrice);
+        DistrictName.setText(room.getAddress().getAddress_combine());
+        DienTich.setText("Diện tích: " + room.getArea_room());
+        Size.setText("Số người: " + room.getPerson_in_room());
         
         Glide.with(this)
             .load(room.getFirstImage())
-            .into(binding.imgPost);
+            .into(imgPost);
     }
 
     private void loadUserData() {
@@ -123,8 +153,8 @@ public class MeetingDetailActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 user = snapshot.getValue(User.class);
                 if (user != null) {
-                    binding.tvprofileDetail.setText(getFirstLetter(user.getName()));
-                    binding.textViewNameUser.setText(user.getName());
+                    tvprofileDetail.setText(getFirstLetter(user.getName()));
+                    textViewNameUser.setText(user.getName());
                 }
             }
 
