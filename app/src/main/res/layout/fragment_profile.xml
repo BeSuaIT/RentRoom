@@ -122,8 +122,14 @@
                 <TextView
                     android:id="@+id/manageRoomsButton"
                     style="@style/ProfileMenuItemStyle"
-                    android:text="@string/quanlyphong"
+                    android:text="Quản lý phòng trọ"
                     app:drawableStartCompat="@drawable/img_house_resized" />
+
+                <TextView
+                    android:id="@+id/manageContractsButton"
+                    style="@style/ProfileMenuItemStyle"
+                    android:text="Quản lý hợp đồng"
+                    app:drawableStartCompat="@drawable/img_contract_resized" />
 
                 <TextView
                     android:id="@+id/billButton"
@@ -140,7 +146,7 @@
                 <TextView
                     android:id="@+id/scheduleButton"
                     style="@style/ProfileMenuItemStyle"
-                    android:text="@string/lichhen"
+                    android:text="Lịch hẹn xem phòng"
                     app:drawableStartCompat="@drawable/img_schedule_resized" />
 
                 <TextView
@@ -152,7 +158,7 @@
                 <TextView
                     android:id="@+id/signOutButton"
                     style="@style/ProfileMenuItemStyle"
-                    android:text="@string/dangxuat"
+                    android:text="Đăng xuất"
                     app:drawableStartCompat="@drawable/img_logout_resized" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>

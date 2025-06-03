@@ -24,7 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class ManagePostActivity extends AppCompatActivity {
+public class PostManagementActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private View emptyView;
     private TabLayout tabLayout;
@@ -37,7 +37,7 @@ public class ManagePostActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manage_post);
+        setContentView(R.layout.activity_post_management);
 
         initializeViews();
         setupListeners();
@@ -51,7 +51,7 @@ public class ManagePostActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         
         findViewById(R.id.imageViewBack).setOnClickListener(v -> finish());
-        findViewById(R.id.fabAddPost).setOnClickListener(v -> startActivity(new Intent(this, PostActivity.class)));
+        findViewById(R.id.fabAddPost).setOnClickListener(v -> startActivity(new Intent(this, AddPostActivity.class)));
     }
 
     private void setupRecyclerView() {
@@ -105,7 +105,7 @@ public class ManagePostActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(ManagePostActivity.this, 
+                Toast.makeText(PostManagementActivity.this,
                     "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

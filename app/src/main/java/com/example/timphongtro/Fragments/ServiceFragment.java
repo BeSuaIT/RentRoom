@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.example.timphongtro.Activities.CartActivity;
+import com.example.timphongtro.Activities.CartManagementActivity;
 import com.example.timphongtro.Activities.ServiceActivity;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
@@ -55,7 +55,7 @@ public class ServiceFragment extends Fragment {
     private void setupClickListeners() {
         button_cart.setOnClickListener(v -> {
             if (user != null) {
-                startActivity(new Intent(requireContext(), CartActivity.class));
+                startActivity(new Intent(requireContext(), CartManagementActivity.class));
             } else {
                 AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
             }

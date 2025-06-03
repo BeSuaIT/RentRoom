@@ -12,7 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.timphongtro.Activities.ScheduleVisitDetailActivity;
+import com.example.timphongtro.Activities.MeetingDetailActivity;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -121,7 +121,7 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
     }
 
     private void navigateToDetail(ScheduleVisitRoomClass schedule) {
-        Intent intent = new Intent(context, ScheduleVisitDetailActivity.class);
+        Intent intent = new Intent(context, MeetingDetailActivity.class);
         intent.putExtra("scheduleData", schedule.toString());
         intent.putExtra("showbtn", shouldShowConfirmButtons(schedule, 
                 FirebaseAuth.getInstance().getCurrentUser().getUid()) ? 1 : 0);

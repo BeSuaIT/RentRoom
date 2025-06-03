@@ -23,8 +23,9 @@ import android.widget.Toast;
 import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
-import com.example.timphongtro.Activities.CartActivity;
-import com.example.timphongtro.Activities.PostActivity;
+import com.example.timphongtro.Activities.CartManagementActivity;
+import com.example.timphongtro.Activities.ContractManagementActivity;
+import com.example.timphongtro.Activities.AddPostActivity;
 import com.example.timphongtro.Activities.SearchActivity;
 import com.example.timphongtro.Activities.ServiceActivity;
 import com.example.timphongtro.Activities.ShowMoreActivity;
@@ -141,7 +142,12 @@ public class HomeFragment extends Fragment {
             startActivity(new Intent(getContext(), ShowMoreActivity.class)));
         view.findViewById(R.id.cart).setOnClickListener(v -> {
             if (checkLoginRequired("Xem giỏ hàng")) {
-                startActivity(new Intent(getContext(), CartActivity.class));
+                startActivity(new Intent(getContext(), CartManagementActivity.class));
+            }
+        });
+        view.findViewById(R.id.contract).setOnClickListener(v -> {
+            if (checkLoginRequired("Xem hợp đồng")) {
+                startActivity(new Intent(getContext(), ContractManagementActivity.class));
             }
         });
         view.findViewById(R.id.tin_dang_cho_thue).setOnClickListener(v -> {
@@ -172,7 +178,7 @@ public class HomeFragment extends Fragment {
                     String userRole = snapshot.child("role").getValue(String.class);
                     
                     if ("Chủ trọ".equals(userRole)) {
-                        startActivity(new Intent(getContext(), PostActivity.class));
+                        startActivity(new Intent(getContext(), AddPostActivity.class));
                     } else {
                         showToast("Chỉ có Chủ trọ mới được phép đăng tin cho thuê");
                     }

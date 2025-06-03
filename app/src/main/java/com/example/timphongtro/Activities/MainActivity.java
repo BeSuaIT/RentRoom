@@ -26,13 +26,14 @@ import com.example.timphongtro.databinding.ActivityMainBinding;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
     private NetworkChangeReceiver networkChangeReceiver;
     private boolean isReceiverRegistered = false;
     private ActivityMainBinding binding;
-    private FirebaseAuth.AuthStateListener authStateListener;
+    private AuthStateListener authStateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
             if (currentUser != null) {
                 AuthUtils.isUserExists(currentUser, exists -> {
                     if (exists) {
-                        Intent post = new Intent(this, PostActivity.class);
+                        Intent post = new Intent(this, AddPostActivity.class);
                         startActivity(post);
                     } else {
                         AuthUtils.clearAllLoginData(this);

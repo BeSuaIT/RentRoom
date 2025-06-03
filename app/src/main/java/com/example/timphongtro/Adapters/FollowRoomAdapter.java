@@ -14,10 +14,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.DetailRoomActivity;
+import com.example.timphongtro.Activities.PostDetailActivity;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
-import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, DetailRoomActivity.class);
+            Intent intent = new Intent(context, PostDetailActivity.class);
             intent.putExtra("DataRoom", room.toString());
             context.startActivity(intent);
         });

@@ -67,7 +67,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DetailRoomActivity extends AppCompatActivity {
+public class PostDetailActivity extends AppCompatActivity {
     private static final int CALL_PHONE_PERMISSION_REQUEST_CODE = 1;
     private TextView roomTitleTextView, priceTextView, addressCombinedTextView, phoneTextView, roomTypeTextView,
             floorTextView, roomAreaTextView, depositTextView, capacityTextView, genderTextView,
@@ -176,7 +176,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
         followButton.setOnClickListener(v -> handleFollowButtonClick());
         userPostCard.setOnClickListener(v -> {
-            Intent intent = new Intent(DetailRoomActivity.this, UserActivity.class);
+            Intent intent = new Intent(PostDetailActivity.this, UserActivity.class);
             intent.putExtra("id_own_post", room.getId_own_post());
             startActivity(intent);
         });
@@ -354,7 +354,7 @@ public class DetailRoomActivity extends AppCompatActivity {
                .setMessage("Bạn cần đăng nhập để " + feature + " phòng này")
                .setPositiveButton("Đăng nhập", (dialog, which) -> {
                    Intent intent = new Intent(this, LoginActivity.class);
-                   intent.putExtra("previous_activity", DetailRoomActivity.class.getName());
+                   intent.putExtra("previous_activity", PostDetailActivity.class.getName());
                    startActivity(intent);
                })
                .setNegativeButton("Hủy", null)
@@ -374,14 +374,14 @@ public class DetailRoomActivity extends AppCompatActivity {
         roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).removeValue();
         imageViewLove.setImageResource(R.drawable.ic_heart_thin_icon);
         loveTextView.setText("Lượt yêu thích: " + newCount);
-        Toast.makeText(DetailRoomActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
+        Toast.makeText(PostDetailActivity.this, "Bỏ yêu thích thành công", Toast.LENGTH_SHORT).show();
     }
 
     private void addLoveStatus(int newCount) {
         roomDatabaseRef.child("userLovePost").child(currentUser.getUid()).setValue(true);
         imageViewLove.setImageResource(R.drawable.ic_love_fill);
         loveTextView.setText("Lượt yêu thích: " + newCount);
-        Toast.makeText(DetailRoomActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
+        Toast.makeText(PostDetailActivity.this, "Yêu thích thành công", Toast.LENGTH_SHORT).show();
     }
 
     private void checkLoveRoom() {
@@ -419,7 +419,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void showZoomImgDialog(int currentPosition) {
-        dialogZoomImg = new Dialog(DetailRoomActivity.this);
+        dialogZoomImg = new Dialog(PostDetailActivity.this);
         dialogZoomImg.setContentView(R.layout.dialog_zoom_img);
 
         ViewPager2 viewPager = dialogZoomImg.findViewById(R.id.viewPagerZoom);
@@ -473,7 +473,7 @@ public class DetailRoomActivity extends AppCompatActivity {
     }
 
     private void openScheduleDialog() {
-        scheduleVisitDialog = new BottomSheetDialog(DetailRoomActivity.this);
+        scheduleVisitDialog = new BottomSheetDialog(PostDetailActivity.this);
         scheduleVisitDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         scheduleVisitDialog.setContentView(R.layout.dialog_book_room);
 
@@ -500,7 +500,7 @@ public class DetailRoomActivity extends AppCompatActivity {
         };
 
         scheduleTime.setOnClickListener(v -> {
-            new DatePickerDialog(DetailRoomActivity.this, date, bookingDate.get(Calendar.YEAR), bookingDate.get(Calendar.MONTH), bookingDate.get(Calendar.DAY_OF_MONTH)).show();
+            new DatePickerDialog(PostDetailActivity.this, date, bookingDate.get(Calendar.YEAR), bookingDate.get(Calendar.MONTH), bookingDate.get(Calendar.DAY_OF_MONTH)).show();
         });
 
         confirmButton = scheduleVisitDialog.findViewById(R.id.btnConfirm);
@@ -737,14 +737,14 @@ public class DetailRoomActivity extends AppCompatActivity {
                         showUpdatePhoneDialog();
                     }
                 } else {
-                    Toast.makeText(DetailRoomActivity.this, 
+                    Toast.makeText(PostDetailActivity.this,
                         "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(DetailRoomActivity.this, 
+                Toast.makeText(PostDetailActivity.this,
                     "Lỗi kiểm tra thông tin người dùng", Toast.LENGTH_SHORT).show();
             }
         });

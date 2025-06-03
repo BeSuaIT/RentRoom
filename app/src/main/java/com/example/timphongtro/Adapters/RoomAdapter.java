@@ -13,7 +13,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.DetailRoomActivity;
+import com.example.timphongtro.Activities.PostDetailActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
@@ -81,7 +81,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
             if(user != null) {
                 userID = user.getUid();
             }
-            Intent detailRoom = new Intent(context, DetailRoomActivity.class);
+            Intent detailRoom = new Intent(context, PostDetailActivity.class);
             detailRoom.putExtra("DataRoom", room.toString());
             context.startActivity(detailRoom);
             RecentlyRead(userID,holder);

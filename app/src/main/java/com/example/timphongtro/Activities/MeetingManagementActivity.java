@@ -24,7 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class scheduleVisitRoomActivity extends AppCompatActivity {
+public class MeetingManagementActivity extends AppCompatActivity {
     private ImageView backButton;
     private TabLayout scheduleTabLayout;
     private RecyclerView scheduleVisitRecyclerView;
@@ -38,7 +38,7 @@ public class scheduleVisitRoomActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_schedule_visit_room);
+        setContentView(R.layout.activity_meeting_management);
 
         initializeVariables();
         setupViews();

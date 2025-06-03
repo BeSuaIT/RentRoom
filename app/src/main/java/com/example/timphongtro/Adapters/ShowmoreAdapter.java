@@ -13,7 +13,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.DetailRoomActivity;
+import com.example.timphongtro.Activities.PostDetailActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
@@ -54,7 +54,7 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         holder.district.setText(address.getDistrict());
         holder.detail.setText(address.getDetail());
         holder.cardViewRoom.setOnClickListener(v -> {
-            Intent detailRoom = new Intent(context, DetailRoomActivity.class);
+            Intent detailRoom = new Intent(context, PostDetailActivity.class);
             detailRoom.putExtra("DataRoom", room.toString());
             context.startActivity(detailRoom);
         });

@@ -1,19 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
+    <!-- ✅ Hardware features -->
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
-
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" /> <!-- ✅ Existing permissions - KEEP -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- ✅ Camera permissions -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" /> <!-- ✅ Storage permissions for different Android versions -->
+    <!-- For Android 12 and below -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" /> <!-- For Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> <!-- ✅ Network and location permissions if needed -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- ✅ Notification permissions for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -25,6 +39,15 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.TimPhongTro"
         tools:targetApi="31">
+        <activity
+            android:name=".Activities.ContractDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.AddContractActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.ContractManagementActivity"
+            android:exported="false" />
         <activity
             android:name=".Activities.RoleSelectionActivity"
             android:exported="false" />
@@ -54,10 +77,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Activities.BillActivity"
+            android:name=".Activities.BillManagementActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.ScheduleVisitDetailActivity"
+            android:name=".Activities.MeetingDetailActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.UserActivity"
@@ -66,16 +89,16 @@
             android:name=".Activities.EditProfileActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.scheduleVisitRoomActivity"
+            android:name=".Activities.MeetingManagementActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.HistoryActivity"
+            android:name=".Activities.HistoryManagementActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.EditPostActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.CartActivity"
+            android:name=".Activities.CartManagementActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.ForgotPasswordActivity"
@@ -102,13 +125,13 @@
             android:name=".Activities.RegisterActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.PostActivity"
+            android:name=".Activities.AddPostActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.ManagePostActivity"
+            android:name=".Activities.PostManagementActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.DetailRoomActivity"
+            android:name=".Activities.PostDetailActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.SplashScreen"

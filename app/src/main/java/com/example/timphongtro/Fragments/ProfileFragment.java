@@ -22,15 +22,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.BillActivity;
-import com.example.timphongtro.Activities.CartActivity;
+import com.example.timphongtro.Activities.BillManagementActivity;
+import com.example.timphongtro.Activities.CartManagementActivity;
+import com.example.timphongtro.Activities.ContractManagementActivity;
 import com.example.timphongtro.Activities.EditProfileActivity;
-import com.example.timphongtro.Activities.HistoryActivity;
+import com.example.timphongtro.Activities.HistoryManagementActivity;
 import com.example.timphongtro.Activities.LoginActivity;
 import com.example.timphongtro.Activities.MainActivity;
-import com.example.timphongtro.Activities.ManagePostActivity;
+import com.example.timphongtro.Activities.PostManagementActivity;
 import com.example.timphongtro.Activities.UserActivity;
-import com.example.timphongtro.Activities.scheduleVisitRoomActivity;
+import com.example.timphongtro.Activities.MeetingManagementActivity;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Models.User;
 import com.facebook.AccessToken;
@@ -51,7 +52,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private TextView nameTextView, emailTextView,
-            signOutButton, manageRoomsButton, scheduleButton,
+            signOutButton, manageRoomsButton, manageContractsButton, scheduleButton,
             historyButton, myProfileButton, billButton, cartButton;
     private TextView profileInitialTextView;
     private ShapeableImageView profileImageView;
@@ -86,6 +87,7 @@ public class ProfileFragment extends Fragment {
         emailTextView = view.findViewById(R.id.txtviewEmail);
         signOutButton = view.findViewById(R.id.signOutButton);
         manageRoomsButton = view.findViewById(R.id.manageRoomsButton);
+        manageContractsButton = view.findViewById(R.id.manageContractsButton);
         scheduleButton = view.findViewById(R.id.scheduleButton);
         historyButton = view.findViewById(R.id.historyButton);
         billButton = view.findViewById(R.id.billButton);
@@ -102,11 +104,12 @@ public class ProfileFragment extends Fragment {
             userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
             startActivity(userProfileIntent);
         });
-        historyButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), HistoryActivity.class)));
-        manageRoomsButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), ManagePostActivity.class)));
-        cartButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), CartActivity.class)));
-        billButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), BillActivity.class)));
-        scheduleButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), scheduleVisitRoomActivity.class)));
+        historyButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), HistoryManagementActivity.class)));
+        manageRoomsButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), PostManagementActivity.class)));
+        manageContractsButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), ContractManagementActivity.class)));
+        cartButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), CartManagementActivity.class)));
+        billButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), BillManagementActivity.class)));
+        scheduleButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), MeetingManagementActivity.class)));
         profileCard.setOnClickListener(v -> startActivity(new Intent(requireActivity(), EditProfileActivity.class)));
         signOutButton.setOnClickListener(v -> handleSignOut());
     }

@@ -121,6 +121,19 @@
                             </LinearLayout>
 
                             <LinearLayout
+                                android:id="@+id/contract"
+                                style="@style/ShortcutButtonStyle">
+
+                                <ImageView
+                                    style="@style/ShortcutIconStyle"
+                                    android:src="@drawable/img_contract" />
+
+                                <TextView
+                                    style="@style/ShortcutTextStyle"
+                                    android:text="Quản lý hợp đồng" />
+                            </LinearLayout>
+
+                            <LinearLayout
                                 android:id="@+id/cart"
                                 style="@style/ShortcutButtonStyle">
 

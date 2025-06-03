@@ -36,7 +36,7 @@ public class PaymentNotificationActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.buttonDetails).setOnClickListener(v -> {
-            Intent intent = new Intent(this, BillActivity.class);
+            Intent intent = new Intent(this, BillManagementActivity.class);
             startActivity(intent);
             finish();
         });

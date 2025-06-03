@@ -65,7 +65,7 @@ public class ServiceDetailActivity extends AppCompatActivity {
         
         button_cart.setOnClickListener(v -> {
             if (user != null) {
-                startActivity(new Intent(ServiceDetailActivity.this, CartActivity.class));
+                startActivity(new Intent(ServiceDetailActivity.this, CartManagementActivity.class));
             } else {
                 AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
             }

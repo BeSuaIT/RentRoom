@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryManagementActivity extends AppCompatActivity {
 
     private SwipeRefreshLayout swipeRefresh;
     private RecyclerView recyclerView;
@@ -38,7 +38,7 @@ public class HistoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_history);
+        setContentView(R.layout.activity_history_management);
         
         initializeViews();
         setupListeners();
@@ -117,7 +117,7 @@ public class HistoryActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 swipeRefresh.setRefreshing(false);
-                Toast.makeText(HistoryActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(HistoryManagementActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -163,7 +163,7 @@ public class HistoryActivity extends AppCompatActivity {
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                     swipeRefresh.setRefreshing(false);
-                    Toast.makeText(HistoryActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HistoryManagementActivity.this, "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
     }

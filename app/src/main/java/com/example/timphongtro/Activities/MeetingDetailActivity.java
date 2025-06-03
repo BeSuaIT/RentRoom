@@ -12,8 +12,7 @@ import com.bumptech.glide.Glide;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.ScheduleVisitRoomClass;
 import com.example.timphongtro.Models.User;
-import com.example.timphongtro.R;
-import com.example.timphongtro.databinding.ActivityScheduleVisitDetailBinding;
+import com.example.timphongtro.databinding.ActivityMeetingDetailBinding;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -23,19 +22,19 @@ import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
 
-public class ScheduleVisitDetailActivity extends AppCompatActivity {
+public class MeetingDetailActivity extends AppCompatActivity {
     private ScheduleVisitRoomClass schedule;
     private Room room;
     private User user;
     private DatabaseReference scheduleRef;
-    private ActivityScheduleVisitDetailBinding binding;
+    private ActivityMeetingDetailBinding binding;
     private DecimalFormat decimalFormat;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityScheduleVisitDetailBinding.inflate(getLayoutInflater());
+        binding = ActivityMeetingDetailBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         decimalFormat = new DecimalFormat("#,###");
@@ -151,7 +150,7 @@ public class ScheduleVisitDetailActivity extends AppCompatActivity {
 
     private void navigateToRoomDetail() {
         if (room != null) {
-            Intent intent = new Intent(this, DetailRoomActivity.class);
+            Intent intent = new Intent(this, PostDetailActivity.class);
             intent.putExtra("DataRoom", room.toString());
             startActivity(intent);
         }

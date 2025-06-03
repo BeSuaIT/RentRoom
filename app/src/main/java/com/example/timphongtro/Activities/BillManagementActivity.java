@@ -21,7 +21,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class BillActivity extends AppCompatActivity {
+public class BillManagementActivity extends AppCompatActivity {
     private RecyclerView rcvBills;
     private BillAdapter billAdapter;
     private ArrayList<Bill> billList;
@@ -30,7 +30,7 @@ public class BillActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_bill);
+        setContentView(R.layout.activity_bill_management);
 
         initializeViews();
         setupRecyclerView();
@@ -76,7 +76,7 @@ public class BillActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(BillActivity.this,
+                        Toast.makeText(BillManagementActivity.this,
                                 "Lỗi: " + error.getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     }
