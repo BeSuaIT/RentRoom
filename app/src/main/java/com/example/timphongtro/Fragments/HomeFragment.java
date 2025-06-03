@@ -134,7 +134,15 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupListeners(View view) {
-        swipeRefreshLayout.setOnRefreshListener(this::loadData);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            try {
+                isInitialLoad = true;
+                loadData();
+            } catch (Exception e) {
+                showToast("Lỗi refresh: " + e.getMessage());
+                forceStopRefresh();
+            }
+        });
 
         view.findViewById(R.id.searchEditText).setOnClickListener(v -> 
             startActivity(new Intent(getContext(), SearchActivity.class)));
@@ -195,6 +203,10 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadData() {
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setRefreshing(true);
+        }
+        
         setupImageSlider(getView());
         fetchCityData();
     }
@@ -288,14 +300,14 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchCityData() {
-        swipeRefreshLayout.setRefreshing(true);
-
         startDistrictShimmer();
 
         cityTimeout = () -> {
             showToast("Timeout loading cities");
             stopDistrictShimmer();
-            swipeRefreshLayout.setRefreshing(false);
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
         };
         timeoutHandler.postDelayed(cityTimeout, 10000);
         
@@ -334,7 +346,9 @@ public class HomeFragment extends Fragment {
                 } catch (Exception e) {
                     showToast("Lỗi không thể load thành phố: " + e.getMessage());
                     stopDistrictShimmer();
-                    swipeRefreshLayout.setRefreshing(false);
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 }
             }
 
@@ -343,19 +357,29 @@ public class HomeFragment extends Fragment {
                 timeoutHandler.removeCallbacks(cityTimeout);
                 showToast("Lỗi không xác định");
                 stopDistrictShimmer();
-                swipeRefreshLayout.setRefreshing(false);
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
         });
     }
 
     private void fetchRoomDatabase() {
-        if (selectedSpinner == null) return;
+        if (selectedSpinner == null) {
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+            return;
+        }
+        
         startRoomShimmer();
 
         roomTimeout = () -> {
             stopRoomShimmer();
             showToast("Timeout loading rooms");
-            swipeRefreshLayout.setRefreshing(false);
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
         };
         timeoutHandler.postDelayed(roomTimeout, 15000);
 
@@ -382,7 +406,9 @@ public class HomeFragment extends Fragment {
                        stopRoomShimmer();
                        roomAdapter.notifyDataSetChanged();
 
-                       swipeRefreshLayout.setRefreshing(false);
+                       if (swipeRefreshLayout != null) {
+                           swipeRefreshLayout.setRefreshing(false);
+                       }
                    }
 
                    @Override
@@ -390,7 +416,9 @@ public class HomeFragment extends Fragment {
                        timeoutHandler.removeCallbacks(roomTimeout);
                        stopRoomShimmer();
                        showToast("Lỗi không thể load bài đăng");
-                       swipeRefreshLayout.setRefreshing(false);
+                       if (swipeRefreshLayout != null) {
+                           swipeRefreshLayout.setRefreshing(false);
+                       }
                    }
                });
     }
@@ -428,7 +456,11 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected(AdapterView<?> parent) {
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            }
         });
     }
 
@@ -480,9 +512,18 @@ public class HomeFragment extends Fragment {
         startActivity(intent);
     }
 
+    private void forceStopRefresh() {
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
+        forceStopRefresh();
+        
         if (timeoutHandler != null) {
             if (cityTimeout != null) {
                 timeoutHandler.removeCallbacks(cityTimeout);
@@ -494,5 +535,11 @@ public class HomeFragment extends Fragment {
                 timeoutHandler.removeCallbacks(imageTimeout);
             }
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        forceStopRefresh();
     }
 }
