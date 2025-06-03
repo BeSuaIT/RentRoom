@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Adapters.ScheduleVisitRoomSendAdapter;
 import com.example.timphongtro.Models.Room;
-import com.example.timphongtro.Models.ScheduleVisitRoomClass;
+import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.R;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,7 +30,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
     private RecyclerView scheduleVisitRecyclerView;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference meetingSchedulesRef, availableRoomsRef;
-    private ArrayList<ScheduleVisitRoomClass> scheduleVisitRoomClasses;
+    private ArrayList<Meeting> meetings;
     private ArrayList<Room> availableRooms;
     private ScheduleVisitRoomSendAdapter scheduleVisitRoomSendAdapter;
     private FirebaseUser currentUser;
@@ -52,7 +52,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         firebaseDatabase = FirebaseDatabase.getInstance();
         meetingSchedulesRef = firebaseDatabase.getReference("MeetingSchedules");
         availableRoomsRef = firebaseDatabase.getReference("Rooms");
-        scheduleVisitRoomClasses = new ArrayList<>();
+        meetings = new ArrayList<>();
         availableRooms = new ArrayList<>();
     }
 
@@ -67,7 +67,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         
         backButton.setOnClickListener(v -> finish());
         
-        scheduleVisitRoomSendAdapter = new ScheduleVisitRoomSendAdapter(this, scheduleVisitRoomClasses);
+        scheduleVisitRoomSendAdapter = new ScheduleVisitRoomSendAdapter(this, meetings);
         scheduleVisitRecyclerView.setAdapter(scheduleVisitRoomSendAdapter);
     }
 
@@ -132,7 +132,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
     }
 
     private void handleTabSelection(int position) {
-        scheduleVisitRoomClasses.clear();
+        meetings.clear();
         switch (position) {
             case 0:
                 loadSentSchedules();
@@ -198,20 +198,20 @@ public class MeetingManagementActivity extends AppCompatActivity {
     }
 
     private void updateScheduleList(DataSnapshot snapshot, String fromId, String status) {
-        scheduleVisitRoomClasses.clear();
+        meetings.clear();
         if (snapshot.exists()) {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                ScheduleVisitRoomClass schedule = dataSnapshot.getValue(ScheduleVisitRoomClass.class);
+                Meeting schedule = dataSnapshot.getValue(Meeting.class);
                 if (isValidSchedule(schedule, fromId, status)) {
-                    scheduleVisitRoomClasses.add(schedule);
+                    meetings.add(schedule);
                 }
             }
         }
         scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-        updateRecyclerViewVisibility(scheduleVisitRoomClasses, scheduleVisitRecyclerView, findViewById(R.id.noHasLovePost));
+        updateRecyclerViewVisibility(meetings, scheduleVisitRecyclerView, findViewById(R.id.noHasLovePost));
     }
 
-    private boolean isValidSchedule(ScheduleVisitRoomClass schedule, String fromId, String status) {
+    private boolean isValidSchedule(Meeting schedule, String fromId, String status) {
         if (schedule == null) return false;
         
         boolean roomExists = availableRooms.stream()
@@ -231,7 +231,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         return true;
     }
 
-    private void updateRecyclerViewVisibility(ArrayList<ScheduleVisitRoomClass> rooms, RecyclerView rcvLovePost, View noHistoryView) {
+    private void updateRecyclerViewVisibility(ArrayList<Meeting> rooms, RecyclerView rcvLovePost, View noHistoryView) {
         rcvLovePost.setVisibility(rooms.isEmpty() ? View.GONE : View.VISIBLE);
         noHistoryView.setVisibility(rooms.isEmpty() ? View.VISIBLE : View.GONE);
     }

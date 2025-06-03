@@ -2,7 +2,7 @@ package com.example.timphongtro.Models;
 
 import com.google.gson.Gson;
 
-public class ScheduleVisitRoomClass {
+public class Meeting {
     private String name;
     private String phone;
     private String note;
@@ -12,10 +12,10 @@ public class ScheduleVisitRoomClass {
     private String status; //0 la tao, 1 la chap nhan, 2 la tu choi
     private String idRoom;
     private String idSchedule;
-    public ScheduleVisitRoomClass() {
+    public Meeting() {
     }
 
-    public ScheduleVisitRoomClass(String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, String status, String idRoom) {
+    public Meeting(String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, String status, String idRoom) {
         this.idSchedule = idSchedule;
         this.idTo = idTo;
         this.idRoom = idRoom;

@@ -15,7 +15,7 @@ import androidx.cardview.widget.CardView;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Models.Room;
-import com.example.timphongtro.Models.ScheduleVisitRoomClass;
+import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.google.firebase.database.DataSnapshot;
@@ -36,7 +36,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private TextView PostTitle, RoomCost, DistrictName, DienTich, Size;
     private TextView tvName, tvTime, tvNote;
     private TextView tvprofileDetail, textViewNameUser;
-    private ScheduleVisitRoomClass schedule;
+    private Meeting schedule;
     private Room room;
     private User user;
     private DatabaseReference scheduleRef;
@@ -97,7 +97,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
             return;
         }
 
-        schedule = new Gson().fromJson(scheduleString, ScheduleVisitRoomClass.class);
+        schedule = new Gson().fromJson(scheduleString, Meeting.class);
         updateScheduleUI();
         loadRoomData();
         loadUserData();

@@ -11,6 +11,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -41,7 +42,7 @@ import com.example.timphongtro.Adapters.UtilityAdapter;
 import com.example.timphongtro.Adapters.FurnitureAdapter;
 import com.example.timphongtro.Adapters.ZoomImageAdapter;
 import com.example.timphongtro.Models.Room;
-import com.example.timphongtro.Models.ScheduleVisitRoomClass;
+import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
@@ -62,6 +63,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -72,7 +74,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private TextView roomTitleTextView, priceTextView, addressCombinedTextView, phoneTextView, roomTypeTextView,
             floorTextView, roomAreaTextView, depositTextView, capacityTextView, genderTextView,
             waterPriceTextView, internetPriceTextView, electricPriceTextView, roomDescriptionTextView,
-            userNameTextView, scheduleTime, userProfileTextView, loveTextView;
+            userNameTextView, scheduleTime, userProfileTextView, loveTextView, scheduleDate;
     private RecyclerView furnitureRecyclerView, utilityRecyclerView;
     private ImageView imageViewBack, imageViewLove;
     private Button callButton, scheduleVisitButton;
@@ -88,7 +90,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private Room room;
     private UUID uuid;
     private boolean isRoomLoved;
-    private Calendar bookingDate;
+    private Calendar bookingDate, bookingTime;
     private FurnitureAdapter furnitureAdapter;
     private UtilityAdapter utilityAdapter;
     private ShapeableImageView userProfileImageView;
@@ -478,32 +480,90 @@ public class PostDetailActivity extends AppCompatActivity {
         scheduleVisitDialog.setContentView(R.layout.dialog_book_room);
 
         ImageView cancelButton = scheduleVisitDialog.findViewById(R.id.cancelButton);
-
         cancelButton.setOnClickListener(v -> {
             if (scheduleVisitDialog.isShowing() && scheduleVisitDialog != null) {
                 scheduleVisitDialog.dismiss();
             }
         });
+
         nameEditText = scheduleVisitDialog.findViewById(R.id.edtYourName);
         phoneEditText = scheduleVisitDialog.findViewById(R.id.edtPhone);
         noteEditText = scheduleVisitDialog.findViewById(R.id.edtNote);
-
+        scheduleDate = scheduleVisitDialog.findViewById(R.id.edtDate);
         scheduleTime = scheduleVisitDialog.findViewById(R.id.edtTime);
-        bookingDate = Calendar.getInstance();
 
-        DatePickerDialog.OnDateSetListener date = (view, year, month, dayOfMonth) -> {
+        loadCurrentUserInfo();
+
+        bookingDate = Calendar.getInstance();
+        bookingTime = Calendar.getInstance();
+
+        DatePickerDialog.OnDateSetListener dateListener = (view, year, month, dayOfMonth) -> {
             bookingDate.set(Calendar.YEAR, year);
             bookingDate.set(Calendar.MONTH, month);
             bookingDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            
             SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd/MM/yyyy", new Locale("vi", "VN"));
-            scheduleTime.setText(dateFormat.format(bookingDate.getTime()));
+            scheduleDate.setText(dateFormat.format(bookingDate.getTime()));
+
+            scheduleTime.setText("Chọn giờ hẹn");
         };
 
+        TimePickerDialog.OnTimeSetListener timeListener = (view, hourOfDay, minute) -> {
+            if (!isValidTime(hourOfDay, minute)) {
+                Toast.makeText(this, "Vui lòng chọn thời gian từ 8:00 - 18:00", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            bookingTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            bookingTime.set(Calendar.MINUTE, minute);
+            
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            scheduleTime.setText(timeFormat.format(bookingTime.getTime()));
+        };
+
+        scheduleDate.setOnClickListener(v -> {
+            DatePickerDialog dateDialog = new DatePickerDialog(
+                PostDetailActivity.this, 
+                dateListener, 
+                bookingDate.get(Calendar.YEAR), 
+                bookingDate.get(Calendar.MONTH), 
+                bookingDate.get(Calendar.DAY_OF_MONTH)
+            );
+
+            dateDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+
+            Calendar maxDate = Calendar.getInstance();
+            maxDate.add(Calendar.DAY_OF_MONTH, 30);
+            dateDialog.getDatePicker().setMaxDate(maxDate.getTimeInMillis());
+            
+            dateDialog.show();
+        });
+
         scheduleTime.setOnClickListener(v -> {
-            new DatePickerDialog(PostDetailActivity.this, date, bookingDate.get(Calendar.YEAR), bookingDate.get(Calendar.MONTH), bookingDate.get(Calendar.DAY_OF_MONTH)).show();
+            if (scheduleDate.getText().toString().equals("Chọn ngày hẹn")) {
+                Toast.makeText(this, "Vui lòng chọn ngày trước", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            TimePickerDialog timeDialog = new TimePickerDialog(
+                PostDetailActivity.this,
+                timeListener,
+                9, // Default 9:00 AM
+                0,
+                true // 24-hour format
+            );
+            timeDialog.show();
         });
 
         confirmButton = scheduleVisitDialog.findViewById(R.id.btnConfirm);
+
+        MaterialButton btnCancel = scheduleVisitDialog.findViewById(R.id.btnCancel);
+        btnCancel.setOnClickListener(v -> {
+            if (scheduleVisitDialog.isShowing()) {
+                scheduleVisitDialog.dismiss();
+            }
+        });
+
         visitScheduleDatabaseRef = null;
         uuid = UUID.randomUUID();
         visitScheduleDatabaseRef = firebaseDatabase.getReference("MeetingSchedules/" + uuid.toString());
@@ -518,55 +578,146 @@ public class PostDetailActivity extends AppCompatActivity {
         scheduleVisitDialog.setCancelable(true);
     }
 
+    private void loadCurrentUserInfo() {
+        if (currentUser == null) return;
+
+        nameEditText.setEnabled(false);
+        phoneEditText.setEnabled(false);
+        nameEditText.setText("Đang tải...");
+        phoneEditText.setText("Đang tải...");
+        
+        DatabaseReference currentUserRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(currentUser.getUid());
+        
+        currentUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                nameEditText.setEnabled(true);
+                phoneEditText.setEnabled(true);
+                
+                if (snapshot.exists()) {
+                    User userData = snapshot.getValue(User.class);
+                    if (userData != null) {
+                        String userName = userData.getName();
+                        if (!TextUtils.isEmpty(userName)) {
+                            nameEditText.setText(userName);
+                        } else {
+                            nameEditText.setText("");
+                        }
+
+                        String userPhone = userData.getPhone();
+                        if (!TextUtils.isEmpty(userPhone) && !userPhone.equals("Chưa cập nhật")) {
+                            phoneEditText.setText(userPhone);
+                        } else {
+                            phoneEditText.setText("");
+                        }
+                    } else {
+                        clearUserFields();
+                    }
+                } else {
+                    clearUserFields();
+                    Toast.makeText(PostDetailActivity.this, 
+                        "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                nameEditText.setEnabled(true);
+                phoneEditText.setEnabled(true);
+                clearUserFields();
+                
+                Toast.makeText(PostDetailActivity.this, 
+                    "Lỗi tải thông tin: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void clearUserFields() {
+        nameEditText.setText("");
+        phoneEditText.setText("");
+    }
+
     private void scheduleVisitRoom() {
         boolean isValid = true;
-        if (TextUtils.isEmpty(nameEditText.getText().toString())) {
+
+        String name = nameEditText.getText().toString().trim();
+        if (TextUtils.isEmpty(name)) {
             nameEditText.setError("Vui lòng nhập tên");
             isValid = false;
         }
-        if (TextUtils.isEmpty(scheduleTime.getText().toString())) {
-            scheduleTime.setError("Vui lòng chọn ngày hẹn");
+
+        if (TextUtils.isEmpty(scheduleDate.getText().toString()) || 
+            scheduleDate.getText().toString().equals("Chọn ngày hẹn")) {
+            Toast.makeText(this, "Vui lòng chọn ngày hẹn", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
-        String phone = "";
-        if (TextUtils.isEmpty(phoneEditText.getText().toString())) {
+
+        if (TextUtils.isEmpty(scheduleTime.getText().toString()) || 
+            scheduleTime.getText().toString().equals("Chọn giờ hẹn")) {
+            Toast.makeText(this, "Vui lòng chọn giờ hẹn", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (isValid && isTimeInPast(bookingDate, bookingTime)) {
+            Toast.makeText(this, "Không thể chọn thời gian trong quá khứ", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        String phone = phoneEditText.getText().toString().trim();
+        if (TextUtils.isEmpty(phone)) {
             phoneEditText.setError("Vui lòng nhập số điện thoại");
             isValid = false;
         } else {
-            String regex = "^\\d{10}$";
+            String regex = "^0\\d{9}$"; // Vietnam phone format: 0xxxxxxxxx
             Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(phoneEditText.getText().toString());
-            if (matcher.matches()) {
-                phone = phoneEditText.getText().toString();
-            } else {
-                phoneEditText.setError("Vui lòng nhập đúng định dạng số điện thoại");
+            Matcher matcher = pattern.matcher(phone);
+            if (!matcher.matches()) {
+                phoneEditText.setError("Số điện thoại phải có 10 chữ số và bắt đầu bằng 0");
                 isValid = false;
             }
         }
 
         if (isValid) {
-            ScheduleVisitRoomClass schedule = new ScheduleVisitRoomClass(
+            String combinedDateTime = scheduleDate.getText().toString() + " lúc " + scheduleTime.getText().toString();
+
+            String note = noteEditText.getText().toString().trim();
+            if (TextUtils.isEmpty(note)) {
+                note = "Không có ghi chú";
+            }
+            
+            Meeting schedule = new Meeting(
                 uuid.toString(), 
-                nameEditText.getText().toString(), 
-                phone, 
-                noteEditText.getText().toString(), 
-                scheduleTime.getText().toString(), 
+                name,
+                phone,
+                note, 
+                combinedDateTime,
                 room.getId_own_post(), 
                 currentUser.getUid(), 
                 "0", 
                 room.getId_room()
             );
-            
+
             if (!currentUser.getUid().equals(room.getId_own_post())) {
-                visitScheduleDatabaseRef.setValue(schedule).addOnSuccessListener(unused -> {
-                    scheduleVisitDialog.dismiss();
-                    Toast.makeText(getApplicationContext(), "Đặt lịch thành công", Toast.LENGTH_LONG).show();
-                }).addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Đặt lịch thất bại", Toast.LENGTH_LONG).show());
+                confirmButton.setEnabled(false);
+                confirmButton.setText("Đang xử lý...");
+                
+                visitScheduleDatabaseRef.setValue(schedule)
+                    .addOnSuccessListener(unused -> {
+                        scheduleVisitDialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "Đặt lịch thành công!", Toast.LENGTH_LONG).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        confirmButton.setEnabled(true);
+                        confirmButton.setText("Xác nhận");
+                        Toast.makeText(getApplicationContext(), "Đặt lịch thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
             } else {
                 Toast.makeText(getApplicationContext(), "Bạn không thể đặt lịch hẹn với chính bài đăng của mình", Toast.LENGTH_LONG).show();
             }
         } else {
-            Toast.makeText(getApplicationContext(), "Vui lòng nhập đầy đủ các trường yêu cầu", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Vui lòng kiểm tra lại thông tin", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -705,7 +856,6 @@ public class PostDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // Kiểm tra user tồn tại trước khi gọi điện
         AuthUtils.isUserExists(realTimeUser, exists -> {
             if (!exists) {
                 AuthUtils.clearAllLoginData(this);
@@ -795,5 +945,24 @@ public class PostDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Quyền gọi điện bị từ chối", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private boolean isValidTime(int hour, int minute) {
+        return hour >= 8 && hour < 18;
+    }
+
+    private boolean isTimeInPast(Calendar selectedDate, Calendar selectedTime) {
+        Calendar now = Calendar.getInstance();
+        Calendar selectedDateTime = Calendar.getInstance();
+
+        selectedDateTime.set(Calendar.YEAR, selectedDate.get(Calendar.YEAR));
+        selectedDateTime.set(Calendar.MONTH, selectedDate.get(Calendar.MONTH));
+        selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDate.get(Calendar.DAY_OF_MONTH));
+        selectedDateTime.set(Calendar.HOUR_OF_DAY, selectedTime.get(Calendar.HOUR_OF_DAY));
+        selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
+        selectedDateTime.set(Calendar.SECOND, 0);
+        selectedDateTime.set(Calendar.MILLISECOND, 0);
+
+        return selectedDateTime.before(now);
     }
 }

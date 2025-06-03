@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Activities.MeetingDetailActivity;
-import com.example.timphongtro.Models.ScheduleVisitRoomClass;
+import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -27,9 +27,9 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
     private static final int STATUS_REJECTED = 2;
 
     Context context;
-    ArrayList<ScheduleVisitRoomClass> schedules;
+    ArrayList<Meeting> schedules;
 
-    public ScheduleVisitRoomSendAdapter(Context context, ArrayList<ScheduleVisitRoomClass> schedules) {
+    public ScheduleVisitRoomSendAdapter(Context context, ArrayList<Meeting> schedules) {
         this.context = context;
         this.schedules = schedules;
     }
@@ -43,7 +43,7 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
 
     @Override
     public void onBindViewHolder(@NonNull ScheduleVisitRoomSendAdapter.ViewHolder holder, int position) {
-        ScheduleVisitRoomClass schedule = schedules.get(position);
+        Meeting schedule = schedules.get(position);
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         
         if (schedule == null || currentUser == null) return;
@@ -64,7 +64,7 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
         holder.itemView.setOnClickListener(v -> navigateToDetail(schedule));
     }
 
-    private void setupStatusView(TextView statusView, ScheduleVisitRoomClass schedule, String userId) {
+    private void setupStatusView(TextView statusView, Meeting schedule, String userId) {
         int backgroundColor;
         String statusText;
         boolean isReceiver = userId.equals(schedule.getIdTo());
@@ -90,12 +90,12 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
         statusView.setText(statusText);
     }
 
-    private boolean shouldShowConfirmButtons(ScheduleVisitRoomClass schedule, String userId) {
+    private boolean shouldShowConfirmButtons(Meeting schedule, String userId) {
         return STATUS_PENDING == Integer.parseInt(schedule.getStatus()) 
                && userId.equals(schedule.getIdTo());
     }
 
-    private void showConfirmationDialog(ScheduleVisitRoomClass schedule) {
+    private void showConfirmationDialog(Meeting schedule) {
         new AlertDialog.Builder(context)
                 .setTitle(R.string.confirmation)
                 .setMessage(R.string.confirm_schedule_message)
@@ -107,7 +107,7 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
                 .show();
     }
 
-    private void updateScheduleStatus(ScheduleVisitRoomClass schedule, int status) {
+    private void updateScheduleStatus(Meeting schedule, int status) {
         FirebaseDatabase.getInstance()
                 .getReference("MeetingSchedules")
                 .child(schedule.getIdSchedule())
@@ -120,7 +120,7 @@ public class ScheduleVisitRoomSendAdapter extends RecyclerView.Adapter<ScheduleV
                 });
     }
 
-    private void navigateToDetail(ScheduleVisitRoomClass schedule) {
+    private void navigateToDetail(Meeting schedule) {
         Intent intent = new Intent(context, MeetingDetailActivity.class);
         intent.putExtra("scheduleData", schedule.toString());
         intent.putExtra("showbtn", shouldShowConfirmButtons(schedule, 
