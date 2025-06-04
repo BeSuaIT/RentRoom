@@ -3,7 +3,6 @@ package com.example.timphongtro.Activities;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -28,6 +27,7 @@ import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -56,6 +56,10 @@ public class UserActivity extends AppCompatActivity {
     private int totalPosts = 0;
     private int totalLoves = 0;
 
+    // ✅ User data variables
+    private User currentDisplayUser;
+    private String userType = "unknown"; // owner, booker, unknown
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,15 +67,7 @@ public class UserActivity extends AppCompatActivity {
 
         initializeViews();
         setupRecyclerView();
-
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            String userId = bundle.getString("id_own_post");
-            if (userId != null) {
-                loadUserData(userId);
-                loadUserPosts(userId);
-            }
-        }
+        handleIntentData();
     }
 
     private void initializeViews() {
@@ -91,12 +87,15 @@ public class UserActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         postRef = database.getReference("Posts");
         roomArrayList = new ArrayList<>();
-
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
+        setupClickListeners();
+    }
+
+    private void setupClickListeners() {
         phoneLinear.setOnClickListener(v -> {
             if (currentUser == null) {
-                AuthUtils.showLoginRequiredDialog(this,"sao chép số điện thoại", "có thể");
+                AuthUtils.showLoginRequiredDialog(this, "sao chép số điện thoại", "có thể");
                 return;
             }
             copyToClipboard("Số điện thoại", originalPhoneNumber);
@@ -104,7 +103,7 @@ public class UserActivity extends AppCompatActivity {
 
         emailLinear.setOnClickListener(v -> {
             if (currentUser == null) {
-                AuthUtils.showLoginRequiredDialog(this,"sao chép email", "có thể");
+                AuthUtils.showLoginRequiredDialog(this, "sao chép email", "có thể");
                 return;
             }
             copyToClipboard("Email", originalEmail);
@@ -117,39 +116,132 @@ public class UserActivity extends AppCompatActivity {
         rcvUser.setAdapter(roomAdapter);
     }
 
-    private void loadUserData(String userId) {
+    private void handleIntentData() {
+        Bundle bundle = getIntent().getExtras();
+        if (bundle == null) {
+            showToast("❌ Thiếu dữ liệu người dùng");
+            finish();
+            return;
+        }
+
+        // ✅ Get user type
+        userType = bundle.getString("userType", "unknown");
+        
+        // ✅ Ưu tiên nhận User object từ Gson
+        String userDataJson = bundle.getString("userData");
+        if (userDataJson != null) {
+            User user = GsonUtils.fromJson(userDataJson, User.class);
+            if (user != null) {
+                currentDisplayUser = user;
+                displayUserData(user);
+                loadUserPosts(getUserId(user));
+                showLoadingSuccess();
+                return;
+            } else {
+                showToast("❌ Lỗi parse dữ liệu user");
+            }
+        }
+        
+        // ✅ Fallback: load từ Firebase bằng ID
+        String userId = bundle.getString("id_own_post");
+        boolean isFallback = bundle.getBoolean("fallbackMode", false);
+        
+        if (userId != null) {
+            if (isFallback) {
+                showToast("ℹ️ Đang tải thông tin người dùng...");
+            }
+            loadUserDataFromFirebase(userId);
+            loadUserPosts(userId);
+        } else {
+            showToast("❌ Không tìm thấy thông tin người dùng");
+            finish();
+        }
+    }
+
+    private String getUserId(User user) {
+        // ✅ Get user ID from User object
+        return user.getUid() != null ? user.getUid() : "";
+    }
+
+    private void showLoadingSuccess() {
+        String userTypeText = getUserTypeText();
+        showToast("✅ Đã tải thông tin " + userTypeText);
+    }
+
+    private String getUserTypeText() {
+        switch (userType) {
+            case "owner":
+                return "chủ phòng";
+            case "booker":
+                return "người đặt lịch";
+            default:
+                return "người dùng";
+        }
+    }
+
+    // ✅ Display user data từ Gson (fast loading)
+    private void displayUserData(User user) {
+        if (user == null) return;
+        
+        // ✅ Update basic info với null safety
+        username.setText(user.getName() != null ? user.getName() : "Không có tên");
+        
+        // ✅ Handle phone với proper masking
+        String userPhone = user.getPhone();
+        if (userPhone == null || userPhone.trim().isEmpty()) {
+            userPhone = "Chưa cập nhật";
+        }
+        phone.setText(maskPhoneNumber(userPhone));
+        originalPhoneNumber = userPhone;
+        
+        // ✅ Handle email với proper masking
+        String userEmail = user.getEmail();
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            userEmail = "Chưa cập nhật";
+        }
+        email.setText(maskEmail(userEmail));
+        originalEmail = userEmail;
+
+        // ✅ Update profile image
+        updateProfileImage(user);
+    }
+
+    // ✅ Load user data từ Firebase (fallback)
+    private void loadUserDataFromFirebase(String userId) {
         database.getReference("Users").child(userId)
             .addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
-                        username.setText(user.getName());
-
-                        phone.setText(maskPhoneNumber(user.getPhone()));
-                        email.setText(maskEmail(user.getEmail()));
-
-                        updateProfileImage(user);
-
-                        originalPhoneNumber = user.getPhone();
-                        originalEmail = user.getEmail();
+                        currentDisplayUser = user;
+                        displayUserData(user);
+                        showToast("✅ Đã tải thông tin từ server");
+                    } else {
+                        showToast("❌ Không tìm thấy thông tin người dùng");
+                        finish();
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    Toast.makeText(UserActivity.this, 
-                        "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    showToast("❌ Lỗi tải dữ liệu: " + error.getMessage());
+                    finish();
                 }
             });
     }
 
     private void updateProfileImage(User user) {
+        if (user == null) return;
+        
         String avatarUrl = user.getAvatarUrl();
+        String userName = user.getName() != null ? user.getName() : "User";
 
-        profileTextView.setText(getFirstLetter(user.getName()));
+        // ✅ Set default text avatar first
+        profileTextView.setText(getFirstLetter(userName));
         
         if (!TextUtils.isEmpty(avatarUrl)) {
+            // ✅ Initially show text, prepare to load image
             profileImageView.setVisibility(View.INVISIBLE);
             profileTextView.setVisibility(View.VISIBLE);
             
@@ -159,14 +251,19 @@ public class UserActivity extends AppCompatActivity {
                 .error(R.drawable.avatar)
                 .listener(new RequestListener<Drawable>() {
                     @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, 
+                                               Target<Drawable> target, boolean isFirstResource) {
+                        // ✅ Show text avatar on failure
                         profileImageView.setVisibility(View.GONE);
                         profileTextView.setVisibility(View.VISIBLE);
                         return false;
                     }
 
                     @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                    public boolean onResourceReady(Drawable resource, Object model, 
+                                                  Target<Drawable> target, DataSource dataSource, 
+                                                  boolean isFirstResource) {
+                        // ✅ Show image avatar on success
                         profileTextView.setVisibility(View.GONE);
                         profileImageView.setVisibility(View.VISIBLE);
                         return false;
@@ -174,33 +271,50 @@ public class UserActivity extends AppCompatActivity {
                 })
                 .into(profileImageView);
         } else {
+            // ✅ No avatar URL, show text avatar
             profileImageView.setVisibility(View.GONE);
             profileTextView.setVisibility(View.VISIBLE);
         }
     }
 
     private String getFirstLetter(String input) {
-        String[] words = input.split(" ");
+        if (input == null || input.trim().isEmpty()) {
+            return "?";
+        }
+        
+        String[] words = input.trim().split("\\s+");
         StringBuilder result = new StringBuilder();
 
         if (words.length == 1) {
             result.append(words[0].charAt(0));
         } else {
-            for (int i = 0; i < 2; i++) {
-                result.append(words[i].charAt(0));
+            for (int i = 0; i < Math.min(words.length, 2); i++) {
+                if (words[i].length() > 0) {
+                    result.append(words[i].charAt(0));
+                }
             }
         }
         return result.toString().toUpperCase();
     }
 
     private void copyToClipboard(String label, String content) {
+        if (content == null || content.equals("Chưa cập nhật")) {
+            showToast("⚠️ Thông tin " + label.toLowerCase() + " chưa được cập nhật");
+            return;
+        }
+        
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(label, content);
         clipboard.setPrimaryClip(clip);
-        Toast.makeText(this, "Đã sao chép " + label.toLowerCase(), Toast.LENGTH_SHORT).show();
+        showToast("✅ Đã sao chép " + label.toLowerCase());
     }
 
     private void loadUserPosts(String userId) {
+        if (userId == null || userId.trim().isEmpty()) {
+            showToast("⚠️ Không thể tải bài đăng: thiếu ID người dùng");
+            return;
+        }
+        
         postRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -215,6 +329,7 @@ public class UserActivity extends AppCompatActivity {
                             roomArrayList.add(room);
                             totalPosts++;
 
+                            // ✅ Count loves
                             DataSnapshot lovesSnapshot = roomSnapshot.child("userLovePost");
                             if (lovesSnapshot.exists()) {
                                 totalLoves += lovesSnapshot.getChildrenCount();
@@ -223,34 +338,49 @@ public class UserActivity extends AppCompatActivity {
                     }
                 }
 
+                // ✅ Update UI
                 postCount.setText(String.valueOf(totalPosts));
                 loveCount.setText(String.valueOf(totalLoves));
                 roomAdapter.notifyDataSetChanged();
+                
+                // ✅ Show appropriate message
+                if (totalPosts == 0) {
+                    String userTypeText = getUserTypeText();
+                    showToast("ℹ️ " + userTypeText + " này chưa có bài đăng nào");
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(UserActivity.this, 
-                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                showToast("❌ Lỗi tải bài đăng: " + error.getMessage());
             }
         });
     }
 
     private String maskPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.length() < 7 || phoneNumber.equals("Chưa cập nhật")) {
-            return phoneNumber;
+        if (phoneNumber == null || phoneNumber.length() < 7 || 
+            phoneNumber.equals("Chưa cập nhật") || phoneNumber.trim().isEmpty()) {
+            return "Chưa cập nhật";
         }
         
-        String firstPart = phoneNumber.substring(0, 3);
-        String lastPart = phoneNumber.substring(phoneNumber.length() - 2);
-        String middlePart = "*".repeat(phoneNumber.length() - 5);
+        // ✅ Remove spaces and special characters for masking
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+        
+        if (cleanPhone.length() < 7) {
+            return phoneNumber; // Return original if too short
+        }
+        
+        String firstPart = cleanPhone.substring(0, 3);
+        String lastPart = cleanPhone.substring(cleanPhone.length() - 2);
+        String middlePart = "*".repeat(cleanPhone.length() - 5);
         
         return firstPart + middlePart + lastPart;
     }
 
     private String maskEmail(String email) {
-        if (email == null || !email.contains("@") || email.equals("Chưa cập nhật")) {
-            return email;
+        if (email == null || !email.contains("@") || 
+            email.equals("Chưa cập nhật") || email.trim().isEmpty()) {
+            return "Chưa cập nhật";
         }
         
         String[] parts = email.split("@");
@@ -258,10 +388,14 @@ public class UserActivity extends AppCompatActivity {
         String domain = parts[1];
         
         if (localPart.length() <= 3) {
-            return email;
+            return email; // Don't mask very short emails
         }
         
         String maskedLocal = localPart.substring(0, 2) + "*".repeat(localPart.length() - 2);
         return maskedLocal + "@" + domain;
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

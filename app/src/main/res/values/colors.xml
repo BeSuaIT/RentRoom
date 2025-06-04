@@ -1,53 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#FFFF9800</color>
-    <color name="primary_variant">#CCFF9800</color>
-    <color name="secondary">#E6FF9800</color>
-
+    
+    <!-- ============================================ -->
+    <!-- 🟠 PRIMARY ORANGE PALETTE -->
+    <!-- ============================================ -->
+    <color name="orange_100">#FFFF9800</color>
+    <color name="orange_80">#CCFF9800</color>
+    <color name="orange_60">#99FF9800</color>
+    <color name="orange_40">#66FF9800</color>
+    <color name="orange_20">#33FF9800</color>
+    <color name="orange_10">#1AFF9800</color>
+    
+    <!-- Orange variations -->
+    <color name="orange_light">#FFFFB74D</color>
+    <color name="orange_dark">#FFF57C00</color>
+    <color name="brighterorange">#FFE3B9</color>
+    
+    <!-- ============================================ -->
+    <!-- 🔵 BLUE PALETTE -->
+    <!-- ============================================ -->
+    <color name="blue_100">#FF2196F3</color>
+    <color name="blue_80">#CC2196F3</color>
+    <color name="blue_60">#992196F3</color>
+    <color name="blue_40">#662196F3</color>
+    <color name="blue_20">#332196F3</color>
+    <color name="blue_10">#1A2196F3</color>
+    
+    <!-- Blue variations -->
+    <color name="blue_light">#FF64B5F6</color>
+    <color name="blue_dark">#FF1976D2</color>
+    
+    <!-- ============================================ -->
+    <!-- 🟢 GREEN PALETTE -->
+    <!-- ============================================ -->
+    <color name="green_100">#FF4CAF50</color>
+    <color name="green_80">#CC4CAF50</color>
+    <color name="green_60">#994CAF50</color>
+    <color name="green_40">#664CAF50</color>
+    <color name="green_20">#334CAF50</color>
+    <color name="green_10">#1A4CAF50</color>
+    
+    <!-- Green variations -->
+    <color name="green_light">#FF81C784</color>
+    <color name="green_dark">#FF388E3C</color>
+    <color name="green_success">#FF00C853</color>
+    
+    <!-- ============================================ -->
+    <!-- 🔴 RED PALETTE -->
+    <!-- ============================================ -->
+    <color name="red_100">#FFF44336</color>
+    <color name="red_80">#CCF44336</color>
+    <color name="red_60">#99F44336</color>
+    <color name="red_40">#66F44336</color>
+    <color name="red_20">#33F44336</color>
+    <color name="red_10">#1AF44336</color>
+    
+    <!-- Red variations -->
+    <color name="red_light">#FFEF5350</color>
+    <color name="red_dark">#FFD32F2F</color>
+    <color name="red_error">#FFFF1744</color>
+    
+    <!-- ============================================ -->
+    <!-- ⚫ GRAYSCALE PALETTE -->
+    <!-- ============================================ -->
+    <color name="black">#FF000000</color>
+    <color name="gray_900">#FF212121</color>
+    <color name="gray_800">#FF424242</color>
+    <color name="gray_700">#FF616161</color>
+    <color name="gray_600">#FF757575</color>
+    <color name="gray_500">#FF9E9E9E</color>
+    <color name="gray_400">#FFBDBDBD</color>
+    <color name="gray_300">#FFE0E0E0</color>
+    <color name="gray_200">#FFEEEEEE</color>
+    <color name="gray_100">#FFF5F5F5</color>
+    <color name="gray_50">#FFFAFAFA</color>
+    
+    <!-- ============================================ -->
+    <!-- ⚪ WHITE PALETTE -->
+    <!-- ============================================ -->
     <color name="white_100">#FFFFFFFF</color>
     <color name="white_90">#E6FFFFFF</color>
     <color name="white_80">#CCFFFFFF</color>
     <color name="white_70">#B3FFFFFF</color>
     <color name="white_60">#99FFFFFF</color>
-    <color name="white_50">#80FFFFFF</color>
     <color name="white_40">#66FFFFFF</color>
-    <color name="white_30">#4DFFFFFF</color>
     <color name="white_20">#33FFFFFF</color>
     <color name="white_10">#1AFFFFFF</color>
-    <color name="white_5">#0DFFFFFF</color>
-
-    <color name="orange_100">#FFFF9800</color>
-    <color name="orange_90">#E6FF9800</color>
-    <color name="orange_80">#CCFF9800</color>
-    <color name="orange_70">#B3FF9800</color>
-    <color name="orange_60">#99FF9800</color>
-    <color name="orange_50">#80FF9800</color>
-    <color name="orange_40">#66FF9800</color>
-    <color name="orange_30">#4DFF9800</color>
-    <color name="orange_20">#33FF9800</color>
-    <color name="orange_10">#1AFF9800</color>
-    <color name="orange_5">#0DFF9800</color>
-
-
-    <color name="status_pending">#FFA000</color>
-    <color name="status_sent">#2196F3</color>
-    <color name="status_approved">#4CAF50</color>
-    <color name="status_rejected">#F44336</color>
-    <color name="status_available">#4CAF50</color>
-    <color name="status_unavailable">#F44336</color>
-    <color name="gray">#757575</color>
-
-    <color name="black">#000000</color>
-    <color name="red">#FF0000</color>
-    <color name="green">#00FF00</color>
-    <color name="red_300">#E2593E</color>
-    <color name="red_600">#DC6A53</color>
-    <color name="brighterorange">#FFE3B9</color>
-
-    <color name="primary_light">#E3F2FD</color>
-    <color name="background_secondary">#F5F5F5</color>
-    <color name="card_background">#FFFFFF</color>
-    <color name="card_border">#E0E0E0</color>
-    <color name="error_color">#F44336</color>
-
+    
+    <!-- ============================================ -->
+    <!-- 🎯 STATUS COLORS -->
+    <!-- ============================================ -->
+    <color name="status_pending">#FFFF9800</color>      <!-- Orange -->
+    <color name="status_sent">#FF2196F3</color>         <!-- Blue -->
+    <color name="status_approved">#FF4CAF50</color>     <!-- Green -->
+    <color name="status_rejected">#FFF44336</color>     <!-- Red -->
+    <color name="status_available">#FF4CAF50</color>    <!-- Green -->
+    <color name="status_unavailable">#FFF44336</color>  <!-- Red -->
+    
+    <!-- ============================================ -->
+    <!-- 🎨 SEMANTIC COLORS -->
+    <!-- ============================================ -->
+    <color name="success">#FF4CAF50</color>
+    <color name="warning">#FFFF9800</color>
+    <color name="error">#FFF44336</color>
+    <color name="info">#FF2196F3</color>
+    
+    <!-- ============================================ -->
+    <!-- 📱 APP THEME COLORS -->
+    <!-- ============================================ -->
+    <color name="primary">#FFFF9800</color>
+    <color name="primary_variant">#FFF57C00</color>
+    <color name="secondary">#FF2196F3</color>
+    <color name="secondary_variant">#FF1976D2</color>
+    
+    <!-- ============================================ -->
+    <!-- 🖼️ SURFACE & BACKGROUND COLORS -->
+    <!-- ============================================ -->
+    <color name="background_primary">#FFFFFFFF</color>
+    <color name="background_secondary">#FFF5F5F5</color>
+    <color name="surface_primary">#FFFFFFFF</color>
+    <color name="surface_secondary">#FFF8F8F8</color>
+    <color name="card_background">#FFFFFFFF</color>
+    <color name="card_border">#FFE0E0E0</color>
+    
+    <!-- ============================================ -->
+    <!-- 📝 TEXT COLORS -->
+    <!-- ============================================ -->
+    <color name="text_primary">#FF212121</color>
+    <color name="text_secondary">#FF757575</color>
+    <color name="text_disabled">#FFBDBDBD</color>
+    <color name="text_hint">#FF9E9E9E</color>
+    <color name="text_on_primary">#FFFFFFFF</color>
+    <color name="text_on_secondary">#FFFFFFFF</color>
+    
+    <!-- ============================================ -->
+    <!-- 🔗 ACCENT & INTERACTIVE COLORS -->
+    <!-- ============================================ -->
+    <color name="accent">#FFFF9800</color>
+    <color name="link">#FF2196F3</color>
+    <color name="divider">#FFE0E0E0</color>
+    <color name="ripple">#1F000000</color>
+    <color name="overlay">#66000000</color>
+    
+    <!-- ============================================ -->
+    <!-- 💾 LEGACY COLORS (For backward compatibility) -->
+    <!-- ============================================ -->
+    <color name="gray">#FF757575</color>
+    <color name="red">#FFF44336</color>
+    <color name="green">#FF4CAF50</color>
+    <color name="red_300">#FFE57373</color>
+    <color name="red_600">#FFE53935</color>
+    <color name="primary_light">#FFE3F2FD</color>
+    <color name="error_color">#FFF44336</color>
+    
 </resources>

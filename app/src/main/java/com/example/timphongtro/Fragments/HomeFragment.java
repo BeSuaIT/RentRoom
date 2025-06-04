@@ -415,7 +415,7 @@ public class HomeFragment extends Fragment {
                    public void onCancelled(@NonNull DatabaseError error) {
                        timeoutHandler.removeCallbacks(roomTimeout);
                        stopRoomShimmer();
-                       showToast("Lỗi không thể load bài đăng");
+                       showToast("Lỗi không thể tải bài đăng");
                        if (swipeRefreshLayout != null) {
                            swipeRefreshLayout.setRefreshing(false);
                        }

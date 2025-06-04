@@ -3,14 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_primary">
 
+    <!-- ✅ AppBar với gradient -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white_100">
+        android:elevation="4dp">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -26,9 +28,12 @@
                     android:layout_height="48dp"
                     android:padding="12dp"
                     android:src="@drawable/ic_back"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"/>
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:tint="@color/white_100"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -42,202 +47,438 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
+                <!-- ✅ Status indicator -->
+                <TextView
+                    android:id="@+id/tvStatusIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/status_indicator_background"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"
+                    android:text="Chờ xác nhận"
+                    android:textColor="@color/white_100"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
             </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- ✅ Main Content -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingBottom="100dp">
 
-            <!-- Room Preview Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewRoom"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:id="@+id/imgPost"
-                        android:layout_width="120dp"
-                        android:layout_height="140dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/img_no_image"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/PostTitle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:text="Tiêu đề"
-                        app:layout_constraintStart_toEndOf="@id/imgPost"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/RoomCost"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textColor="@color/red"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:text="20000"
-                        app:layout_constraintStart_toStartOf="@id/PostTitle"
-                        app:layout_constraintTop_toBottomOf="@id/PostTitle"/>
-
-                    <TextView
-                        android:id="@+id/DistrictName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Địa chỉ"
-                        app:layout_constraintStart_toStartOf="@id/RoomCost"
-                        app:layout_constraintTop_toBottomOf="@id/RoomCost"/>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="8dp"
-                        app:layout_constraintStart_toStartOf="@id/DistrictName"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/DistrictName">
-
-                        <TextView
-                            android:id="@+id/DienTich"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Diện tích: 20m2"
-                            android:drawablePadding="4dp"/>
-
-                        <TextView
-                            android:id="@+id/Size"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:text="Số người: 2"
-                            android:drawablePadding="4dp"/>
-
-                    </LinearLayout>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Schedule Info Card -->
+            <!-- ✅ Meeting Summary Card với Avatar Loading -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                android:layout_margin="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
-                    <!-- Visitor Info -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Thông tin người xem"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-
-                    <TextView
-                        android:id="@+id/tvName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:drawableStart="@drawable/ic_user"
-                        android:drawablePadding="8dp"/>
-
-                    <!-- Schedule Time -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Thời gian xem phòng"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-
-                    <TextView
-                        android:id="@+id/tvTime"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:drawableStart="@drawable/ic_clock"
-                        android:drawablePadding="8dp"/>
-
-                    <!-- User Profile -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Chủ phòng"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-
+                    <!-- ✅ Meeting Header với Avatar Loading -->
                     <LinearLayout
-                        android:id="@+id/userPost"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
 
-                        <TextView
-                            android:id="@+id/tvprofileDetail"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="@drawable/avatar"
-                            android:gravity="center"
-                            android:textColor="@color/white_100"
-                            android:textSize="20sp"/>
+                        <!-- ✅ Avatar Container với Image và Text -->
+                        <FrameLayout
+                            android:layout_width="60dp"
+                            android:layout_height="60dp">
 
-                        <TextView
-                            android:id="@+id/textViewNameUser"
-                            android:layout_width="wrap_content"
+                            <com.google.android.material.imageview.ShapeableImageView
+                                android:id="@+id/profileImageView"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:visibility="gone"
+                                app:shapeAppearanceOverlay="@style/CircularImageView"/>
+
+                            <TextView
+                                android:id="@+id/circleAvatar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/circle_avatar_background"
+                                android:gravity="center"
+                                android:text="NA"
+                                android:textColor="@color/white_100"
+                                android:textSize="20sp"
+                                android:textStyle="bold"/>
+
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:textSize="16sp"/>
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Nguyễn Văn A"
+                                android:textColor="@color/text_primary"
+                                android:textSize="18sp"
+                                android:textStyle="bold"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Người đặt lịch"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp"/>
+
+                        </LinearLayout>
 
                     </LinearLayout>
 
-                    <!-- Notes Section -->
+                    <!-- ✅ Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="16dp"
+                        android:background="@color/divider"/>
+
+                    <!-- ✅ Meeting Time Info -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="@drawable/time_info_background">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_clock"
+                            app:tint="@color/blue_100"/>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Thời gian xem phòng"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"/>
+
+                            <TextView
+                                android:id="@+id/tvTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="14:30, 25/12/2024"
+                                android:textColor="@color/blue_100"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- ✅ Note Section -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal"
+                        android:gravity="top">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
+                            android:src="@drawable/ic_note"
+                            app:tint="@color/gray_600"/>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Ghi chú"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"/>
+
+                            <TextView
+                                android:id="@+id/tvNote"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Tôi muốn xem phòng vào buổi chiều"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:lineSpacingMultiplier="1.3"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ✅ Room Info Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardViewRoom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                android:foreground="?android:attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- ✅ Card Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_home"
+                            app:tint="@color/orange_100"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="Thông tin phòng trọ"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_right"
+                            app:tint="@color/gray_600"/>
+
+                    </LinearLayout>
+
+                    <!-- ✅ Room Content -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingBottom="16dp">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="120dp"
+                            android:layout_height="100dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@color/orange_100">
+
+                            <ImageView
+                                android:id="@+id/imgPost"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/img_no_image"/>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/PostTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Tiêu đề phòng trọ"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:ellipsize="end"
+                                android:maxLines="2"/>
+
+                            <TextView
+                                android:id="@+id/RoomCost"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:text="3,500,000 đ/tháng"
+                                android:textColor="@color/red_100"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/DienTich"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="25m²"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="12sp"
+                                    android:drawableStart="@drawable/ic_area"
+                                    android:drawablePadding="4dp"/>
+
+                                <TextView
+                                    android:id="@+id/Size"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:text="2 người"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="12sp"
+                                    android:drawableStart="@drawable/ic_user"
+                                    android:drawablePadding="4dp"/>
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/DistrictName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Quận 1, TP.HCM"
+                                android:textColor="@color/orange_100"
+                                android:textSize="12sp"
+                                android:drawableStart="@drawable/ic_location"
+                                android:drawablePadding="4dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ✅ Owner Info Card với Avatar Loading -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp">
+
+                <LinearLayout
+                    android:id="@+id/userPost"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_user"
+                        app:tint="@color/blue_100"/>
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Ghi chú"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
+                        android:layout_marginStart="12dp"
+                        android:text="Chủ phòng"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"/>
+
+                    <!-- ✅ Owner Avatar Container -->
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="16dp">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/ownerProfileImageView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:visibility="gone"
+                            app:shapeAppearanceOverlay="@style/CircularImageView"/>
+
+                        <TextView
+                            android:id="@+id/tvprofileDetail"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/circle_avatar_background"
+                            android:gravity="center"
+                            android:text="NA"
+                            android:textColor="@color/white_100"
+                            android:textSize="16sp"
+                            android:textStyle="bold"/>
+
+                    </FrameLayout>
 
                     <TextView
-                        android:id="@+id/tvNote"
-                        android:layout_width="match_parent"
+                        android:id="@+id/textViewNameUser"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"/>
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="Chủ phòng"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_right"
+                        app:tint="@color/gray_600"/>
 
                 </LinearLayout>
 
@@ -247,35 +488,51 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Action Buttons -->
+    <!-- ✅ Bottom Action Buttons -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomActionCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        app:cardElevation="8dp">
+        app:cardCornerRadius="0dp"
+        app:cardElevation="12dp"
+        android:layout_marginTop="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:background="@color/surface_primary">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRefuse"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="Từ chối"
-                style="@style/Widget.Material3.Button.OutlinedButton"/>
+                android:text="❌ Từ chối"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:strokeColor="@color/red_100"
+                app:strokeWidth="2dp"
+                android:textColor="@color/red_100"
+                app:cornerRadius="12dp"
+                app:rippleColor="@color/red_20"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAccept"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:layout_weight="1"
-                android:text="Xác nhận"
-                style="@style/Widget.Material3.Button"/>
+                android:layout_marginStart="8dp"
+                android:text="✅ Xác nhận"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/green_100"
+                app:cornerRadius="12dp"
+                app:rippleColor="@color/green_20"/>
 
         </LinearLayout>
 

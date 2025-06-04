@@ -2,18 +2,22 @@ package com.example.timphongtro.Activities;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.timphongtro.Adapters.ScheduleVisitRoomSendAdapter;
+import com.example.timphongtro.Adapters.MeetingAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.R;
-import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -23,18 +27,35 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MeetingManagementActivity extends AppCompatActivity {
-    private ImageView backButton;
-    private TabLayout scheduleTabLayout;
+    
+    // ✅ UI Components
+    private ImageView backButton, filterIcon;
+    private HorizontalScrollView chipScrollView;
+    private ChipGroup chipGroup;
     private RecyclerView scheduleVisitRecyclerView;
+    private LinearLayout noDataLayout;
+    private TextView noDataTitle, noDataMessage;
+    
+    // ✅ Chips
+    private Chip chipAll, chipMyBookings, chipPending, chipApproved, chipRejected;
+    
+    // ✅ Firebase
     private FirebaseDatabase firebaseDatabase;
-    private DatabaseReference meetingSchedulesRef, availableRoomsRef;
+    private DatabaseReference meetingSchedulesRef, postsRef;
     private ArrayList<Meeting> meetings;
     private ArrayList<Room> availableRooms;
-    private ScheduleVisitRoomSendAdapter scheduleVisitRoomSendAdapter;
+    private MeetingAdapter meetingAdapter;
     private FirebaseUser currentUser;
-
+    
+    // ✅ State management
+    private boolean isFilterVisible = true;
+    private Map<String, Integer> countMap = new HashMap<>();
+    private String currentFilter = "all";
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,197 +63,400 @@ public class MeetingManagementActivity extends AppCompatActivity {
 
         initializeVariables();
         setupViews();
+        setupChipListeners();
         loadRoomData();
-        loadScheduleData();
-        setupTabLayout();
+        loadAllSchedulesAndCount();
     }
 
     private void initializeVariables() {
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         firebaseDatabase = FirebaseDatabase.getInstance();
         meetingSchedulesRef = firebaseDatabase.getReference("MeetingSchedules");
-        availableRoomsRef = firebaseDatabase.getReference("Rooms");
+        postsRef = firebaseDatabase.getReference("Posts");
         meetings = new ArrayList<>();
         availableRooms = new ArrayList<>();
+        
+        // ✅ Initialize count map
+        countMap.put("all", 0);
+        countMap.put("my_bookings", 0);
+        countMap.put("pending", 0);
+        countMap.put("approved", 0);
+        countMap.put("rejected", 0);
     }
 
     private void setupViews() {
+        // ✅ Toolbar components
         backButton = findViewById(R.id.imageViewBack);
-        scheduleVisitRecyclerView = findViewById(R.id.rcvScheduleVisit);
-        scheduleTabLayout = findViewById(R.id.tablayout);
+        filterIcon = findViewById(R.id.filterIcon);
         
+        // ✅ Filter components
+        chipScrollView = findViewById(R.id.chipScrollView);
+        chipGroup = findViewById(R.id.chipGroup);
+        chipAll = findViewById(R.id.chipAll);
+        chipMyBookings = findViewById(R.id.chipMyBookings);
+        chipPending = findViewById(R.id.chipPending);
+        chipApproved = findViewById(R.id.chipApproved);
+        chipRejected = findViewById(R.id.chipRejected);
+        
+        // ✅ Content components
+        scheduleVisitRecyclerView = findViewById(R.id.rcvScheduleVisit);
+        noDataLayout = findViewById(R.id.noHasLovePost);
+        noDataTitle = findViewById(R.id.noDataTitle);
+        noDataMessage = findViewById(R.id.noDataMessage);
+        
+        // ✅ Setup RecyclerView
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         scheduleVisitRecyclerView.setLayoutManager(linearLayoutManager);
         
-        backButton.setOnClickListener(v -> finish());
+        meetingAdapter = new MeetingAdapter(this, meetings);
+        scheduleVisitRecyclerView.setAdapter(meetingAdapter);
         
-        scheduleVisitRoomSendAdapter = new ScheduleVisitRoomSendAdapter(this, meetings);
-        scheduleVisitRecyclerView.setAdapter(scheduleVisitRoomSendAdapter);
+        // ✅ Setup click listeners
+        backButton.setOnClickListener(v -> finish());
+        filterIcon.setOnClickListener(v -> toggleFilterVisibility());
+        
+        // ✅ Set default chip selection
+        chipAll.setChecked(true);
     }
 
+    private void setupChipListeners() {
+        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            
+            int checkedId = checkedIds.get(0);
+            handleChipSelection(checkedId);
+        });
+    }
+
+    private void handleChipSelection(int chipId) {
+        meetings.clear();
+        meetingAdapter.notifyDataSetChanged();
+        
+        if (chipId == R.id.chipAll) {
+            currentFilter = "all";
+            loadAllSchedules();
+        } else if (chipId == R.id.chipMyBookings) {
+            currentFilter = "my_bookings";
+            loadMyBookings();
+        } else if (chipId == R.id.chipPending) {
+            currentFilter = "pending";
+            loadPendingSchedules();
+        } else if (chipId == R.id.chipApproved) {
+            currentFilter = "approved";
+            loadApprovedSchedules();
+        } else if (chipId == R.id.chipRejected) {
+            currentFilter = "rejected";
+            loadRejectedSchedules();
+        }
+    }
+
+    private void toggleFilterVisibility() {
+        if (isFilterVisible) {
+            chipScrollView.setVisibility(View.GONE);
+            filterIcon.setRotation(180f);
+        } else {
+            chipScrollView.setVisibility(View.VISIBLE);
+            filterIcon.setRotation(0f);
+        }
+        isFilterVisible = !isFilterVisible;
+    }
+
+    // ✅ Load all schedules and calculate counts
+    private void loadAllSchedulesAndCount() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                calculateCounts(snapshot);
+                updateChipCounts();
+                
+                // ✅ Load data for current filter
+                switch (currentFilter) {
+                    case "all":
+                        loadAllSchedules();
+                        break;
+                    case "my_bookings":
+                        loadMyBookings();
+                        break;
+                    case "pending":
+                        loadPendingSchedules();
+                        break;
+                    case "approved":
+                        loadApprovedSchedules();
+                        break;
+                    case "rejected":
+                        loadRejectedSchedules();
+                        break;
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                updateRecyclerViewVisibility(false);
+            }
+        });
+    }
+
+    private void calculateCounts(DataSnapshot snapshot) {
+        int allCount = 0;
+        int myBookingsCount = 0;
+        int pendingCount = 0;
+        int approvedCount = 0;
+        int rejectedCount = 0;
+        
+        if (snapshot.exists()) {
+            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                Meeting schedule = dataSnapshot.getValue(Meeting.class);
+                if (isValidSchedule(schedule)) {
+                    allCount++;
+                    
+                    boolean isMyBooking = schedule.getIdFrom().equals(currentUser.getUid());
+                    boolean isPendingForMe = schedule.getIdTo().equals(currentUser.getUid()) && "0".equals(schedule.getStatus());
+                    boolean isRelatedUser = schedule.getIdFrom().equals(currentUser.getUid()) || 
+                                          schedule.getIdTo().equals(currentUser.getUid());
+                    
+                    if (isMyBooking) {
+                        myBookingsCount++;
+                    }
+                    
+                    if (isPendingForMe) {
+                        pendingCount++;
+                    }
+                    
+                    if (isRelatedUser && "1".equals(schedule.getStatus())) {
+                        approvedCount++;
+                    }
+                    
+                    if (isRelatedUser && "2".equals(schedule.getStatus())) {
+                        rejectedCount++;
+                    }
+                }
+            }
+        }
+        
+        countMap.put("all", allCount);
+        countMap.put("my_bookings", myBookingsCount);
+        countMap.put("pending", pendingCount);
+        countMap.put("approved", approvedCount);
+        countMap.put("rejected", rejectedCount);
+    }
+
+    private void updateChipCounts() {
+        chipAll.setText("Tất cả (" + countMap.get("all") + ")");
+        chipMyBookings.setText("📅 Tôi đặt (" + countMap.get("my_bookings") + ")");
+        chipPending.setText("⏳ Chờ duyệt (" + countMap.get("pending") + ")");
+        chipApproved.setText("✅ Đã duyệt (" + countMap.get("approved") + ")");
+        chipRejected.setText("❌ Từ chối (" + countMap.get("rejected") + ")");
+    }
+
+    // ✅ Load all schedules related to current user
+    private void loadAllSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                meetings.clear();
+                if (snapshot.exists()) {
+                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                        Meeting schedule = dataSnapshot.getValue(Meeting.class);
+                        if (isValidSchedule(schedule) && isRelatedToCurrentUser(schedule)) {
+                            meetings.add(schedule);
+                        }
+                    }
+                }
+                meetingAdapter.notifyDataSetChanged();
+                updateRecyclerViewVisibility(!meetings.isEmpty());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                updateRecyclerViewVisibility(false);
+            }
+        });
+    }
+
+    // ✅ Load schedules that current user created
+    private void loadMyBookings() {
+        meetingSchedulesRef.orderByChild("idFrom")
+                .equalTo(currentUser.getUid())
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        updateScheduleList(snapshot);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        updateRecyclerViewVisibility(false);
+                    }
+                });
+    }
+
+    // ✅ Load schedules pending approval by current user
+    private void loadPendingSchedules() {
+        meetingSchedulesRef.orderByChild("idTo")
+                .equalTo(currentUser.getUid())
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        updateScheduleListByStatus(snapshot, "0");
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        updateRecyclerViewVisibility(false);
+                    }
+                });
+    }
+
+    // ✅ Load approved schedules
+    private void loadApprovedSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleListByStatusAndUser(snapshot, "1");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                updateRecyclerViewVisibility(false);
+            }
+        });
+    }
+
+    // ✅ Load rejected schedules
+    private void loadRejectedSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleListByStatusAndUser(snapshot, "2");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                updateRecyclerViewVisibility(false);
+            }
+        });
+    }
+
+    // ✅ Load room data từ Posts
     private void loadRoomData() {
-        availableRoomsRef.addValueEventListener(new ValueEventListener() {
+        postsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 availableRooms.clear();
                 if (snapshot.exists()) {
-                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                        processRoomCategory(dataSnapshot);
+                    for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                        Room room = roomSnapshot.getValue(Room.class);
+                        if (room != null) {
+                            availableRooms.add(room);
+                        }
                     }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
             }
         });
     }
 
-    private void processRoomCategory(DataSnapshot dataSnapshot) {
-        String key = dataSnapshot.getKey();
-        if ("Tro".equals(key) || "ChungCuMini".equals(key)) {
-            for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                Room room = childSnapshot.getValue(Room.class);
-                if (room != null) {
-                    availableRooms.add(room);
-                }
-            }
-        }
-    }
-
-    private void loadScheduleData() {
-        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleList(snapshot, currentUser.getUid(), "");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
-        });
-    }
-
-    private void setupTabLayout() {
-        if (currentUser != null) {
-            scheduleTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(TabLayout.Tab tab) {
-                    handleTabSelection(tab.getPosition());
-                }
-
-                @Override
-                public void onTabUnselected(TabLayout.Tab tab) {}
-
-                @Override
-                public void onTabReselected(TabLayout.Tab tab) {}
-            });
-        }
-    }
-
-    private void handleTabSelection(int position) {
-        meetings.clear();
-        switch (position) {
-            case 0:
-                loadSentSchedules();
-                break;
-            case 1:
-                loadPendingSchedules();
-                break;
-            case 2:
-                loadAcceptedSchedules();
-                break;
-            case 3:
-                loadRejectedSchedules();
-                break;
-        }
-    }
-
-    private void loadSentSchedules() {
-        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleList(snapshot, currentUser.getUid(), "");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void loadPendingSchedules() {
-        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleList(snapshot, "", "0");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void loadAcceptedSchedules() {
-        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleList(snapshot, "", "1");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void loadRejectedSchedules() {
-        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleList(snapshot, "", "2");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void updateScheduleList(DataSnapshot snapshot, String fromId, String status) {
+    private void updateScheduleList(DataSnapshot snapshot) {
         meetings.clear();
         if (snapshot.exists()) {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
-                if (isValidSchedule(schedule, fromId, status)) {
+                if (isValidSchedule(schedule)) {
                     meetings.add(schedule);
                 }
             }
         }
-        scheduleVisitRoomSendAdapter.notifyDataSetChanged();
-        updateRecyclerViewVisibility(meetings, scheduleVisitRecyclerView, findViewById(R.id.noHasLovePost));
+        meetingAdapter.notifyDataSetChanged();
+        updateRecyclerViewVisibility(!meetings.isEmpty());
     }
 
-    private boolean isValidSchedule(Meeting schedule, String fromId, String status) {
+    private void updateScheduleListByStatus(DataSnapshot snapshot, String targetStatus) {
+        meetings.clear();
+        if (snapshot.exists()) {
+            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                Meeting schedule = dataSnapshot.getValue(Meeting.class);
+                if (isValidSchedule(schedule) && targetStatus.equals(schedule.getStatus())) {
+                    meetings.add(schedule);
+                }
+            }
+        }
+        meetingAdapter.notifyDataSetChanged();
+        updateRecyclerViewVisibility(!meetings.isEmpty());
+    }
+
+    private void updateScheduleListByStatusAndUser(DataSnapshot snapshot, String targetStatus) {
+        meetings.clear();
+        if (snapshot.exists()) {
+            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                Meeting schedule = dataSnapshot.getValue(Meeting.class);
+                if (isValidSchedule(schedule) && 
+                    targetStatus.equals(schedule.getStatus()) && 
+                    isRelatedToCurrentUser(schedule)) {
+                    meetings.add(schedule);
+                }
+            }
+        }
+        meetingAdapter.notifyDataSetChanged();
+        updateRecyclerViewVisibility(!meetings.isEmpty());
+    }
+
+    private boolean isValidSchedule(Meeting schedule) {
         if (schedule == null) return false;
         
-        boolean roomExists = availableRooms.stream()
-            .anyMatch(room -> room.getId_room().equals(schedule.getIdRoom()));
-            
-        if (!roomExists) return false;
-
-        if (!fromId.isEmpty()) {
-            return schedule.getIdFrom().equals(fromId);
-        }
-
-        if (!status.isEmpty()) {
-            return schedule.getIdTo().equals(currentUser.getUid()) &&
-                   status.equals(schedule.getStatus());
-        }
-
-        return true;
+        return availableRooms.stream()
+                .anyMatch(room -> room.getId_room().equals(schedule.getIdRoom()));
     }
 
-    private void updateRecyclerViewVisibility(ArrayList<Meeting> rooms, RecyclerView rcvLovePost, View noHistoryView) {
-        rcvLovePost.setVisibility(rooms.isEmpty() ? View.GONE : View.VISIBLE);
-        noHistoryView.setVisibility(rooms.isEmpty() ? View.VISIBLE : View.GONE);
+    private boolean isRelatedToCurrentUser(Meeting schedule) {
+        return schedule.getIdFrom().equals(currentUser.getUid()) || 
+               schedule.getIdTo().equals(currentUser.getUid());
+    }
+
+    private void updateRecyclerViewVisibility(boolean hasData) {
+        scheduleVisitRecyclerView.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        noDataLayout.setVisibility(hasData ? View.GONE : View.VISIBLE);
+        
+        if (!hasData) {
+            updateNoDataText();
+        }
+    }
+
+    private void updateNoDataText() {
+        String title, message;
+        
+        switch (currentFilter) {
+            case "all":
+                title = "Chưa có lịch hẹn";
+                message = "Bạn chưa có lịch hẹn xem phòng nào";
+                break;
+            case "my_bookings":
+                title = "Chưa đặt lịch hẹn";
+                message = "Bạn chưa đặt lịch hẹn xem phòng nào";
+                break;
+            case "pending":
+                title = "Không có lịch chờ duyệt";
+                message = "Hiện tại không có lịch hẹn nào cần bạn xác nhận";
+                break;
+            case "approved":
+                title = "Chưa có lịch đã duyệt";
+                message = "Chưa có lịch hẹn nào được xác nhận";
+                break;
+            case "rejected":
+                title = "Chưa có lịch bị từ chối";
+                message = "Chưa có lịch hẹn nào bị từ chối";
+                break;
+            default:
+                title = "Không có dữ liệu";
+                message = "Không tìm thấy lịch hẹn nào";
+                break;
+        }
+        
+        noDataTitle.setText(title);
+        noDataMessage.setText(message);
     }
 }

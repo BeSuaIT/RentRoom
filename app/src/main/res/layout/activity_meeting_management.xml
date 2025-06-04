@@ -5,16 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- ✅ AppBar Layout -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/white_100">
+        android:layout_height="wrap_content">
 
+        <!-- ✅ Toolbar -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:contentInsetStartWithNavigation="0dp"
             android:background="@color/orange_100">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -27,6 +27,8 @@
                     android:layout_height="48dp"
                     android:padding="12dp"
                     android:src="@drawable/ic_back"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -43,42 +45,117 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
+                <!-- ✅ Filter icon -->
+                <ImageView
+                    android:id="@+id/filterIcon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_filter"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Filter"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.appbar.MaterialToolbar>
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tablayout"
+        <!-- ✅ Filter chips với theme đúng -->
+        <HorizontalScrollView
+            android:id="@+id/chipScrollView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:tabMode="fixed"
-            app:tabGravity="fill"
-            app:tabTextColor="@color/gray"
-            app:tabSelectedTextColor="@color/orange_100"
-            app:tabIndicatorColor="@color/orange_100"
-            android:background="@color/white_100">
+            android:background="@color/white_100"
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="16dp"
+            android:scrollbars="none">
 
-            <com.google.android.material.tabs.TabItem
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đã gửi" />
+                app:singleSelection="true"
+                app:chipSpacingHorizontal="8dp">
 
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Chờ duyệt" />
+                <!-- ✅ Fix Chip với proper style -->
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tất cả"
+                    android:checked="true"
+                    android:checkable="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_primary"
+                    app:chipBackgroundColor="@color/orange_20"
+                    app:chipStrokeColor="@color/orange_100"
+                    app:chipStrokeWidth="1dp"
+                    app:chipCornerRadius="16dp"
+                    app:chipMinHeight="36dp" />
 
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Đã duyệt" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMyBookings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📅 Tôi đặt"
+                    android:checkable="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/blue_100"
+                    app:chipBackgroundColor="@color/blue_20"
+                    app:chipStrokeColor="@color/blue_100"
+                    app:chipStrokeWidth="1dp"
+                    app:chipCornerRadius="16dp"
+                    app:chipMinHeight="36dp" />
 
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Từ chối" />
-        </com.google.android.material.tabs.TabLayout>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipPending"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⏳ Chờ duyệt"
+                    android:checkable="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/orange_100"
+                    app:chipBackgroundColor="@color/orange_20"
+                    app:chipStrokeColor="@color/orange_100"
+                    app:chipStrokeWidth="1dp"
+                    app:chipCornerRadius="16dp"
+                    app:chipMinHeight="36dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipApproved"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✅ Đã duyệt"
+                    android:checkable="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/green_100"
+                    app:chipBackgroundColor="@color/green_20"
+                    app:chipStrokeColor="@color/green_100"
+                    app:chipStrokeWidth="1dp"
+                    app:chipCornerRadius="16dp"
+                    app:chipMinHeight="36dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRejected"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="❌ Từ chối"
+                    android:checkable="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/red_100"
+                    app:chipBackgroundColor="@color/red_20"
+                    app:chipStrokeColor="@color/red_100"
+                    app:chipStrokeWidth="1dp"
+                    app:chipCornerRadius="16dp"
+                    app:chipMinHeight="36dp" />
+
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- ✅ Content area -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -92,35 +169,42 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp" />
 
+        <!-- ✅ No data layout -->
         <LinearLayout
             android:id="@+id/noHasLovePost"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:background="@color/background_primary">
 
             <ImageView
                 android:layout_width="120dp"
                 android:layout_height="120dp"
-                android:src="@drawable/ic_noschedule" />
+                android:src="@drawable/ic_calendar_off"
+                android:tint="@color/gray_500" />
 
             <TextView
+                android:id="@+id/noDataTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Chưa có lịch hẹn"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/noDataMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:gravity="center"
                 android:paddingHorizontal="32dp"
                 android:text="Bạn chưa có lịch hẹn xem phòng nào"
-                android:textColor="@android:color/darker_gray" />
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
 
         </LinearLayout>
     </FrameLayout>
