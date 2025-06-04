@@ -11,7 +11,6 @@ public class BillItem {
         this.price = price;
     }
 
-    // Getters
     public String getTitle() { return title; }
     public int getQuantity() { return quantity; }
     public long getPrice() { return price; }

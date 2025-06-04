@@ -1,7 +1,5 @@
 package com.example.timphongtro.Models;
 
-import com.google.gson.Gson;
-
 public class Meeting {
     private String name;
     private String phone;
@@ -97,11 +95,5 @@ public class Meeting {
 
     public void setTimeVisitRoom(String timeVisitRoom) {
         this.timeVisitRoom = timeVisitRoom;
-    }
-
-    @Override
-    public String toString() {
-        Gson gson = new Gson();
-        return gson.toJson(this);
     }
 }

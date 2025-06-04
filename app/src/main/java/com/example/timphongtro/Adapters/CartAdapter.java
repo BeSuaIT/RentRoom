@@ -1,20 +1,29 @@
 package com.example.timphongtro.Adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.timphongtro.Activities.ServiceDetailActivity;
+import com.example.timphongtro.Activities.UserActivity;
 import com.example.timphongtro.Models.Cart;
+import com.example.timphongtro.Models.Service;
+import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -44,9 +53,11 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
         this.sellerIds = new ArrayList<>();
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        this.cartRef = FirebaseDatabase.getInstance()
-                .getReference("Carts")
-                .child(user.getUid());
+        if (user != null) {
+            this.cartRef = FirebaseDatabase.getInstance()
+                    .getReference("Carts")
+                    .child(user.getUid());
+        }
 
         groupItemsBySeller(cartList);
     }
@@ -59,8 +70,10 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
     }
 
     private void groupItemsBySeller(List<Cart> cartList) {
+        if (cartList == null) return;
+        
         for (Cart item : cartList) {
-            if (item.getId_seller() != null) {
+            if (item != null && item.getId_seller() != null) {
                 String sellerId = item.getId_seller();
                 if (!sellerIds.contains(sellerId)) {
                     sellerIds.add(sellerId);
@@ -71,8 +84,15 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
     }
 
     private void updateOrRemoveItem(Cart cart, int delta) {
+        if (cart == null || cartRef == null) return;
+        
         String sellerId = cart.getId_seller();
         String serviceId = cart.getServiceId();
+
+        if (TextUtils.isEmpty(sellerId) || TextUtils.isEmpty(serviceId)) {
+            Toast.makeText(context, "Lỗi: Thông tin sản phẩm không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (delta == 0) { // Remove item
             cartRef.child(sellerId)
@@ -88,6 +108,10 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                             }
                         }
                         notifyDataSetChanged();
+                        Toast.makeText(context, "Đã xóa sản phẩm khỏi giỏ hàng", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Lỗi xóa sản phẩm: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         } else { // Update quantity
             int newAmount = cart.getAmount() + delta;
@@ -98,6 +122,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                         .addOnSuccessListener(aVoid -> {
                             cart.setAmount(newAmount);
                             notifyDataSetChanged();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(context, "Lỗi cập nhật số lượng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
             } else {
                 updateOrRemoveItem(cart, 0);
@@ -117,29 +144,71 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
         String sellerId = sellerIds.get(position);
         List<Cart> sellerItems = sellerItemsMap.get(sellerId);
 
-        DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users")
-                .child(sellerId);
-        sellerRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String sellerName = snapshot.exists() ? snapshot.getValue(String.class) : "Người bán không xác định";
-                holder.sellerName.setText("Người bán: " + sellerName);
-            }
+        if (TextUtils.isEmpty(sellerId) || sellerItems == null) return;
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                holder.sellerName.setText("Người bán không xác định");
-            }
-        });
+        loadSellerInfo(holder, sellerId);
 
         CartItemsAdapter itemsAdapter = new CartItemsAdapter(sellerItems);
         holder.itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         holder.itemsRecyclerView.setAdapter(itemsAdapter);
     }
 
+    private void loadSellerInfo(SellerViewHolder holder, String sellerId) {
+        
+        DatabaseReference sellerRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(sellerId);
+                
+        sellerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User seller = snapshot.getValue(User.class);
+                if (seller != null) {
+                    String sellerName = seller.getName() != null ? seller.getName() : "Người bán không xác định";
+                    holder.sellerName.setText("Người bán: " + sellerName);
+                    holder.sellerName.setOnClickListener(v -> navigateToSellerProfile(seller));
+                } else {
+                    holder.sellerName.setText("Người bán: Không xác định");
+                    holder.sellerName.setOnClickListener(null);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                holder.sellerName.setText("Người bán: Lỗi tải thông tin");
+                holder.sellerName.setOnClickListener(null);
+            }
+        });
+    }
+
+    private void navigateToSellerProfile(User seller) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        
+        if (currentUser == null) {
+            AuthUtils.showLoginRequiredDialog(context, "xem thông tin người bán", "có thể");
+            return;
+        }
+
+        if (seller == null) {
+            Toast.makeText(context, "Lỗi: Không có thông tin người bán", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String sellerJson = GsonUtils.toJson(seller);
+        if (sellerJson != null) {
+            Intent intent = new Intent(context, UserActivity.class);
+            intent.putExtra("userData", sellerJson);
+            intent.putExtra("userType", "seller"); // Đánh dấu là người bán
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } else {
+            Toast.makeText(context, "Lỗi mở thông tin người bán", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override
     public int getItemCount() {
-        return sellerIds.size();
+        return sellerIds != null ? sellerIds.size() : 0;
     }
 
     public static class SellerViewHolder extends RecyclerView.ViewHolder {
@@ -157,7 +226,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
         private List<Cart> items;
 
         CartItemsAdapter(List<Cart> items) {
-            this.items = items;
+            this.items = items != null ? items : new ArrayList<>();
         }
 
         @NonNull
@@ -169,13 +238,17 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
 
         @Override
         public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
-            Cart cart = items.get(position);
-            holder.bindData(cart);
+            if (position >= 0 && position < items.size()) {
+                Cart cart = items.get(position);
+                if (cart != null) {
+                    holder.bindData(cart);
+                }
+            }
         }
 
         @Override
         public int getItemCount() {
-            return items.size();
+            return items != null ? items.size() : 0;
         }
 
         class ItemViewHolder extends RecyclerView.ViewHolder {
@@ -199,21 +272,75 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                 decreaseButton.setOnClickListener(v -> updateOrRemoveItem(cart, -1));
                 increaseButton.setOnClickListener(v -> updateOrRemoveItem(cart, 1));
                 removeButton.setOnClickListener(v -> updateOrRemoveItem(cart, 0));
+                itemView.setOnClickListener(v -> navigateToServiceDetail(cart));
+            }
+
+            private void navigateToServiceDetail(Cart cart) {
+                if (cart == null) {
+                    Toast.makeText(context, "Lỗi: Không có thông tin sản phẩm", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Service service = createServiceFromCart(cart);
+                if (service == null) {
+                    Toast.makeText(context, "Lỗi: Không thể tải thông tin sản phẩm", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String serviceJson = GsonUtils.toJson(service);
+                if (serviceJson != null) {
+                    Intent intent = new Intent(context, ServiceDetailActivity.class);
+                    intent.putExtra("ServiceData", serviceJson);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } else {
+                    Toast.makeText(context, "Lỗi mở chi tiết sản phẩm", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            private Service createServiceFromCart(Cart cart) {
+                if (cart == null) return null;
+                
+                try {
+                    Service service = new Service();
+                    service.setServiceId(cart.getServiceId());
+                    service.setTitle(cart.getTitle());
+                    service.setPrice(cart.getPrice());
+                    service.setId_seller(cart.getId_seller());
+                    service.setImages(cart.getImages());
+                    service.setAmount(cart.getAmount());
+                    service.setDescription("Chi tiết sản phẩm sẽ được tải từ cơ sở dữ liệu");
+                    service.setSold(0);
+                    service.setCreateAt("");
+                    service.setId_own_post("");
+                    
+                    return service;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
             }
 
             void bindData(Cart cart) {
-                cartItemName.setText(cart.getTitle());
+                if (cart == null) return;
+                cartItemName.setText(cart.getTitle() != null ? cart.getTitle() : "Sản phẩm");
                 itemPrice.setText(String.format("%s VNĐ", decimalFormat.format(cart.getPrice())));
                 quantity.setText(String.valueOf(cart.getAmount()));
 
-                // Load image
                 if (cart.getImages() != null && !cart.getImages().isEmpty()) {
-                    Glide.with(context)
-                            .load(cart.getImages().get(0))
-                            .placeholder(R.drawable.loading)
-                            .error(R.drawable.img_no_image)
-                            .centerCrop()
-                            .into(cartItemImage);
+                    String firstImage = cart.getImages().get(0);
+                    if (!TextUtils.isEmpty(firstImage)) {
+                        Glide.with(context)
+                                .load(firstImage)
+                                .placeholder(R.drawable.loading)
+                                .error(R.drawable.img_no_image)
+                                .centerCrop()
+                                .into(cartItemImage);
+                    } else {
+                        cartItemImage.setImageResource(R.drawable.img_no_image);
+                    }
+                } else {
+                    cartItemImage.setImageResource(R.drawable.img_no_image);
                 }
 
                 setupClickListeners(cart);

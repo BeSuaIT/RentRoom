@@ -2,6 +2,7 @@ package com.example.timphongtro.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -16,6 +17,7 @@ import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -23,7 +25,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -33,9 +34,9 @@ public class ServiceDetailActivity extends AppCompatActivity {
     private TextView service_title, service_price, service_sold_count, service_description;
     private Button btn_add_to_cart;
     private ImageView button_cart, imageView_back;
+    private ImageSlider imageSlider;
     private Service service;
-    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    private FirebaseUser user = firebaseAuth.getCurrentUser();
+    private DecimalFormat decimalFormat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +48,32 @@ public class ServiceDetailActivity extends AppCompatActivity {
         setupClickListeners();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshUserState();
+    }
+
+    private void refreshUserState() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        
+        if (currentUser != null) {
+            AuthUtils.checkUserExistsOnStartup(this, currentUser, exists -> {
+                if (!exists) {
+                    updateUIForLoggedOutState();
+                }
+            });
+        } else {
+            updateUIForLoggedOutState();
+        }
+    }
+
+    private void updateUIForLoggedOutState() {
+        btn_add_to_cart.setText("Đăng nhập để mua");
+    }
+
     private void initializeViews() {
-        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
+        decimalFormat = new DecimalFormat("#,###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
 
         service_title = findViewById(R.id.service_title);
@@ -58,29 +83,62 @@ public class ServiceDetailActivity extends AppCompatActivity {
         btn_add_to_cart = findViewById(R.id.btn_add_to_cart);
         button_cart = findViewById(R.id.button_cart);
         imageView_back = findViewById(R.id.imageView_back);
+        imageSlider = findViewById(R.id.ServiceImage);
     }
 
     private void setupClickListeners() {
         imageView_back.setOnClickListener(v -> finish());
         
         button_cart.setOnClickListener(v -> {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user != null) {
-                startActivity(new Intent(ServiceDetailActivity.this, CartManagementActivity.class));
+                AuthUtils.isUserExists(user, exists -> {
+                    if (!exists) {
+                        AuthUtils.clearAllLoginData(this);
+                        AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
+                        return;
+                    }
+                    
+                    startActivity(new Intent(ServiceDetailActivity.this, CartManagementActivity.class));
+                });
             } else {
                 AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
             }
         });
 
         btn_add_to_cart.setOnClickListener(v -> {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user != null) {
-                addServiceToCart();
+                AuthUtils.isUserExists(user, exists -> {
+                    if (!exists) {
+                        AuthUtils.clearAllLoginData(this);
+                        AuthUtils.showLoginRequiredDialog(this, "sản phẩm vào giỏ hàng", "thêm");
+                        return;
+                    }
+                    
+                    addServiceToCart(user);
+                });
             } else {
-                AuthUtils.showLoginRequiredDialog(this, "sản phẩm", "thêm vào giỏ hàng");
+                AuthUtils.showLoginRequiredDialog(this, "sản phẩm vào giỏ hàng", "thêm");
             }
         });
     }
 
-    private void addServiceToCart() {
+    private void addServiceToCart(FirebaseUser user) {
+        if (service == null) {
+            Toast.makeText(this, "Lỗi: Không có thông tin dịch vụ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (TextUtils.isEmpty(service.getServiceId()) || TextUtils.isEmpty(service.getId_seller())) {
+            Toast.makeText(this, "Lỗi: Thông tin dịch vụ không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // ✅ Disable button khi đang xử lý
+        btn_add_to_cart.setEnabled(false);
+        btn_add_to_cart.setText("Đang thêm...");
+
         String userID = user.getUid();
         String sellerId = service.getId_seller();
         DatabaseReference cartRef = FirebaseDatabase.getInstance()
@@ -91,46 +149,95 @@ public class ServiceDetailActivity extends AppCompatActivity {
         cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    int currentAmount = dataSnapshot.getValue(Integer.class);
-                    cartRef.child(service.getServiceId()).setValue(currentAmount + 1);
-                } else {
-                    cartRef.child(service.getServiceId()).setValue(1);
+                try {
+                    if (dataSnapshot.exists()) {
+                        Integer currentAmount = dataSnapshot.getValue(Integer.class);
+                        int newAmount = (currentAmount != null ? currentAmount : 0) + 1;
+                        cartRef.child(service.getServiceId()).setValue(newAmount);
+                    } else {
+                        cartRef.child(service.getServiceId()).setValue(1);
+                    }
+                    
+                    String serviceName = service.getTitle() != null ? service.getTitle() : "Dịch vụ";
+                    Toast.makeText(ServiceDetailActivity.this, serviceName + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
+                    
+                } catch (Exception e) {
+                    Toast.makeText(ServiceDetailActivity.this, "Lỗi thêm vào giỏ hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                } finally {
+                    btn_add_to_cart.setEnabled(true);
+                    btn_add_to_cart.setText("Thêm vào giỏ hàng");
                 }
-                Toast.makeText(ServiceDetailActivity.this, service.getTitle() + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(ServiceDetailActivity.this, "Không thể thêm vào giỏ hàng", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ServiceDetailActivity.this, "Không thể thêm vào giỏ hàng: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+
+                btn_add_to_cart.setEnabled(true);
+                btn_add_to_cart.setText("Thêm vào giỏ hàng");
             }
         });
     }
 
     private void loadServiceData() {
-        ArrayList<SlideModel> slideModels = new ArrayList<>();
-        ImageSlider imageSlider = findViewById(R.id.ServiceImage);
-        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
-        decimalFormat.setDecimalSeparatorAlwaysShown(false);
-        
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             String serviceString = bundle.getString("ServiceData");
-            Gson gson = new Gson();
-            service = gson.fromJson(serviceString, Service.class);
+            if (serviceString != null) {
+                service = GsonUtils.fromJson(serviceString, Service.class);
+                
+                if (service != null) {
+                    displayServiceDetails();
+                    setupImageSlider();
+                } else {
+                    Toast.makeText(this, "Lỗi: Dữ liệu dịch vụ không hợp lệ", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            } else {
+                Toast.makeText(this, "Lỗi: Không có dữ liệu dịch vụ", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        } else {
+            Toast.makeText(this, "Lỗi: Thiếu dữ liệu", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
 
-            service_title.setText(service.getTitle());
-            String price = decimalFormat.format(service.getPrice()) + " VNĐ";
-            service_price.setText(price);
-            service_sold_count.setText(String.valueOf(service.getSold()));
-            service_description.setText(service.getDescription());
+    private void displayServiceDetails() {
+        if (service == null) return;
 
-            if (service.getImages() != null && !service.getImages().isEmpty()) {
-                for (String imageUrl : service.getImages()) {
+        service_title.setText(service.getTitle() != null ? service.getTitle() : "Dịch vụ");
+        
+        String formattedPrice = decimalFormat.format(service.getPrice()) + " VNĐ";
+        service_price.setText(formattedPrice);
+        
+        service_sold_count.setText(String.valueOf(service.getSold()));
+        
+        String description = service.getDescription();
+        if (!TextUtils.isEmpty(description)) {
+            service_description.setText(description);
+        } else {
+            service_description.setText("Không có mô tả chi tiết");
+        }
+    }
+
+    private void setupImageSlider() {
+        if (service == null) return;
+
+        ArrayList<SlideModel> slideModels = new ArrayList<>();
+        
+        if (service.getImages() != null && !service.getImages().isEmpty()) {
+            for (String imageUrl : service.getImages()) {
+                if (!TextUtils.isEmpty(imageUrl)) {
                     slideModels.add(new SlideModel(imageUrl, ScaleTypes.FIT));
                 }
             }
-            imageSlider.setImageList(slideModels, ScaleTypes.FIT);
         }
+        
+        if (slideModels.isEmpty()) {
+            slideModels.add(new SlideModel(R.drawable.img_no_image, ScaleTypes.FIT));
+        }
+        
+        imageSlider.setImageList(slideModels, ScaleTypes.FIT);
     }
 }

@@ -2,6 +2,7 @@ package com.example.timphongtro.Adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +16,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.LoginActivity;
 import com.example.timphongtro.Activities.ServiceDetailActivity;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -34,13 +36,13 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
 
     private ArrayList<Service> serviceList;
     private Context context;
-    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    private FirebaseUser user = firebaseAuth.getCurrentUser();
+    private DecimalFormat decimalFormat;
 
     public ServiceAdapter(Context context, ArrayList<Service> serviceList) {
         this.context = context;
-        this.serviceList = serviceList;
-
+        this.serviceList = serviceList != null ? serviceList : new ArrayList<>();
+        this.decimalFormat = new DecimalFormat("#,###");
+        this.decimalFormat.setDecimalSeparatorAlwaysShown(false);
     }
 
     @NonNull
@@ -52,77 +54,151 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
 
     @Override
     public void onBindViewHolder(@NonNull ServiceAdapter.ServiceViewHolder holder, int position) {
-        DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
-        decimalFormat.setDecimalSeparatorAlwaysShown(false);
-
         Service service = serviceList.get(position);
-        holder.name.setText(service.getTitle());
+        if (service != null) {
+            bindServiceData(holder, service);
+            setupClickListeners(holder, service);
+        }
+    }
+
+    private void bindServiceData(ServiceViewHolder holder, Service service) {
+        holder.name.setText(service.getTitle() != null ? service.getTitle() : "Dịch vụ");
         holder.price.setText(decimalFormat.format(service.getPrice()) + " VNĐ");
 
-        Glide.with(context).load(service.getImages().get(0)).centerCrop().into(holder.image);
+        if (service.getImages() != null && !service.getImages().isEmpty()) {
+            String firstImage = service.getImages().get(0);
+            if (!TextUtils.isEmpty(firstImage)) {
+                Glide.with(context)
+                        .load(firstImage)
+                        .placeholder(R.drawable.loading)
+                        .error(R.drawable.img_no_image)
+                        .centerCrop()
+                        .into(holder.image);
+            } else {
+                holder.image.setImageResource(R.drawable.img_no_image);
+            }
+        } else {
+            holder.image.setImageResource(R.drawable.img_no_image);
+        }
 
-        DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users/" + service.getId_seller());
+        loadSellerName(holder, service.getId_seller());
+    }
+
+    private void loadSellerName(ServiceViewHolder holder, String sellerId) {
+        if (TextUtils.isEmpty(sellerId)) {
+            holder.seller.setText("Người bán không xác định");
+            return;
+        }
+
+        holder.seller.setText("Đang tải...");
+
+        DatabaseReference sellerRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(sellerId);
+                
         sellerRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     String sellerName = snapshot.getValue(String.class);
-                    holder.seller.setText(sellerName);
+                    holder.seller.setText(!TextUtils.isEmpty(sellerName) ? sellerName : "Người bán");
+                } else {
+                    holder.seller.setText("Người bán không tìm thấy");
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                holder.seller.setText("Unknown Seller");
+                holder.seller.setText("Lỗi tải thông tin");
             }
         });
+    }
 
-        holder.btn_add.setOnClickListener(v -> {
-            if (user != null) {
-                String userID = user.getUid();
-                String sellerId = service.getId_seller();
-                DatabaseReference cartRef = FirebaseDatabase.getInstance()
-                        .getReference("Carts")
-                        .child(userID)
-                        .child(sellerId);
+    private void setupClickListeners(ServiceViewHolder holder, Service service) {
+        holder.btn_add.setOnClickListener(v -> handleAddToCart(service));
+        holder.cardService.setOnClickListener(v -> navigateToServiceDetail(service));
+    }
 
-                cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            int currentAmount = dataSnapshot.getValue(Integer.class);
-                            cartRef.child(service.getServiceId()).setValue(currentAmount + 1);
-                        } else {
-                            cartRef.child(service.getServiceId()).setValue(1);
-                        }
-                        Toast.makeText(context, service.getTitle() + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
+    private void handleAddToCart(Service service) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        
+        if (user != null) {
+            AuthUtils.isUserExists(user, exists -> {
+                if (!exists) {
+                    AuthUtils.clearAllLoginData(context);
+                    showLoginRequiredDialog();
+                    return;
+                }
+                
+                addServiceToCart(user.getUid(), service);
+            });
+        } else {
+            showLoginRequiredDialog();
+        }
+    }
+
+    private void addServiceToCart(String userId, Service service) {
+        if (service == null || TextUtils.isEmpty(service.getServiceId()) || TextUtils.isEmpty(service.getId_seller())) {
+            Toast.makeText(context, "Lỗi: Thông tin dịch vụ không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DatabaseReference cartRef = FirebaseDatabase.getInstance()
+                .getReference("Carts")
+                .child(userId)
+                .child(service.getId_seller());
+
+        cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                try {
+                    if (dataSnapshot.exists()) {
+                        Integer currentAmount = dataSnapshot.getValue(Integer.class);
+                        int newAmount = (currentAmount != null ? currentAmount : 0) + 1;
+                        cartRef.child(service.getServiceId()).setValue(newAmount);
+                    } else {
+                        cartRef.child(service.getServiceId()).setValue(1);
                     }
+                    
+                    String serviceName = service.getTitle() != null ? service.getTitle() : "Dịch vụ";
+                    Toast.makeText(context, serviceName + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
+                    
+                } catch (Exception e) {
+                    Toast.makeText(context, "Lỗi thêm vào giỏ hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Toast.makeText(context, "Không thể thêm vào giỏ hàng", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            } else {
-                Intent intent = new Intent(context, LoginActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra("previous_activity", "com.example.timphongtro.Activities.MainActivity");
-                context.startActivity(intent);
-                Toast.makeText(context, "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng", Toast.LENGTH_SHORT).show();
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(context, "Không thể thêm vào giỏ hàng: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
 
-        holder.cardService.setOnClickListener(v -> {
+    private void navigateToServiceDetail(Service service) {
+        if (service == null) {
+            Toast.makeText(context, "Lỗi: Không có thông tin dịch vụ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String serviceJson = GsonUtils.toJson(service);
+        if (serviceJson != null) {
             Intent intent = new Intent(context, ServiceDetailActivity.class);
-            intent.putExtra("ServiceData", service.toString());
+            intent.putExtra("ServiceData", serviceJson);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
-        });
+        } else {
+            Toast.makeText(context, "Lỗi mở chi tiết dịch vụ", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showLoginRequiredDialog() {
+        AuthUtils.showLoginRequiredDialog(context, "sản phẩm vào giỏ hàng", "thêm");
     }
 
     @Override
     public int getItemCount() {
-        return serviceList.size();
+        return serviceList != null ? serviceList.size() : 0;
     }
 
     public static class ServiceViewHolder extends RecyclerView.ViewHolder {

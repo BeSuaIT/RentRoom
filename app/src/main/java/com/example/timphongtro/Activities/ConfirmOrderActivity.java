@@ -3,6 +3,7 @@ package com.example.timphongtro.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -24,6 +25,7 @@ import com.example.timphongtro.Models.Cart;
 import com.example.timphongtro.Models.City;
 import com.example.timphongtro.Models.District;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -32,16 +34,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONObject;
 
-import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import vn.zalopay.sdk.Environment;
@@ -79,20 +77,29 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
         totalPriceValue = getIntent().getLongExtra("totalPrice", 0);
 
-        String cartJson = getIntent().getStringExtra("cartList");
-        if (cartJson != null) {
-            Gson gson = new Gson();
-            Type type = new TypeToken<ArrayList<Cart>>(){}.getType();
-            cartList = gson.fromJson(cartJson, type);
-        } else {
-            cartList = new ArrayList<>();
-        }
-
+        loadCartDataFromIntent();
         initViews();
         loadUserInfo();
         fetchCityData();
         setupConfirmButton();
         setupPaymentSpinner();
+    }
+
+    private void loadCartDataFromIntent() {
+        String cartJson = getIntent().getStringExtra("cartList");
+        if (!TextUtils.isEmpty(cartJson)) {
+            cartList = GsonUtils.fromJson(cartJson, GsonUtils.getListType(Cart.class));
+            
+            if (cartList == null) {
+                cartList = new ArrayList<>();
+                Toast.makeText(this, "Lỗi: Dữ liệu giỏ hàng không hợp lệ", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        } else {
+            cartList = new ArrayList<>();
+            Toast.makeText(this, "Lỗi: Không có dữ liệu giỏ hàng", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     private void initViews() {
@@ -140,26 +147,34 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         Button btnConfirm = findViewById(R.id.button_confirmOrder);
         btnConfirm.setOnClickListener(v -> {
             if (validateOrder()) {
+                btnConfirm.setEnabled(false);
+                btnConfirm.setText("Đang xử lý...");
+                
                 if (selectedPaymentMethod.equals("zalopay")) {
-                    executeZaloPayPayment();
+                    executeZaloPayPayment(btnConfirm);
                 } else {
-                    createOrder(0);
+                    createOrder(0, btnConfirm);
                 }
             }
         });
     }
 
     private boolean validateOrder() {
-        String selectedCity = spinnerCity.getSelectedItem().toString();
-        String selectedDistrict = spinnerDistrict.getSelectedItem().toString();
-        String detailAddress = ((EditText) findViewById(R.id.editText_address)).getText().toString().trim();
-
-        if (selectedCity.isEmpty() || selectedDistrict.isEmpty()) {
+        if (spinnerCity.getSelectedItem() == null || spinnerDistrict.getSelectedItem() == null) {
             Toast.makeText(this, "Vui lòng chọn địa chỉ giao hàng", Toast.LENGTH_SHORT).show();
             return false;
         }
 
-        if (detailAddress.isEmpty()) {
+        String selectedCity = spinnerCity.getSelectedItem().toString();
+        String selectedDistrict = spinnerDistrict.getSelectedItem().toString();
+        String detailAddress = ((EditText) findViewById(R.id.editText_address)).getText().toString().trim();
+
+        if (TextUtils.isEmpty(selectedCity) || TextUtils.isEmpty(selectedDistrict)) {
+            Toast.makeText(this, "Vui lòng chọn địa chỉ giao hàng", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (TextUtils.isEmpty(detailAddress)) {
             Toast.makeText(this, "Vui lòng nhập địa chỉ chi tiết", Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -172,7 +187,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         return true;
     }
 
-    private void executeZaloPayPayment() {
+    private void executeZaloPayPayment(Button btnConfirm) {
         CreateOrder orderApi = new CreateOrder();
 
         try {
@@ -184,27 +199,45 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                 ZaloPaySDK.getInstance().payOrder(ConfirmOrderActivity.this, token, "demozpdk://app", new PayOrderListener() {
                     @Override
                     public void onPaymentSucceeded(String s, String s1, String s2) {
-                        createOrder(1);
+                        createOrder(1, btnConfirm);
                     }
 
                     @Override
                     public void onPaymentCanceled(String s, String s1) {
+                        btnConfirm.setEnabled(true);
+                        btnConfirm.setText("Xác nhận đặt hàng");
+                        Toast.makeText(ConfirmOrderActivity.this, "Thanh toán đã bị hủy", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onPaymentError(ZaloPayError zaloPayError, String s, String s1) {
+                        btnConfirm.setEnabled(true);
+                        btnConfirm.setText("Xác nhận đặt hàng");
+                        Toast.makeText(ConfirmOrderActivity.this, "Lỗi thanh toán: " + zaloPayError.toString(), Toast.LENGTH_SHORT).show();
                     }
                 });
+            } else {
+                btnConfirm.setEnabled(true);
+                btnConfirm.setText("Xác nhận đặt hàng");
+                Toast.makeText(this, "Lỗi tạo đơn thanh toán", Toast.LENGTH_SHORT).show();
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            btnConfirm.setEnabled(true);
+            btnConfirm.setText("Xác nhận đặt hàng");
+            Toast.makeText(this, "Lỗi xử lý thanh toán: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void createOrder(int status) {
+    private void createOrder(int status, Button btnConfirm) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
+        if (user == null) {
+            btnConfirm.setEnabled(true);
+            btnConfirm.setText("Xác nhận đặt hàng");
+            Toast.makeText(this, "Lỗi: Người dùng chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         EditText editTextAddress = findViewById(R.id.editText_address);
         String detailAddress = editTextAddress.getText().toString().trim();
@@ -219,6 +252,13 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                 final int[] successCount = {0};
                 final int totalOrders = (int) cartSnapshot.getChildrenCount();
 
+                if (totalOrders == 0) {
+                    btnConfirm.setEnabled(true);
+                    btnConfirm.setText("Xác nhận đặt hàng");
+                    Toast.makeText(ConfirmOrderActivity.this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
                     String sellerId = sellerSnapshot.getKey();
                     if (sellerId == null) continue;
@@ -230,7 +270,6 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                     ordersRef.child(orderId).setValue(orderData)
                         .addOnSuccessListener(aVoid -> {
                             successCount[0]++;
-                            // Chỉ show notification và finish khi tất cả đơn hàng đã được tạo
                             if (successCount[0] == totalOrders) {
                                 showPaymentNotification(selectedPaymentMethod, true);
                                 cartRef.removeValue();
@@ -238,18 +277,22 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                             }
                         })
                         .addOnFailureListener(e -> {
+                            btnConfirm.setEnabled(true);
+                            btnConfirm.setText("Xác nhận đặt hàng");
                             showPaymentNotification(selectedPaymentMethod, false);
                             Toast.makeText(ConfirmOrderActivity.this, 
-                                "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                "Lỗi tạo đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                btnConfirm.setEnabled(true);
+                btnConfirm.setText("Xác nhận đặt hàng");
                 showPaymentNotification(selectedPaymentMethod, false);
                 Toast.makeText(ConfirmOrderActivity.this, 
-                    "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    "Lỗi truy cập giỏ hàng: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -286,7 +329,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             items.put(serviceId, amount);
 
             for (Cart cartItem : cartList) {
-                if (cartItem.getServiceId().equals(serviceId)) {
+                if (cartItem != null && cartItem.getServiceId().equals(serviceId)) {
                     totalAmount += (long) cartItem.getPrice() * amount;
                     break;
                 }
@@ -321,7 +364,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                 if (snapshot.exists()) {
                     String customerName = snapshot.child("name").getValue(String.class);
                     TextView textViewCustomerName = findViewById(R.id.textView_customerName);
-                    textViewCustomerName.setText(customerName);
+                    textViewCustomerName.setText(customerName != null ? customerName : "Khách hàng");
                 }
             });
         }
@@ -352,13 +395,19 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                 }
             }
             spinnerAdapter.notifyDataSetChanged();
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Lỗi tải danh sách tỉnh thành: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 
     private void updateDistrictList(ArrayList<District> districts) {
         districtNames.clear();
-        for (District district : districts) {
-            districtNames.add(district.getName());
+        if (districts != null) {
+            for (District district : districts) {
+                if (district != null && district.getName() != null) {
+                    districtNames.add(district.getName());
+                }
+            }
         }
         districtAdapter.notifyDataSetChanged();
     }

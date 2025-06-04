@@ -32,7 +32,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
 
@@ -122,13 +121,14 @@ public class MeetingDetailActivity extends AppCompatActivity {
             return;
         }
 
-        try {
-            schedule = new Gson().fromJson(scheduleString, Meeting.class);
+        schedule = GsonUtils.fromJson(scheduleString, Meeting.class);
+        
+        if (schedule != null) {
             updateScheduleUI();
             loadRoomData();
             loadBookerUserData();
-        } catch (Exception e) {
-            showToast("Lỗi: Dữ liệu không hợp lệ");
+        } else {
+            showToast("Lỗi: Dữ liệu lịch hẹn không hợp lệ");
             finish();
         }
     }
@@ -136,7 +136,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private void updateScheduleUI() {
         if (schedule == null) return;
 
-        tvName.setText(schedule.getName());
+        tvName.setText(schedule.getName() != null ? schedule.getName() : "Không có tên");
         tvTime.setText(formatDateTime(schedule.getTimeVisitRoom()));
 
         String note = schedule.getNote();
@@ -245,7 +245,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
                 break;
         }
 
-        // ✅ Create rounded background programmatically
+        // Create rounded background
         GradientDrawable background = new GradientDrawable();
         background.setShape(GradientDrawable.RECTANGLE);
         background.setCornerRadius(14f);
@@ -254,7 +254,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         tvStatusIndicator.setBackground(background);
         tvStatusIndicator.setText(statusText);
         
-        // ✅ Update avatar color based on status (only for text avatar)
+        // Update avatar color based on status (only for text avatar)
         if (circleAvatar.getVisibility() == View.VISIBLE) {
             setupAvatarColor(backgroundColor);
         }
@@ -297,10 +297,10 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private void updateRoomUI() {
         if (room == null) return;
 
-        PostTitle.setText(room.getTitle_room());
+        PostTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
         String formattedPrice = decimalFormat.format(room.getPrice_room()) + " đ/tháng";
         RoomCost.setText(formattedPrice);
-        DienTich.setText(room.getArea_room() + "m²");
+        DienTich.setText((room.getArea_room() != null ? room.getArea_room() : "0") + "m²");
         Size.setText(room.getPerson_in_room() + " người");
 
         if (room.getAddress() != null) {
@@ -309,8 +309,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         } else {
             DistrictName.setText("Địa chỉ không xác định");
         }
-        
-        // ✅ Load room image with rounded corners
+
         if (room.getFirstImage() != null && !room.getFirstImage().isEmpty()) {
             RequestOptions requestOptions = new RequestOptions()
                     .transform(new RoundedCorners(24));
@@ -356,7 +355,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         String displayName = ownerUser.getName();
         String avatarText = getFirstLetter(displayName);
         tvprofileDetail.setText(avatarText);
-        textViewNameUser.setText(displayName);
+        textViewNameUser.setText(displayName != null ? displayName : "Chủ phòng");
         
         if (!TextUtils.isEmpty(avatarUrl)) {
             tvprofileDetail.setVisibility(View.GONE);
@@ -397,7 +396,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
                 setupStatusIndicator();
                 bottomActionCard.setVisibility(View.GONE);
 
-                // ✅ Delay before closing
+                // Delay before closing
                 new android.os.Handler().postDelayed(this::finish, 1500);
             })
             .addOnFailureListener(e -> {
@@ -407,11 +406,12 @@ public class MeetingDetailActivity extends AppCompatActivity {
 
     private void navigateToRoomDetail() {
         if (room != null) {
-            try {
+            String roomJson = GsonUtils.toJson(room);
+            if (roomJson != null) {
                 Intent intent = new Intent(this, PostDetailActivity.class);
-                intent.putExtra("DataRoom", new Gson().toJson(room));
+                intent.putExtra("DataRoom", roomJson);
                 startActivity(intent);
-            } catch (Exception e) {
+            } else {
                 showToast("Lỗi mở chi tiết phòng");
             }
         } else {
@@ -433,7 +433,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
             }
         }
         
-        // ✅ Fallback nếu chưa load owner user
+        // Fallback nếu chưa load owner user
         if (room != null) {
             Intent intent = new Intent(this, UserActivity.class);
             intent.putExtra("id_own_post", room.getId_own_post());
@@ -459,7 +459,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
             }
         }
         
-        // ✅ Fallback nếu chưa load booker user
+        // Fallback nếu chưa load booker user
         if (schedule != null) {
             Intent intent = new Intent(this, UserActivity.class);
             intent.putExtra("id_own_post", schedule.getIdFrom());

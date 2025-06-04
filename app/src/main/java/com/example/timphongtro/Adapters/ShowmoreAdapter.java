@@ -17,6 +17,7 @@ import com.example.timphongtro.Activities.PostDetailActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_room,parent,false);
+        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_room, parent, false);
         return new MyViewHolder(v);
     }
 
@@ -41,24 +42,48 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        
         Room room = list.get(position);
-        holder.title_room.setText(room.getTitle_room());
+
+        holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
         holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
         holder.area_room.setText(String.valueOf(room.getArea_room()));
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
-        Glide.with(context).load(room.getFirstImage()).centerCrop().into(holder.img_post);
+        String firstImage = room.getFirstImage();
+        if (firstImage != null && !firstImage.isEmpty()) {
+            Glide.with(context)
+                    .load(firstImage)
+                    .placeholder(R.drawable.loading)
+                    .error(R.drawable.img_no_image)
+                    .centerCrop()
+                    .into(holder.img_post);
+        } else {
+            holder.img_post.setImageResource(R.drawable.img_no_image);
+        }
 
         Address address = room.getAddress();
-        holder.city.setText(address.getCity());
-        holder.district.setText(address.getDistrict());
-        holder.detail.setText(address.getDetail());
+        if (address != null) {
+            holder.city.setText(address.getCity() != null ? address.getCity() : "");
+            holder.district.setText(address.getDistrict() != null ? address.getDistrict() : "");
+            holder.detail.setText(address.getDetail() != null ? address.getDetail() : "");
+        } else {
+            holder.city.setText("");
+            holder.district.setText("");
+            holder.detail.setText("Địa chỉ không xác định");
+        }
+
         holder.cardViewRoom.setOnClickListener(v -> {
             Intent detailRoom = new Intent(context, PostDetailActivity.class);
-            detailRoom.putExtra("DataRoom", room.toString());
-            context.startActivity(detailRoom);
-        });
 
+            String roomJson = GsonUtils.toJson(room);
+            if (roomJson != null) {
+                detailRoom.putExtra("DataRoom", roomJson);
+                context.startActivity(detailRoom);
+            } else {
+                android.widget.Toast.makeText(context, "Lỗi mở chi tiết phòng", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -66,11 +91,11 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         return list.size();
     }
 
-    public static class MyViewHolder extends RecyclerView.ViewHolder{
-
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView people_room, price_room, area_room, city, district, detail, title_room;
         ImageView img_post;
         CardView cardViewRoom;
+        
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             title_room = itemView.findViewById(R.id.PostTitle);

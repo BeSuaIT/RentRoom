@@ -15,6 +15,8 @@ import com.example.timphongtro.Adapters.CartAdapter;
 import com.example.timphongtro.Models.Cart;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -22,7 +24,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -45,7 +46,31 @@ public class CartManagementActivity extends AppCompatActivity {
 
         initializeViews();
         initializeData();
-        retrieveCartItems();
+        checkUserAndRetrieveCart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkUserAndRetrieveCart();
+    }
+
+    private void checkUserAndRetrieveCart() {
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            AuthUtils.isUserExists(user, exists -> {
+                if (!exists) {
+                    AuthUtils.clearAllLoginData(this);
+                    AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
+                    return;
+                }
+
+                retrieveCartItems();
+            });
+        } else {
+            AuthUtils.showLoginRequiredDialog(this, "giỏ hàng", "xem");
+        }
     }
 
     private void initializeViews() {
@@ -63,7 +88,6 @@ public class CartManagementActivity extends AppCompatActivity {
         decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
 
-        user = FirebaseAuth.getInstance().getCurrentUser();
         cartList = new ArrayList<>();
         cartAdapter = new CartAdapter(this, cartList);
         rcvcart.setAdapter(cartAdapter);
@@ -83,35 +107,27 @@ public class CartManagementActivity extends AppCompatActivity {
                     public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
                         List<Cart> newCartList = new ArrayList<>();
 
-                        // Lặp qua các sellerId
                         for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
                             String sellerId = sellerSnapshot.getKey();
+                            if (sellerId == null) continue;
 
-                            // Lặp qua các serviceId của mỗi seller
                             for (DataSnapshot serviceSnapshot : sellerSnapshot.getChildren()) {
                                 String serviceId = serviceSnapshot.getKey();
                                 Integer amount = serviceSnapshot.getValue(Integer.class);
 
-                                if (serviceId == null || amount == null) continue;
+                                if (serviceId == null || amount == null || amount <= 0) continue;
 
-                                // Tìm thông tin service từ Services
-                                for (DataSnapshot category : servicesSnapshot.getChildren()) {
-                                    DataSnapshot serviceSnap = category.child(serviceId);
-                                    if (serviceSnap.exists()) {
-                                        Service service = serviceSnap.getValue(Service.class);
-                                        if (service != null) {
-                                            Cart cart = new Cart(
-                                                    serviceId,
-                                                    service.getTitle(),
-                                                    sellerId,
-                                                    amount,
-                                                    service.getPrice(),
-                                                    service.getImages()
-                                            );
-                                            newCartList.add(cart);
-                                            break;
-                                        }
-                                    }
+                                Service foundService = findServiceInSnapshot(servicesSnapshot, serviceId);
+                                if (foundService != null) {
+                                    Cart cart = new Cart(
+                                            serviceId,
+                                            foundService.getTitle(),
+                                            sellerId,
+                                            amount,
+                                            foundService.getPrice(),
+                                            foundService.getImages()
+                                    );
+                                    newCartList.add(cart);
                                 }
                             }
                         }
@@ -127,16 +143,26 @@ public class CartManagementActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(CartManagementActivity.this, "Lỗi tải giỏ hàng", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(CartManagementActivity.this, "Lỗi tải giỏ hàng: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(CartManagementActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CartManagementActivity.this, "Lỗi tải dữ liệu dịch vụ: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private Service findServiceInSnapshot(DataSnapshot servicesSnapshot, String serviceId) {
+        for (DataSnapshot category : servicesSnapshot.getChildren()) {
+            DataSnapshot serviceSnap = category.child(serviceId);
+            if (serviceSnap.exists()) {
+                return serviceSnap.getValue(Service.class);
+            }
+        }
+        return null;
     }
 
     private void updateRecyclerViewVisibility() {
@@ -144,6 +170,7 @@ public class CartManagementActivity extends AppCompatActivity {
         if (cartList.isEmpty()) {
             rcvcart.setVisibility(View.GONE);
             noHistoryView.setVisibility(View.VISIBLE);
+            textView_total.setText("0 VNĐ");
         } else {
             rcvcart.setVisibility(View.VISIBLE);
             noHistoryView.setVisibility(View.GONE);
@@ -153,23 +180,32 @@ public class CartManagementActivity extends AppCompatActivity {
     private void calculateTotalPrice() {
         totalPriceValue = 0;
         for (Cart cart : cartList) {
-            totalPriceValue += (long) cart.getPrice() * cart.getAmount();
+            if (cart != null) {
+                totalPriceValue += (long) cart.getPrice() * cart.getAmount();
+            }
         }
         textView_total.setText(decimalFormat.format(totalPriceValue) + " VNĐ");
     }
 
     private void openConfirmOrder() {
+        if (user == null) {
+            AuthUtils.showLoginRequiredDialog(this, "đặt hàng", "có thể");
+            return;
+        }
+
         if (cartList.isEmpty()) {
             Toast.makeText(this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Gson gson = new Gson();
-        String cartJson = gson.toJson(cartList);
-
-        Intent intent = new Intent(this, ConfirmOrderActivity.class);
-        intent.putExtra("cartList", cartJson);
-        intent.putExtra("totalPrice", totalPriceValue);
-        startActivity(intent);
+        String cartJson = GsonUtils.toJson(cartList);
+        if (cartJson != null) {
+            Intent intent = new Intent(this, ConfirmOrderActivity.class);
+            intent.putExtra("cartList", cartJson);
+            intent.putExtra("totalPrice", totalPriceValue);
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Lỗi xử lý dữ liệu giỏ hàng", Toast.LENGTH_SHORT).show();
+        }
     }
 }

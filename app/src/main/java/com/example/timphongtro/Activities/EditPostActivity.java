@@ -41,6 +41,7 @@ import com.example.timphongtro.Models.Utility;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.Furniture;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -51,7 +52,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -93,13 +93,7 @@ public class EditPostActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_post);
 
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            String roomString = bundle.getString("DataRoom");
-            Gson gson = new Gson();
-            roomData = gson.fromJson(roomString, Room.class);
-        }
-
+        loadRoomDataFromIntent();
         initializeFirebase();
         initializeViews();
         setupActivityResultLaunchers();
@@ -107,6 +101,30 @@ public class EditPostActivity extends AppCompatActivity {
 
         if (roomData != null) {
             populateDataFromRoom();
+        } else {
+            Toast.makeText(this, "Lỗi: Không có dữ liệu phòng để chỉnh sửa", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+
+    private void loadRoomDataFromIntent() {
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
+            String roomString = bundle.getString("DataRoom");
+            if (roomString != null) {
+                roomData = GsonUtils.fromJson(roomString, Room.class);
+                
+                if (roomData == null) {
+                    Toast.makeText(this, "Lỗi: Dữ liệu phòng không hợp lệ", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            } else {
+                Toast.makeText(this, "Lỗi: Không có dữ liệu phòng", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        } else {
+            Toast.makeText(this, "Lỗi: Thiếu dữ liệu", Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
@@ -185,34 +203,50 @@ public class EditPostActivity extends AppCompatActivity {
     }
 
     private void populateDataFromRoom() {
-        edtTitleRoom.setText(roomData.getTitle_room());
+        if (roomData == null) return;
+
+        edtTitleRoom.setText(roomData.getTitle_room() != null ? roomData.getTitle_room() : "");
         edtPrice.setText(String.valueOf(roomData.getPrice_room()));
         edtDeposit.setText(String.valueOf(roomData.getDeposit_room()));
-        edtArea.setText(roomData.getArea_room());
-        edtPhone.setText(roomData.getPhone());
+        edtArea.setText(roomData.getArea_room() != null ? roomData.getArea_room() : "0");
+        edtPhone.setText(roomData.getPhone() != null ? roomData.getPhone() : "");
         edtFloor.setText(String.valueOf(roomData.getFloor()));
         edtPerson.setText(String.valueOf(roomData.getPerson_in_room()));
-        edtDescriptionRoom.setText(roomData.getDescription_room());
+        edtDescriptionRoom.setText(roomData.getDescription_room() != null ? roomData.getDescription_room() : "");
         edtPark.setText(String.valueOf(roomData.getPark_slot()));
         edtElectric.setText(String.valueOf(roomData.getPrice_electric()));
         edtWater.setText(String.valueOf(roomData.getPrice_water()));
         edtInternet.setText(String.valueOf(roomData.getPrice_internet()));
 
         address = roomData.getAddress();
-        edtAddress.setText(address.getDetail());
+        if (address != null && address.getDetail() != null) {
+            edtAddress.setText(address.getDetail());
+        } else {
+            edtAddress.setText("");
+        }
 
         String gender = roomData.getGender_room();
-        genderCheckboxes[0].setChecked(gender.contains("Nam"));
-        genderCheckboxes[1].setChecked(gender.contains("Nữ"));
+        if (gender != null) {
+            genderCheckboxes[0].setChecked(gender.contains("Nam"));
+            genderCheckboxes[1].setChecked(gender.contains("Nữ"));
+        }
 
-        radioGroupType.check("Chung cư Mini".equals(roomData.getType_room()) ? R.id.radiobtnChungCu : R.id.radiobtnTro);
+        String roomType = roomData.getType_room();
+        if ("Chung cư Mini".equals(roomType)) {
+            radioGroupType.check(R.id.radiobtnChungCu);
+        } else {
+            radioGroupType.check(R.id.radiobtnTro);
+        }
+        
         radioGroupState.check(roomData.getStatus_room() == 1 ? R.id.radiobtnUnavailable : R.id.radiobtnAvailable);
 
-        if (roomData.getImages() != null) {
+        if (roomData.getImages() != null && !roomData.getImages().isEmpty()) {
             uploadedImageUrls = new ArrayList<>(roomData.getImages());
             selectedImages.clear();
             for (String imageUrl : uploadedImageUrls) {
-                selectedImages.add(Uri.parse(imageUrl));
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    selectedImages.add(Uri.parse(imageUrl));
+                }
             }
             imageAdapter.notifyDataSetChanged();
         }
@@ -249,7 +283,7 @@ public class EditPostActivity extends AppCompatActivity {
                 cityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerCity.setAdapter(cityAdapter);
 
-                if (roomData != null && roomData.getAddress() != null) {
+                if (roomData != null && roomData.getAddress() != null && roomData.getAddress().getCity() != null) {
                     int cityPosition = cities.indexOf(roomData.getAddress().getCity());
                     if (cityPosition != -1) {
                         spinnerCity.setSelection(cityPosition);
@@ -259,9 +293,13 @@ public class EditPostActivity extends AppCompatActivity {
                 spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        String selectedCityName = cities.get(position);
-                        String selectedCityKey = cityKeyMap.get(selectedCityName);
-                        loadDistrictsForCity(selectedCityKey);
+                        if (position >= 0 && position < cities.size()) {
+                            String selectedCityName = cities.get(position);
+                            String selectedCityKey = cityKeyMap.get(selectedCityName);
+                            if (selectedCityKey != null) {
+                                loadDistrictsForCity(selectedCityKey);
+                            }
+                        }
                     }
 
                     @Override
@@ -272,12 +310,14 @@ public class EditPostActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(EditPostActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditPostActivity.this, "Lỗi tải danh sách tỉnh thành", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void loadDistrictsForCity(String cityKey) {
+        if (cityKey == null) return;
+        
         DatabaseReference districtRef = FirebaseDatabase.getInstance().getReference("Cities")
                 .child(cityKey)
                 .child("Districts");
@@ -296,11 +336,18 @@ public class EditPostActivity extends AppCompatActivity {
                 ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(EditPostActivity.this, android.R.layout.simple_spinner_item, districts);
                 districtAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerDistrict.setAdapter(districtAdapter);
+
+                if (roomData != null && roomData.getAddress() != null && roomData.getAddress().getDistrict() != null) {
+                    int districtPosition = districts.indexOf(roomData.getAddress().getDistrict());
+                    if (districtPosition != -1) {
+                        spinnerDistrict.setSelection(districtPosition);
+                    }
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(EditPostActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditPostActivity.this, "Lỗi tải danh sách quận huyện", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -312,28 +359,30 @@ public class EditPostActivity extends AppCompatActivity {
 
         if (utilities != null) {
             for (Utility utility : utilities) {
-                switch (utility.getId()) {
-                    case "checkboxtoilet":
-                        utilityCheckboxes[0].setChecked(true);
-                        break;
-                    case "checkboxfloor":
-                        utilityCheckboxes[1].setChecked(true);
-                        break;
-                    case "checkbox_time_flex":
-                        utilityCheckboxes[2].setChecked(true);
-                        break;
-                    case "checkboxfingerprint":
-                        utilityCheckboxes[3].setChecked(true);
-                        break;
-                    case "checkboxbacony":
-                        utilityCheckboxes[4].setChecked(true);
-                        break;
-                    case "checkboxpet":
-                        utilityCheckboxes[5].setChecked(true);
-                        break;
-                    case "checkbox_w_owner":
-                        utilityCheckboxes[6].setChecked(true);
-                        break;
+                if (utility != null && utility.getId() != null) {
+                    switch (utility.getId()) {
+                        case "checkboxtoilet":
+                            utilityCheckboxes[0].setChecked(true);
+                            break;
+                        case "checkboxfloor":
+                            utilityCheckboxes[1].setChecked(true);
+                            break;
+                        case "checkbox_time_flex":
+                            utilityCheckboxes[2].setChecked(true);
+                            break;
+                        case "checkboxfingerprint":
+                            utilityCheckboxes[3].setChecked(true);
+                            break;
+                        case "checkboxbacony":
+                            utilityCheckboxes[4].setChecked(true);
+                            break;
+                        case "checkboxpet":
+                            utilityCheckboxes[5].setChecked(true);
+                            break;
+                        case "checkbox_w_owner":
+                            utilityCheckboxes[6].setChecked(true);
+                            break;
+                    }
                 }
             }
         }
@@ -346,31 +395,33 @@ public class EditPostActivity extends AppCompatActivity {
 
         if (furnitureList != null) {
             for (Furniture furniture : furnitureList) {
-                switch (furniture.getId()) {
-                    case "checkbox_air_condition":
-                        furnitureCheckboxes[0].setChecked(true);
-                        break;
-                    case "checkbox_heater":
-                        furnitureCheckboxes[1].setChecked(true);
-                        break;
-                    case "checkbox_curtain":
-                        furnitureCheckboxes[2].setChecked(true);
-                        break;
-                    case "checkboxfridge":
-                        furnitureCheckboxes[3].setChecked(true);
-                        break;
-                    case "checkboxbed":
-                        furnitureCheckboxes[4].setChecked(true);
-                        break;
-                    case "checkboxwardrobe":
-                        furnitureCheckboxes[5].setChecked(true);
-                        break;
-                    case "checkbox_washing_machine":
-                        furnitureCheckboxes[6].setChecked(true);
-                        break;
-                    case "checkboxsofa":
-                        furnitureCheckboxes[7].setChecked(true);
-                        break;
+                if (furniture != null && furniture.getId() != null) {
+                    switch (furniture.getId()) {
+                        case "checkbox_air_condition":
+                            furnitureCheckboxes[0].setChecked(true);
+                            break;
+                        case "checkbox_heater":
+                            furnitureCheckboxes[1].setChecked(true);
+                            break;
+                        case "checkbox_curtain":
+                            furnitureCheckboxes[2].setChecked(true);
+                            break;
+                        case "checkboxfridge":
+                            furnitureCheckboxes[3].setChecked(true);
+                            break;
+                        case "checkboxbed":
+                            furnitureCheckboxes[4].setChecked(true);
+                            break;
+                        case "checkboxwardrobe":
+                            furnitureCheckboxes[5].setChecked(true);
+                            break;
+                        case "checkbox_washing_machine":
+                            furnitureCheckboxes[6].setChecked(true);
+                            break;
+                        case "checkboxsofa":
+                            furnitureCheckboxes[7].setChecked(true);
+                            break;
+                    }
                 }
             }
         }
@@ -465,7 +516,7 @@ public class EditPostActivity extends AppCompatActivity {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 cameraLauncher.launch(cameraIntent);
             } catch (Exception e) {
-                Toast.makeText(this, "Error launching camera", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Lỗi mở camera", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -490,12 +541,16 @@ public class EditPostActivity extends AppCompatActivity {
                                 for (int i = 0; i < count; i++) {
                                     Uri imageUri = data.getClipData().getItemAt(i).getUri();
                                     Uri cachedUri = copyImageToCache(imageUri);
-                                    selectedImages.add(cachedUri);
+                                    if (cachedUri != null) {
+                                        selectedImages.add(cachedUri);
+                                    }
                                 }
                             } else if (data.getData() != null) {
                                 Uri imageUri = data.getData();
                                 Uri cachedUri = copyImageToCache(imageUri);
-                                selectedImages.add(cachedUri);
+                                if (cachedUri != null) {
+                                    selectedImages.add(cachedUri);
+                                }
                             }
                             imageAdapter.notifyDataSetChanged();
                         }
@@ -506,12 +561,18 @@ public class EditPostActivity extends AppCompatActivity {
         cameraLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == RESULT_OK) {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Bundle extras = result.getData().getExtras();
-                        Bitmap imageBitmap = (Bitmap) extras.get("data");
-                        Uri imageUri = saveImageToCache(imageBitmap);
-                        selectedImages.add(imageUri);
-                        imageAdapter.notifyDataSetChanged();
+                        if (extras != null) {
+                            Bitmap imageBitmap = (Bitmap) extras.get("data");
+                            if (imageBitmap != null) {
+                                Uri imageUri = saveImageToCache(imageBitmap);
+                                if (imageUri != null) {
+                                    selectedImages.add(imageUri);
+                                    imageAdapter.notifyDataSetChanged();
+                                }
+                            }
+                        }
                         dialog.dismiss();
                     }
                 });
@@ -570,6 +631,11 @@ public class EditPostActivity extends AppCompatActivity {
                 if (!validateInputs()) return;
                 Room updatedRoom = createRoomObject();
 
+                if (updatedRoom == null) {
+                    Toast.makeText(this, "Lỗi tạo dữ liệu phòng", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (!selectedImages.isEmpty()) {
                     AlertDialog progressDialog = new AlertDialog.Builder(this)
                             .setView(R.layout.progress_layout)
@@ -596,7 +662,9 @@ public class EditPostActivity extends AppCompatActivity {
                 }
             }
 
-            if (selectedImages.isEmpty()) {
+            int imagesToUpload = (int) selectedImages.stream().filter(imageUri -> !imageUri.toString().startsWith("https://")).count();
+
+            if (imagesToUpload == 0) {
                 updatedRoom.setImages(newUploadedUrls);
                 uploadRoomToFirebase(updatedRoom);
                 progressDialog.dismiss();
@@ -604,18 +672,11 @@ public class EditPostActivity extends AppCompatActivity {
             }
 
             uploadCount = 0;
-            final int totalImages = selectedImages.size();
             final boolean[] hasError = {false};
 
             for (Uri imageUri : selectedImages) {
                 if (imageUri.toString().startsWith("https://")) {
-                    uploadCount++;
-                    if (uploadCount == totalImages) {
-                        updatedRoom.setImages(newUploadedUrls);
-                        uploadRoomToFirebase(updatedRoom);
-                        progressDialog.dismiss();
-                    }
-                    continue;
+                    continue; // Skip already uploaded images
                 }
 
                 String fileName = "room_" + System.currentTimeMillis() + "_" + uploadCount + ".jpg";
@@ -627,7 +688,7 @@ public class EditPostActivity extends AppCompatActivity {
                                 newUploadedUrls.add(uri.toString());
                                 uploadCount++;
 
-                                if (uploadCount == totalImages && !hasError[0]) {
+                                if (uploadCount == imagesToUpload && !hasError[0]) {
                                     updatedRoom.setImages(newUploadedUrls);
                                     uploadRoomToFirebase(updatedRoom);
                                     progressDialog.dismiss();
@@ -645,6 +706,7 @@ public class EditPostActivity extends AppCompatActivity {
                         });
             }
 
+            // Delete old images that are no longer used
             if (roomData.getImages() != null) {
                 for (String oldImageUrl : roomData.getImages()) {
                     if (!newUploadedUrls.contains(oldImageUrl)) {
@@ -658,6 +720,7 @@ public class EditPostActivity extends AppCompatActivity {
                             StorageReference oldImageRef = storage.getReference().child(filePath);
                             oldImageRef.delete();
                         } catch (Exception ignored) {
+                            // Ignore delete errors
                         }
                     }
                 }
@@ -713,71 +776,109 @@ public class EditPostActivity extends AppCompatActivity {
     }
 
     private Room createRoomObject() {
-        String id_room = roomData.getId_room();
-        String id_own_post = roomData.getId_own_post();
+        try {
+            if (roomData == null) return null;
 
-        String city = spinnerCity.getSelectedItem().toString();
-        String district = spinnerDistrict.getSelectedItem().toString();
-        String detail = edtAddress.getText().toString();
-        String address_combine = detail + ", " + district + ", " + city;
+            String id_room = roomData.getId_room();
+            String id_own_post = roomData.getId_own_post();
 
-        int status_room = radioGroupState.getCheckedRadioButtonId() == R.id.radiobtnUnavailable ? 1 : 0;
+            String city = "";
+            String district = "";
+            
+            if (spinnerCity.getSelectedItem() != null) {
+                city = spinnerCity.getSelectedItem().toString();
+            }
+            
+            if (spinnerDistrict.getSelectedItem() != null) {
+                district = spinnerDistrict.getSelectedItem().toString();
+            }
+            
+            String detail = edtAddress.getText().toString();
+            String address_combine = detail + ", " + district + ", " + city;
 
-        if ("".equals(detail)) {
-            address = new Address(city, district);
-        } else {
-            address = new Address(city, district, detail, address_combine);
+            int status_room = radioGroupState.getCheckedRadioButtonId() == R.id.radiobtnUnavailable ? 1 : 0;
+
+            if ("".equals(detail)) {
+                address = new Address(city, district);
+            } else {
+                address = new Address(city, district, detail, address_combine);
+            }
+
+            String gender_room;
+            if (genderCheckboxes[0].isChecked() && genderCheckboxes[1].isChecked()) {
+                gender_room = "Nam/Nữ";
+            } else if (genderCheckboxes[0].isChecked()) {
+                gender_room = "Nam";
+            } else {
+                gender_room = "Nữ";
+            }
+
+            String type_room = radioGroupType.getCheckedRadioButtonId() == R.id.radiobtnChungCu ? "Chung cư Mini" : "Trọ";
+
+            handleDataFurniture();
+            handleDataExtensions();
+
+            ArrayList<String> images;
+            if (!uploadedImageUrls.isEmpty()) {
+                images = new ArrayList<>(uploadedImageUrls);
+            } else if (roomData.getImages() != null) {
+                images = new ArrayList<>(roomData.getImages());
+            } else {
+                images = new ArrayList<>();
+            }
+
+            long price = 0, deposit = 0, electric = 0, water = 0, internet = 0;
+            int park = 0, person = 0, floor = 0;
+            
+            try {
+                price = Long.parseLong(edtPrice.getText().toString());
+                deposit = Long.parseLong(edtDeposit.getText().toString());
+                electric = Long.parseLong(edtElectric.getText().toString());
+                water = Long.parseLong(edtWater.getText().toString());
+                internet = Long.parseLong(edtInternet.getText().toString());
+                park = Integer.parseInt(edtPark.getText().toString());
+                person = Integer.parseInt(edtPerson.getText().toString());
+                floor = Integer.parseInt(edtFloor.getText().toString());
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Lỗi: Vui lòng nhập số hợp lệ", Toast.LENGTH_SHORT).show();
+                return null;
+            }
+
+            return new Room(
+                    id_own_post,
+                    id_room,
+                    edtTitleRoom.getText().toString(),
+                    price,
+                    address,
+                    edtArea.getText().toString(),
+                    deposit,
+                    edtDescriptionRoom.getText().toString(),
+                    gender_room,
+                    park,
+                    person,
+                    status_room,
+                    type_room,
+                    edtPhone.getText().toString(),
+                    floor,
+                    images,
+                    furnitures,
+                    extensions_room,
+                    electric,
+                    water,
+                    internet
+            );
+        } catch (Exception e) {
+            Toast.makeText(this, "Lỗi tạo dữ liệu phòng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            return null;
         }
-
-        String gender_room;
-        if (genderCheckboxes[0].isChecked() && genderCheckboxes[1].isChecked()) {
-            gender_room = "Nam/Nữ";
-        } else if (genderCheckboxes[0].isChecked()) {
-            gender_room = "Nam";
-        } else {
-            gender_room = "Nữ";
-        }
-
-        String type_room = radioGroupType.getCheckedRadioButtonId() == R.id.radiobtnChungCu ? "Chung cư Mini" : "Trọ";
-
-        handleDataFurniture();
-        handleDataExtensions();
-
-        ArrayList<String> images;
-        if (!uploadedImageUrls.isEmpty()) {
-            images = new ArrayList<>(uploadedImageUrls);
-        } else if (roomData.getImages() != null) {
-            images = new ArrayList<>(roomData.getImages());
-        } else {
-            images = new ArrayList<>();
-        }
-
-        return new Room(
-                id_own_post,
-                id_room,
-                edtTitleRoom.getText().toString(),
-                Long.parseLong(edtPrice.getText().toString()),
-                address,
-                edtArea.getText().toString(),
-                Long.parseLong(edtDeposit.getText().toString()),
-                edtDescriptionRoom.getText().toString(),
-                gender_room,
-                Integer.parseInt(edtPark.getText().toString()),
-                Integer.parseInt(edtPerson.getText().toString()),
-                status_room,
-                type_room,
-                edtPhone.getText().toString(),
-                Integer.parseInt(edtFloor.getText().toString()),
-                images,
-                furnitures,
-                extensions_room,
-                Long.parseLong(edtElectric.getText().toString()),
-                Long.parseLong(edtWater.getText().toString()),
-                Long.parseLong(edtInternet.getText().toString())
-        );
     }
 
     private void uploadRoomToFirebase(Room room) {
+        if (room == null) {
+            Toast.makeText(this, "Lỗi: Dữ liệu phòng không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Posts");
         DatabaseReference roomRef = postsRef.child(room.getId_room());
 
@@ -817,6 +918,15 @@ public class EditPostActivity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(EditPostActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }).addOnFailureListener(e -> {
+            roomRef.setValue(roomMap)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(EditPostActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(updateError -> {
+                        Toast.makeText(EditPostActivity.this, "Cập nhật thất bại: " + updateError.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         });
     }

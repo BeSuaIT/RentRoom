@@ -1,6 +1,5 @@
 package com.example.timphongtro.Models;
 
-import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -85,19 +84,6 @@ public class Service {
         return images;
     }
 
-    public void setImages(Object imagesObj) {
-        if (imagesObj == null) {
-            this.images = new ArrayList<>();
-        } else if (imagesObj instanceof ArrayList) {
-            this.images = (ArrayList<String>) imagesObj;
-        } else if (imagesObj instanceof Map) {
-            Map<String, String> map = (Map<String, String>) imagesObj;
-            this.images = new ArrayList<>(map.values());
-        } else {
-            this.images = new ArrayList<>();
-        }
-    }
-
     public int getPrice() {
         return price;
     }
@@ -114,9 +100,27 @@ public class Service {
         this.amount = amount;
     }
 
-    @Override
-    public String toString() {
-        Gson gson = new Gson();
-        return gson.toJson(this);
+    public void setImages(Object imagesObj) {
+        if (imagesObj == null) {
+            this.images = new ArrayList<>();
+        } else if (imagesObj instanceof ArrayList) {
+            this.images = (ArrayList<String>) imagesObj;
+        } else if (imagesObj instanceof Map) {
+            Map<String, String> map = (Map<String, String>) imagesObj;
+            this.images = new ArrayList<>(map.values());
+        } else {
+            this.images = new ArrayList<>();
+        }
+    }
+
+    public String getFirstImage() {
+        if (images != null && !images.isEmpty()) {
+            return images.get(0);
+        }
+        return null;
+    }
+
+    public boolean hasImages() {
+        return images != null && !images.isEmpty();
     }
 }

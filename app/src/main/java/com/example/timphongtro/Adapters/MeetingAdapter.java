@@ -22,6 +22,7 @@ import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -29,7 +30,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
@@ -63,7 +63,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
         
         if (schedule == null || currentUser == null) return;
 
-        holder.tvName.setText(schedule.getName());
+        holder.tvName.setText(schedule.getName() != null ? schedule.getName() : "Không có tên");
         holder.tvTime.setText(formatDateTime(schedule.getTimeVisitRoom()));
 
         loadUserAvatar(holder, schedule.getIdFrom(), schedule.getName());
@@ -127,13 +127,14 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                     .load(avatarUrl)
                     .placeholder(R.drawable.avatar)
                     .error(R.drawable.avatar)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL) // Only use Glide's built-in cache
                     .into(holder.profileImageView);
         } else {
             holder.profileImageView.setVisibility(View.GONE);
             holder.circleImageView.setVisibility(View.VISIBLE);
             holder.circleImageView.setText(getFirstLetter(displayName));
 
+            // ✅ Setup avatar background color
             setupAvatarColor(holder.circleImageView, schedules.get(holder.getAbsoluteAdapterPosition()));
         }
     }
@@ -178,7 +179,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     }
 
     private void updateRoomUI(ViewHolder holder, Room room) {
-        holder.tvRoomTitle.setText(room.getTitle_room());
+        holder.tvRoomTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
         if (room.getAddress() != null) {
             String address = room.getAddress().getAddress_combine() + ", " +
                            room.getAddress().getDistrict() + ", " +
@@ -334,7 +335,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                 .setValue(String.valueOf(status))
                 .addOnSuccessListener(unused -> {
                     String message = status == STATUS_APPROVED ? 
-                            "✅ Đã xác nhận lịch hẹn" : "Đã từ chối lịch hẹn";
+                            "Đã xác nhận lịch hẹn" : "Đã từ chối lịch hẹn";
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -344,13 +345,18 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
 
     private void navigateToDetail(Meeting schedule, String currentUserId) {
         Intent intent = new Intent(context, MeetingDetailActivity.class);
-        
-        intent.putExtra("scheduleData", new Gson().toJson(schedule));
-        
-        boolean showButtons = shouldShowConfirmButtons(schedule, currentUserId);
-        intent.putExtra("showbtn", showButtons ? 1 : 0);
-        
-        context.startActivity(intent);
+
+        String scheduleJson = GsonUtils.toJson(schedule);
+        if (scheduleJson != null) {
+            intent.putExtra("scheduleData", scheduleJson);
+            
+            boolean showButtons = shouldShowConfirmButtons(schedule, currentUserId);
+            intent.putExtra("showbtn", showButtons ? 1 : 0);
+            
+            context.startActivity(intent);
+        } else {
+            Toast.makeText(context, "Lỗi mở chi tiết lịch hẹn", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

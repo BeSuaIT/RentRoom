@@ -1,7 +1,5 @@
 package com.example.timphongtro.Models;
 
-import com.google.gson.Gson;
-
 import java.util.ArrayList;
 
 public class Room {
@@ -230,11 +228,5 @@ public class Room {
 
     public void setLoveCount(int loveCount) {
         this.loveCount = loveCount;
-    }
-
-    @Override
-    public String toString() {
-        Gson gson = new Gson();
-        return gson.toJson(this);
     }
 }

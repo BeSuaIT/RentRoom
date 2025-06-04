@@ -46,6 +46,7 @@ import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -57,13 +58,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -177,11 +176,9 @@ public class PostDetailActivity extends AppCompatActivity {
         scheduleVisitButton.setOnClickListener(v -> showBottomDialog());
         imageViewLove.setOnClickListener(v -> handleLoveButtonClick());
         followButton.setOnClickListener(v -> handleFollowButtonClick());
-        userPostCard.setOnClickListener(v -> {
-            Intent intent = new Intent(PostDetailActivity.this, UserActivity.class);
-            intent.putExtra("id_own_post", room.getId_own_post());
-            startActivity(intent);
-        });
+
+        userPostCard.setOnClickListener(v -> navigateToUserProfile());
+        
         phoneTextView.setOnClickListener(v -> {
             FirebaseUser realTimeUser = FirebaseAuth.getInstance().getCurrentUser();
             if (realTimeUser == null) {
@@ -199,6 +196,18 @@ public class PostDetailActivity extends AppCompatActivity {
             copyToClipboard(addressCombinedTextView.getText().toString(), "Đã sao chép địa chỉ");
         });
         callButton.setOnClickListener(v -> handleCallButtonClick());
+    }
+
+    private void navigateToUserProfile() {
+        if (room == null) {
+            Toast.makeText(this, "⚠️ Thông tin phòng chưa được tải", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(PostDetailActivity.this, UserActivity.class);
+        intent.putExtra("id_own_post", room.getId_own_post());
+        intent.putExtra("userType", "owner"); // Đánh dấu là chủ phòng
+        startActivity(intent);
     }
 
     private void setupFirebaseReferences() {
@@ -230,50 +239,64 @@ public class PostDetailActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             String roomString = bundle.getString("DataRoom");
-            room = new Gson().fromJson(roomString, Room.class);
-            displayRoomDetails();
-            setupImageSlider();
-            setupAdapters();
-            loadUserPostInfo();
 
-            // Luôn hiển thị lượt yêu thích
-            checkLoveRoom();
+            room = GsonUtils.fromJson(roomString, Room.class);
             
-            // Chỉ check follow status nếu đã đăng nhập
-            if (currentUser != null) {
-                checkFollowStatus();
+            if (room != null) {
+                displayRoomDetails();
+                setupImageSlider();
+                setupAdapters();
+                loadUserPostInfo();
+                checkLoveRoom();
+
+                if (currentUser != null) {
+                    checkFollowStatus();
+                } else {
+                    setFollowButtonToDefault();
+                }
             } else {
-                setFollowButtonToDefault();
+                Toast.makeText(this, "Lỗi tải dữ liệu phòng", Toast.LENGTH_SHORT).show();
+                finish();
             }
+        } else {
+            Toast.makeText(this, "Không có dữ liệu phòng", Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
     private void displayRoomDetails() {
         if (room == null) return;
 
-        roomTypeTextView.setText(room.getType_room());
-        roomTitleTextView.setText(room.getTitle_room());
+        roomTypeTextView.setText(room.getType_room() != null ? room.getType_room() : "Loại phòng");
+        roomTitleTextView.setText(room.getTitle_room() != null ? room.getTitle_room() : "Tiêu đề phòng");
+        
         long price = room.getPrice_room();
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
         String priceNumber = decimalFormat.format(price) + " đ/tháng";
         priceTextView.setText(priceNumber);
-        addressCombinedTextView.setText(room.getAddress().getAddress_combine());
+
+        if (room.getAddress() != null && room.getAddress().getAddress_combine() != null) {
+            addressCombinedTextView.setText(room.getAddress().getAddress_combine());
+        } else {
+            addressCombinedTextView.setText("Địa chỉ không xác định");
+        }
+        
         phoneTextView.setText(maskPhoneNumber(room.getPhone()));
         floorTextView.setText(String.valueOf(room.getFloor()));
-        roomAreaTextView.setText(room.getArea_room());
+        roomAreaTextView.setText(room.getArea_room() != null ? room.getArea_room() : "0");
         depositTextView.setText(decimalFormat.format(room.getDeposit_room()));
         capacityTextView.setText(String.valueOf(room.getPerson_in_room()));
-        genderTextView.setText(room.getGender_room());
+        genderTextView.setText(room.getGender_room() != null ? room.getGender_room() : "Không xác định");
         waterPriceTextView.setText(decimalFormat.format(room.getPrice_water()));
         internetPriceTextView.setText(decimalFormat.format(room.getPrice_internet()));
         electricPriceTextView.setText(decimalFormat.format(room.getPrice_electric()));
-        roomDescriptionTextView.setText(room.getDescription_room());
+        roomDescriptionTextView.setText(room.getDescription_room() != null ? room.getDescription_room() : "Không có mô tả");
     }
 
     private String maskPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.length() < 7) {
-            return phoneNumber;
+            return phoneNumber != null ? phoneNumber : "Chưa cập nhật";
         }
         
         String firstPart = phoneNumber.substring(0, 3);
@@ -308,11 +331,19 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void setupAdapters() {
-        furnitureAdapter = new FurnitureAdapter(this, room.getRoomFurniture());
+        if (room.getRoomFurniture() != null) {
+            furnitureAdapter = new FurnitureAdapter(this, room.getRoomFurniture());
+        } else {
+            furnitureAdapter = new FurnitureAdapter(this, new ArrayList<>());
+        }
         furnitureRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         furnitureRecyclerView.setAdapter(furnitureAdapter);
 
-        utilityAdapter = new UtilityAdapter(this, room.getRoomUtilities());
+        if (room.getRoomUtilities() != null) {
+            utilityAdapter = new UtilityAdapter(this, room.getRoomUtilities());
+        } else {
+            utilityAdapter = new UtilityAdapter(this, new ArrayList<>());
+        }
         utilityRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         utilityRecyclerView.setAdapter(utilityAdapter);
     }
@@ -670,7 +701,7 @@ public class PostDetailActivity extends AppCompatActivity {
             phoneEditText.setError("Vui lòng nhập số điện thoại");
             isValid = false;
         } else {
-            String regex = "^0\\d{9}$"; // Vietnam phone format: 0xxxxxxxxx
+            String regex = "^0\\d{9}$"; // format: 0xxxxxxxxx
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(phone);
             if (!matcher.matches()) {
@@ -730,7 +761,7 @@ public class PostDetailActivity extends AppCompatActivity {
                 if (snapshot.exists()) {
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
-                        userNameTextView.setText(user.getName());
+                        userNameTextView.setText(user.getName() != null ? user.getName() : "Chưa cập nhật");
                         updateUserProfileImage(user);
                     }
                 }
@@ -738,6 +769,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                userNameTextView.setText("Lỗi tải thông tin");
             }
         });
 
@@ -829,7 +861,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
     public static String getFirstLetter(String input) {
         if (input == null || input.isEmpty()) {
-            return "";
+            return "?";
         }
         
         String[] words = input.split(" ");

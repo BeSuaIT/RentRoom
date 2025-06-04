@@ -21,6 +21,7 @@ import com.example.timphongtro.Activities.EditPostActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -47,65 +48,106 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
     public void onBindViewHolder(@NonNull ManageRoomAdapter.MyViewHolder holder, int position) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        
         Room room = list.get(position);
         if (room != null) {
-            holder.title_room.setText(room.getTitle_room());
+            holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
             holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
-            holder.area_room.setText(String.valueOf(room.getArea_room()));
+            holder.area_room.setText(room.getArea_room() != null ? room.getArea_room() : "0");
             holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
-            Glide.with(context).load(room.getFirstImage()).centerCrop().into(holder.img_post);
+
+            String firstImage = room.getFirstImage();
+            if (firstImage != null && !firstImage.isEmpty()) {
+                Glide.with(context)
+                        .load(firstImage)
+                        .placeholder(R.drawable.loading)
+                        .error(R.drawable.img_no_image)
+                        .centerCrop()
+                        .into(holder.img_post);
+            } else {
+                holder.img_post.setImageResource(R.drawable.img_no_image);
+            }
 
             Address address = room.getAddress();
-            holder.city.setText(address.getCity());
-            holder.district.setText(address.getDistrict());
-            holder.detail.setText(address.getDetail());
-            
+            if (address != null) {
+                holder.city.setText(address.getCity() != null ? address.getCity() : "");
+                holder.district.setText(address.getDistrict() != null ? address.getDistrict() : "");
+                holder.detail.setText(address.getDetail() != null ? address.getDetail() : "Không có địa chỉ chi tiết");
+            } else {
+                holder.city.setText("");
+                holder.district.setText("");
+                holder.detail.setText("Địa chỉ không xác định");
+            }
+
             holder.constraintViewDetail.setOnClickListener(v -> {
-                Intent detailRoom = new Intent(context, PostDetailActivity.class);
-                detailRoom.putExtra("DataRoom", room.toString());
-                context.startActivity(detailRoom);
+                String roomJson = GsonUtils.toJson(room);
+                if (roomJson != null) {
+                    Intent detailRoom = new Intent(context, PostDetailActivity.class);
+                    detailRoom.putExtra("DataRoom", roomJson);
+                    context.startActivity(detailRoom);
+                } else {
+                    Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
+                }
             });
 
             holder.textViewDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setTitle("Xác nhận")
-                        .setMessage("Bạn chắc chắn muốn xóa không?")
-                        .setPositiveButton("Có", (dialog, which) -> {
-                            FirebaseDatabase database = FirebaseDatabase.getInstance();
-                            DatabaseReference myRef = database.getReference("Posts/" + room.getId_room());
-                            myRef.removeValue().addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    int currentPosition = holder.getBindingAdapterPosition();
-                                    if (currentPosition != RecyclerView.NO_POSITION) {
-                                        list.remove(currentPosition);
-                                        notifyItemRemoved(currentPosition);
-                                        notifyItemRangeChanged(currentPosition, list.size());
-                                    }
-                                    Toast.makeText(context, "Xóa bài thành công", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(context, "Xóa bài thất bại", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }).setNegativeButton("Không", (dialog, which) -> {
-                        });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
+                builder.setTitle("Xác nhận xóa")
+                        .setMessage("Bạn chắc chắn muốn xóa phòng \"" + room.getTitle_room() + "\" không?\n\nViệc này không thể hoàn tác.")
+                        .setPositiveButton("Xóa", (dialog, which) -> {
+                            deleteRoom(room, holder);
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
             });
 
             holder.textViewEdit.setOnClickListener(v -> {
-                Intent updateRoom = new Intent(context, EditPostActivity.class);
-                updateRoom.putExtra("DataRoom", room.toString());
-                context.startActivity(updateRoom);
+                String roomJson = GsonUtils.toJson(room);
+                if (roomJson != null) {
+                    Intent updateRoom = new Intent(context, EditPostActivity.class);
+                    updateRoom.putExtra("DataRoom", roomJson);
+                    context.startActivity(updateRoom);
+                } else {
+                    Toast.makeText(context, "Lỗi mở chỉnh sửa phòng", Toast.LENGTH_SHORT).show();
+                }
             });
         }
     }
 
+    private void deleteRoom(Room room, MyViewHolder holder) {
+        if (room == null || room.getId_room() == null) {
+            Toast.makeText(context, "Lỗi: Thông tin phòng không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        holder.textViewDelete.setEnabled(false);
+        holder.textViewDelete.setText("Đang xóa...");
+        
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference roomRef = database.getReference("Posts/" + room.getId_room());
+        
+        roomRef.removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    int currentPosition = holder.getBindingAdapterPosition();
+                    if (currentPosition != RecyclerView.NO_POSITION && currentPosition < list.size()) {
+                        list.remove(currentPosition);
+                        notifyItemRemoved(currentPosition);
+                        notifyItemRangeChanged(currentPosition, list.size());
+                    }
+                    
+                    Toast.makeText(context, "Xóa phòng thành công", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    holder.textViewDelete.setEnabled(true);
+                    holder.textViewDelete.setText("Xóa");
+                    
+                    Toast.makeText(context, "Xóa phòng thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
     @Override
     public int getItemCount() {
-        if (list == null) {
-            return 0;
-        }
-        return list.size();
+        return list != null ? list.size() : 0;
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {

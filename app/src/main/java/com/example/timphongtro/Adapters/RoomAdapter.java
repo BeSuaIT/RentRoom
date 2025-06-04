@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -17,6 +18,7 @@ import com.example.timphongtro.Activities.PostDetailActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -54,8 +56,10 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        
         Room room = list.get(position);
-        holder.title_room.setText(room.getTitle_room());
+
+        holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
         holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
         holder.area_room.setText(String.valueOf(room.getArea_room()));
         holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
@@ -68,40 +72,66 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
                         .load(firstImage)
                         .placeholder(R.drawable.loading)
                         .error(R.drawable.img_no_image)
+                        .centerCrop()
                         .into(holder.img_post);
+            } else {
+                holder.img_post.setImageResource(R.drawable.img_no_image);
             }
+        } else {
+            holder.img_post.setImageResource(R.drawable.img_no_image);
         }
 
         Address address = room.getAddress();
-        holder.city.setText(address.getCity());
-        holder.district.setText(address.getDistrict());
-        holder.detail.setText(address.getDetail());
+        if (address != null) {
+            holder.city.setText(address.getCity() != null ? address.getCity() : "");
+            holder.district.setText(address.getDistrict() != null ? address.getDistrict() : "");
+            holder.detail.setText(address.getDetail() != null ? address.getDetail() : "");
+        } else {
+            holder.city.setText("");
+            holder.district.setText("");
+            holder.detail.setText("Địa chỉ không xác định");
+        }
+
         holder.cardViewRoom.setOnClickListener(v -> {
             String userID = "";
-            if(user != null) {
+            if (user != null) {
                 userID = user.getUid();
             }
+            
             Intent detailRoom = new Intent(context, PostDetailActivity.class);
-            detailRoom.putExtra("DataRoom", room.toString());
-            context.startActivity(detailRoom);
-            RecentlyRead(userID,holder);
+
+            String roomJson = GsonUtils.toJson(room);
+            if (roomJson != null) {
+                detailRoom.putExtra("DataRoom", roomJson);
+                context.startActivity(detailRoom);
+
+                RecentlyRead(userID, holder);
+            } else {
+                Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
     private void RecentlyRead(String userID, MyViewHolder holder) {
-        if(user != null) {
-
-            room = list.get(holder.getAdapterPosition());
+        if (user != null) {
+            room = list.get(holder.getAbsoluteAdapterPosition());
             Date timeRead = new Date();
             long timestamp = timeRead.getTime();
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Histories/" + userID);
+            
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance()
+                    .getReference("Histories/" + userID);
+                    
             databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    databaseReference.child(room.getId_room()).setValue(timestamp);
+                    if (room != null && room.getId_room() != null) {
+                        databaseReference.child(room.getId_room()).setValue(timestamp);
+                    }
                 }
+                
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
+                    // Handle error silently
                 }
             });
         }
@@ -113,7 +143,6 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-
         TextView people_room, price_room, area_room, city, district, detail, title_room;
         CardView cardViewRoom;
         ImageView img_post;

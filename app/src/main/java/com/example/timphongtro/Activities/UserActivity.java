@@ -55,9 +55,6 @@ public class UserActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private int totalPosts = 0;
     private int totalLoves = 0;
-
-    // ✅ User data variables
-    private User currentDisplayUser;
     private String userType = "unknown"; // owner, booker, unknown
 
     @Override
@@ -119,82 +116,56 @@ public class UserActivity extends AppCompatActivity {
     private void handleIntentData() {
         Bundle bundle = getIntent().getExtras();
         if (bundle == null) {
-            showToast("❌ Thiếu dữ liệu người dùng");
+            showToast("Thiếu dữ liệu người dùng");
             finish();
             return;
         }
 
-        // ✅ Get user type
         userType = bundle.getString("userType", "unknown");
-        
-        // ✅ Ưu tiên nhận User object từ Gson
+
         String userDataJson = bundle.getString("userData");
         if (userDataJson != null) {
             User user = GsonUtils.fromJson(userDataJson, User.class);
             if (user != null) {
-                currentDisplayUser = user;
                 displayUserData(user);
                 loadUserPosts(getUserId(user));
-                showLoadingSuccess();
                 return;
             } else {
-                showToast("❌ Lỗi parse dữ liệu user");
+                showToast("Lỗi phân tích dữ liệu nguười dùng");
             }
         }
-        
-        // ✅ Fallback: load từ Firebase bằng ID
+
         String userId = bundle.getString("id_own_post");
         boolean isFallback = bundle.getBoolean("fallbackMode", false);
         
         if (userId != null) {
             if (isFallback) {
-                showToast("ℹ️ Đang tải thông tin người dùng...");
+                showToast("Đang tải thông tin người dùng...");
             }
             loadUserDataFromFirebase(userId);
             loadUserPosts(userId);
         } else {
-            showToast("❌ Không tìm thấy thông tin người dùng");
+            showToast("Không tìm thấy thông tin người dùng");
             finish();
         }
     }
 
     private String getUserId(User user) {
-        // ✅ Get user ID from User object
         return user.getUid() != null ? user.getUid() : "";
     }
 
-    private void showLoadingSuccess() {
-        String userTypeText = getUserTypeText();
-        showToast("✅ Đã tải thông tin " + userTypeText);
-    }
-
-    private String getUserTypeText() {
-        switch (userType) {
-            case "owner":
-                return "chủ phòng";
-            case "booker":
-                return "người đặt lịch";
-            default:
-                return "người dùng";
-        }
-    }
-
-    // ✅ Display user data từ Gson (fast loading)
     private void displayUserData(User user) {
         if (user == null) return;
-        
-        // ✅ Update basic info với null safety
+
         username.setText(user.getName() != null ? user.getName() : "Không có tên");
-        
-        // ✅ Handle phone với proper masking
+
         String userPhone = user.getPhone();
         if (userPhone == null || userPhone.trim().isEmpty()) {
             userPhone = "Chưa cập nhật";
         }
         phone.setText(maskPhoneNumber(userPhone));
         originalPhoneNumber = userPhone;
-        
-        // ✅ Handle email với proper masking
+
         String userEmail = user.getEmail();
         if (userEmail == null || userEmail.trim().isEmpty()) {
             userEmail = "Chưa cập nhật";
@@ -202,11 +173,10 @@ public class UserActivity extends AppCompatActivity {
         email.setText(maskEmail(userEmail));
         originalEmail = userEmail;
 
-        // ✅ Update profile image
         updateProfileImage(user);
     }
 
-    // ✅ Load user data từ Firebase (fallback)
+    // Load user data từ Firebase (fallback)
     private void loadUserDataFromFirebase(String userId) {
         database.getReference("Users").child(userId)
             .addValueEventListener(new ValueEventListener() {
@@ -214,18 +184,16 @@ public class UserActivity extends AppCompatActivity {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
-                        currentDisplayUser = user;
                         displayUserData(user);
-                        showToast("✅ Đã tải thông tin từ server");
                     } else {
-                        showToast("❌ Không tìm thấy thông tin người dùng");
+                        showToast("Không tìm thấy thông tin người dùng");
                         finish();
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    showToast("❌ Lỗi tải dữ liệu: " + error.getMessage());
+                    showToast("Lỗi tải dữ liệu: " + error.getMessage());
                     finish();
                 }
             });
@@ -237,11 +205,9 @@ public class UserActivity extends AppCompatActivity {
         String avatarUrl = user.getAvatarUrl();
         String userName = user.getName() != null ? user.getName() : "User";
 
-        // ✅ Set default text avatar first
         profileTextView.setText(getFirstLetter(userName));
         
         if (!TextUtils.isEmpty(avatarUrl)) {
-            // ✅ Initially show text, prepare to load image
             profileImageView.setVisibility(View.INVISIBLE);
             profileTextView.setVisibility(View.VISIBLE);
             
@@ -251,19 +217,17 @@ public class UserActivity extends AppCompatActivity {
                 .error(R.drawable.avatar)
                 .listener(new RequestListener<Drawable>() {
                     @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, 
-                                               Target<Drawable> target, boolean isFirstResource) {
-                        // ✅ Show text avatar on failure
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                                @NonNull Target<Drawable> target, boolean isFirstResource) {
                         profileImageView.setVisibility(View.GONE);
                         profileTextView.setVisibility(View.VISIBLE);
                         return false;
                     }
 
                     @Override
-                    public boolean onResourceReady(Drawable resource, Object model, 
-                                                  Target<Drawable> target, DataSource dataSource, 
-                                                  boolean isFirstResource) {
-                        // ✅ Show image avatar on success
+                    public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model,
+                                                   Target<Drawable> target, @NonNull DataSource dataSource,
+                                                   boolean isFirstResource) {
                         profileTextView.setVisibility(View.GONE);
                         profileImageView.setVisibility(View.VISIBLE);
                         return false;
@@ -271,7 +235,6 @@ public class UserActivity extends AppCompatActivity {
                 })
                 .into(profileImageView);
         } else {
-            // ✅ No avatar URL, show text avatar
             profileImageView.setVisibility(View.GONE);
             profileTextView.setVisibility(View.VISIBLE);
         }
@@ -299,19 +262,19 @@ public class UserActivity extends AppCompatActivity {
 
     private void copyToClipboard(String label, String content) {
         if (content == null || content.equals("Chưa cập nhật")) {
-            showToast("⚠️ Thông tin " + label.toLowerCase() + " chưa được cập nhật");
+            showToast("Thông tin " + label.toLowerCase() + " chưa được cập nhật");
             return;
         }
         
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(label, content);
         clipboard.setPrimaryClip(clip);
-        showToast("✅ Đã sao chép " + label.toLowerCase());
+        showToast("Đã sao chép " + label.toLowerCase());
     }
 
     private void loadUserPosts(String userId) {
         if (userId == null || userId.trim().isEmpty()) {
-            showToast("⚠️ Không thể tải bài đăng: thiếu ID người dùng");
+            showToast("Không thể tải bài đăng: thiếu ID người dùng");
             return;
         }
         
@@ -329,7 +292,7 @@ public class UserActivity extends AppCompatActivity {
                             roomArrayList.add(room);
                             totalPosts++;
 
-                            // ✅ Count loves
+                            // Count loves
                             DataSnapshot lovesSnapshot = roomSnapshot.child("userLovePost");
                             if (lovesSnapshot.exists()) {
                                 totalLoves += lovesSnapshot.getChildrenCount();
@@ -338,21 +301,14 @@ public class UserActivity extends AppCompatActivity {
                     }
                 }
 
-                // ✅ Update UI
                 postCount.setText(String.valueOf(totalPosts));
                 loveCount.setText(String.valueOf(totalLoves));
                 roomAdapter.notifyDataSetChanged();
-                
-                // ✅ Show appropriate message
-                if (totalPosts == 0) {
-                    String userTypeText = getUserTypeText();
-                    showToast("ℹ️ " + userTypeText + " này chưa có bài đăng nào");
-                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                showToast("❌ Lỗi tải bài đăng: " + error.getMessage());
+                showToast("Lỗi tải bài đăng: " + error.getMessage());
             }
         });
     }
@@ -363,7 +319,7 @@ public class UserActivity extends AppCompatActivity {
             return "Chưa cập nhật";
         }
         
-        // ✅ Remove spaces and special characters for masking
+        // Remove spaces and special characters for masking
         String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
         
         if (cleanPhone.length() < 7) {
