@@ -12,8 +12,10 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.LinearLayout;
 
 import com.example.timphongtro.BroadcastReceiver.NetworkChangeReceiver;
 import com.example.timphongtro.Fragments.HomeFragment;
@@ -28,6 +30,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuth.AuthStateListener;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
     private NetworkChangeReceiver networkChangeReceiver;
@@ -151,30 +158,32 @@ public class MainActivity extends AppCompatActivity {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_bottom_fab);
 
-        dialog.findViewById(R.id.house).setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent search = new Intent(this, SearchActivity.class);
-            startActivity(search);
-        });
-        
-        dialog.findViewById(R.id.contract).setOnClickListener(v -> {
-            dialog.dismiss();
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                AuthUtils.isUserExists(currentUser, exists -> {
-                    if (exists) {
-                        Intent post = new Intent(this, AddPostActivity.class);
-                        startActivity(post);
-                    } else {
-                        AuthUtils.clearAllLoginData(this);
-                        AuthUtils.showLoginRequiredDialog(this, "đăng tin phòng trọ", "đăng");
-                    }
-                });
-            } else {
-                AuthUtils.showLoginRequiredDialog(this, "đăng tin phòng trọ", "đăng");
-            }
-        });
-        
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        LinearLayout guestSection = dialog.findViewById(R.id.guest_section);
+        LinearLayout tenantSection = dialog.findViewById(R.id.tenant_section);
+        LinearLayout landlordSection = dialog.findViewById(R.id.landlord_section);
+
+        if (currentUser != null) {
+            AuthUtils.isUserExists(currentUser, exists -> {
+                if (exists) {
+                    guestSection.setVisibility(View.GONE);
+                    getUserRoleAndSetupUI(currentUser.getUid(), dialog, tenantSection, landlordSection);
+                } else {
+                    AuthUtils.clearAllLoginData(this);
+                    guestSection.setVisibility(View.VISIBLE);
+                    tenantSection.setVisibility(View.GONE);
+                    landlordSection.setVisibility(View.GONE);
+                    setupGuestClickListeners(dialog);
+                }
+            });
+        } else {
+            guestSection.setVisibility(View.VISIBLE);
+            tenantSection.setVisibility(View.GONE);
+            landlordSection.setVisibility(View.GONE);
+            setupGuestClickListeners(dialog);
+        }
+
         dialog.findViewById(R.id.cancelButton).setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
@@ -183,6 +192,98 @@ public class MainActivity extends AppCompatActivity {
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         dialog.getWindow().setGravity(Gravity.BOTTOM);
         dialog.setCancelable(true);
+    }
+
+    private void getUserRoleAndSetupUI(String userId, BottomSheetDialog dialog, 
+                                      LinearLayout tenantSection, LinearLayout landlordSection) {
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(userId);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String userRole = snapshot.child("role").getValue(String.class);
+                    
+                    runOnUiThread(() -> {
+                        if ("Chủ trọ".equals(userRole)) {
+                            tenantSection.setVisibility(View.VISIBLE);
+                            landlordSection.setVisibility(View.VISIBLE);
+                            setupLandlordClickListeners(dialog);
+                        } else {
+                            tenantSection.setVisibility(View.VISIBLE);
+                            landlordSection.setVisibility(View.GONE);
+                            setupTenantClickListeners(dialog);
+                        }
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        tenantSection.setVisibility(View.VISIBLE);
+                        landlordSection.setVisibility(View.GONE);
+                        setupTenantClickListeners(dialog);
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                runOnUiThread(() -> {
+                    tenantSection.setVisibility(View.VISIBLE);
+                    landlordSection.setVisibility(View.GONE);
+                    setupTenantClickListeners(dialog);
+                });
+            }
+        });
+    }
+
+    private void setupTenantClickListeners(BottomSheetDialog dialog) {
+        dialog.findViewById(R.id.btn_cart).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, CartManagementActivity.class));
+        });
+
+        dialog.findViewById(R.id.btn_tenant_contracts).setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(this, ContractManagementActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    private void setupLandlordClickListeners(BottomSheetDialog dialog) {
+        dialog.findViewById(R.id.btn_cart).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, CartManagementActivity.class));
+        });
+        dialog.findViewById(R.id.btn_tenant_contracts).setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(this, ContractManagementActivity.class);
+            startActivity(intent);
+        });
+        dialog.findViewById(R.id.btn_post_room).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, AddPostActivity.class));
+        });
+        dialog.findViewById(R.id.btn_manage_posts).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, PostManagementActivity.class));
+        });
+        dialog.findViewById(R.id.btn_add_contract).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, AddContractActivity.class));
+        });
+    }
+
+    private void setupGuestClickListeners(BottomSheetDialog dialog) {
+        dialog.findViewById(R.id.btn_login).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, LoginActivity.class));
+        });
+
+        dialog.findViewById(R.id.btn_register).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, RegisterActivity.class));
+        });
     }
 
     @Override
