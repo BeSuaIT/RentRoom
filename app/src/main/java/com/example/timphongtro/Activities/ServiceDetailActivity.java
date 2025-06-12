@@ -15,6 +15,7 @@ import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Models.Service;
+import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
 import com.example.timphongtro.Utils.GsonUtils;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 
 public class ServiceDetailActivity extends AppCompatActivity {
 
-    private TextView service_title, service_price, service_sold_count, service_description;
+    private TextView service_title, service_price, service_sold_count, service_description, service_seller_name;
     private Button btn_add_to_cart;
     private ImageView button_cart, imageView_back;
     private ImageSlider imageSlider;
@@ -80,6 +81,7 @@ public class ServiceDetailActivity extends AppCompatActivity {
         service_price = findViewById(R.id.service_price);
         service_sold_count = findViewById(R.id.service_sold_count);
         service_description = findViewById(R.id.service_description);
+        service_seller_name = findViewById(R.id.service_seller_name);
         btn_add_to_cart = findViewById(R.id.btn_add_to_cart);
         button_cart = findViewById(R.id.button_cart);
         imageView_back = findViewById(R.id.imageView_back);
@@ -122,6 +124,70 @@ public class ServiceDetailActivity extends AppCompatActivity {
                 AuthUtils.showLoginRequiredDialog(this, "sản phẩm vào giỏ hàng", "thêm");
             }
         });
+
+        service_seller_name.setOnClickListener(v -> {
+            if (service != null && !TextUtils.isEmpty(service.getId_seller())) {
+                navigateToSellerProfile();
+            } else {
+                Toast.makeText(this, "Không có thông tin người bán", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void navigateToSellerProfile() {
+        if (service == null || TextUtils.isEmpty(service.getId_seller())) {
+            Toast.makeText(this, "Không có thông tin người bán", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(service.getId_seller());
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    try {
+                        User seller = snapshot.getValue(User.class);
+                        if (seller != null) {
+                            if (TextUtils.isEmpty(seller.getUid())) {
+                                seller.setUid(service.getId_seller());
+                            }
+
+                            String sellerJson = GsonUtils.toJson(seller);
+                            if (sellerJson != null) {
+                                Intent intent = new Intent(ServiceDetailActivity.this, UserActivity.class);
+                                intent.putExtra("userData", sellerJson);
+                                startActivity(intent);
+                            } else {
+                                navigateToSellerProfileFallback();
+                            }
+                        } else {
+                            navigateToSellerProfileFallback();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(ServiceDetailActivity.this, "Lỗi tải thông tin người bán", Toast.LENGTH_SHORT).show();
+                        navigateToSellerProfileFallback();
+                    }
+                } else {
+                    Toast.makeText(ServiceDetailActivity.this, "Không tìm thấy thông tin người bán", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(ServiceDetailActivity.this, "Lỗi kết nối: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                navigateToSellerProfileFallback();
+            }
+        });
+    }
+
+    private void navigateToSellerProfileFallback() {
+        Intent intent = new Intent(ServiceDetailActivity.this, UserActivity.class);
+        intent.putExtra("id_own_post", service.getId_seller());
+        intent.putExtra("fallbackMode", true);
+        startActivity(intent);
     }
 
     private void addServiceToCart(FirebaseUser user) {
@@ -135,7 +201,6 @@ public class ServiceDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // ✅ Disable button khi đang xử lý
         btn_add_to_cart.setEnabled(false);
         btn_add_to_cart.setText("Đang thêm...");
 
@@ -189,6 +254,11 @@ public class ServiceDetailActivity extends AppCompatActivity {
                 if (service != null) {
                     displayServiceDetails();
                     setupImageSlider();
+                    loadSellerName();
+
+                    if (isServiceDataIncomplete()) {
+                        loadCompleteServiceData();
+                    }
                 } else {
                     Toast.makeText(this, "Lỗi: Dữ liệu dịch vụ không hợp lệ", Toast.LENGTH_SHORT).show();
                     finish();
@@ -203,6 +273,53 @@ public class ServiceDetailActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isServiceDataIncomplete() {
+        return service != null && 
+               (TextUtils.isEmpty(service.getDescription()) || 
+                service.getDescription().equals("Đang tải mô tả...") ||
+                service.getDescription().equals("Chi tiết sản phẩm sẽ được tải từ cơ sở dữ liệu"));
+    }
+
+    private void loadCompleteServiceData() {
+        if (service == null || TextUtils.isEmpty(service.getServiceId())) {
+            return;
+        }
+
+        DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
+        
+        servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Service completeService = null;
+                
+                // Duyệt qua tất cả categories để tìm service
+                for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+                    DataSnapshot serviceSnapshot = categorySnapshot.child(service.getServiceId());
+                    if (serviceSnapshot.exists()) {
+                        completeService = serviceSnapshot.getValue(Service.class);
+                        if (completeService != null) {
+                            completeService.setServiceId(service.getServiceId());
+                            break;
+                        }
+                    }
+                }
+                
+                if (completeService != null) {
+                    // Cập nhật service với dữ liệu đầy đủ
+                    service = completeService;
+                    runOnUiThread(() -> {
+                        displayServiceDetails();
+                        setupImageSlider();
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+    }
+
     private void displayServiceDetails() {
         if (service == null) return;
 
@@ -214,11 +331,50 @@ public class ServiceDetailActivity extends AppCompatActivity {
         service_sold_count.setText(String.valueOf(service.getSold()));
         
         String description = service.getDescription();
-        if (!TextUtils.isEmpty(description)) {
+        if (!TextUtils.isEmpty(description) && 
+            !description.equals("Đang tải mô tả...") && 
+            !description.equals("Chi tiết sản phẩm sẽ được tải từ cơ sở dữ liệu")) {
             service_description.setText(description);
         } else {
-            service_description.setText("Không có mô tả chi tiết");
+            service_description.setText("Đang tải mô tả...");
         }
+    }
+
+    private void loadSellerName() {
+        if (service == null || TextUtils.isEmpty(service.getId_seller())) {
+            service_seller_name.setText("Không xác định");
+            service_seller_name.setClickable(false);
+            return;
+        }
+
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(service.getId_seller());
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String sellerName = snapshot.child("name").getValue(String.class);
+                    if (!TextUtils.isEmpty(sellerName)) {
+                        service_seller_name.setText(sellerName);
+                        service_seller_name.setClickable(true);
+                    } else {
+                        service_seller_name.setText("Không xác định");
+                        service_seller_name.setClickable(false);
+                    }
+                } else {
+                    service_seller_name.setText("Không xác định");
+                    service_seller_name.setClickable(false);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                service_seller_name.setText("Không xác định");
+                service_seller_name.setClickable(false);
+            }
+        });
     }
 
     private void setupImageSlider() {

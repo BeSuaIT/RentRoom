@@ -425,7 +425,6 @@ public class MeetingDetailActivity extends AppCompatActivity {
             if (userJson != null) {
                 Intent intent = new Intent(this, UserActivity.class);
                 intent.putExtra("userData", userJson);
-                intent.putExtra("userType", "owner"); // Đánh dấu là chủ phòng
                 startActivity(intent);
                 return;
             } else {
@@ -438,7 +437,6 @@ public class MeetingDetailActivity extends AppCompatActivity {
             Intent intent = new Intent(this, UserActivity.class);
             intent.putExtra("id_own_post", room.getId_own_post());
             intent.putExtra("fallbackMode", true);
-            intent.putExtra("userType", "owner");
             startActivity(intent);
         } else {
             showToast("Thông tin chủ phòng chưa được tải");
@@ -451,7 +449,6 @@ public class MeetingDetailActivity extends AppCompatActivity {
             if (userJson != null) {
                 Intent intent = new Intent(this, UserActivity.class);
                 intent.putExtra("userData", userJson);
-                intent.putExtra("userType", "booker"); // Đánh dấu là người đặt lịch
                 startActivity(intent);
                 return;
             } else {
@@ -464,7 +461,6 @@ public class MeetingDetailActivity extends AppCompatActivity {
             Intent intent = new Intent(this, UserActivity.class);
             intent.putExtra("id_own_post", schedule.getIdFrom());
             intent.putExtra("fallbackMode", true);
-            intent.putExtra("userType", "booker");
             startActivity(intent);
         } else {
             showToast("Thông tin người đặt lịch chưa được tải");

@@ -206,7 +206,6 @@ public class PostDetailActivity extends AppCompatActivity {
 
         Intent intent = new Intent(PostDetailActivity.this, UserActivity.class);
         intent.putExtra("id_own_post", room.getId_own_post());
-        intent.putExtra("userType", "owner"); // Đánh dấu là chủ phòng
         startActivity(intent);
     }
 

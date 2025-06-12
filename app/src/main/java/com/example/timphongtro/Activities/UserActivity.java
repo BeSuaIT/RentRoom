@@ -55,7 +55,6 @@ public class UserActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private int totalPosts = 0;
     private int totalLoves = 0;
-    private String userType = "unknown"; // owner, booker, unknown
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,8 +119,6 @@ public class UserActivity extends AppCompatActivity {
             finish();
             return;
         }
-
-        userType = bundle.getString("userType", "unknown");
 
         String userDataJson = bundle.getString("userData");
         if (userDataJson != null) {
