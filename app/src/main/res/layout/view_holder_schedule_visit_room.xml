@@ -16,10 +16,10 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- ✅ Phần layout cũ giữ nguyên -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:baselineAligned="false"
             android:orientation="horizontal"
             android:padding="16dp">
 
@@ -185,7 +185,6 @@
 
         </LinearLayout>
 
-        <!-- ✅ CHỈ THÊM PHẦN NÀY: Nút Thu hồi -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -203,7 +202,6 @@
                 android:backgroundTint="@color/red"
                 android:visibility="gone"
                 app:cornerRadius="16dp"
-                app:icon="@drawable/ic_recyclebin"
                 app:iconSize="14dp"
                 app:iconTint="@color/white_100" />
 

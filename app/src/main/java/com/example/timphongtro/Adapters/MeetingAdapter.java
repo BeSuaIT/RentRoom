@@ -84,7 +84,6 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        // Giữ nguyên text nếu lỗi
                     }
                 });
     }
