@@ -31,27 +31,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MeetingManagementActivity extends AppCompatActivity {
-    
-    // ✅ UI Components
+
     private ImageView backButton, filterIcon;
     private HorizontalScrollView chipScrollView;
     private ChipGroup chipGroup;
     private RecyclerView scheduleVisitRecyclerView;
     private LinearLayout noDataLayout;
     private TextView noDataTitle, noDataMessage;
-    
-    // ✅ Chips
     private Chip chipAll, chipMyBookings, chipPending, chipApproved, chipRejected;
-    
-    // ✅ Firebase
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference meetingSchedulesRef, postsRef;
     private ArrayList<Meeting> meetings;
     private ArrayList<Room> availableRooms;
     private MeetingAdapter meetingAdapter;
     private FirebaseUser currentUser;
-    
-    // ✅ State management
     private boolean isFilterVisible = true;
     private Map<String, Integer> countMap = new HashMap<>();
     private String currentFilter = "all";
@@ -75,8 +68,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         postsRef = firebaseDatabase.getReference("Posts");
         meetings = new ArrayList<>();
         availableRooms = new ArrayList<>();
-        
-        // ✅ Initialize count map
+
         countMap.put("all", 0);
         countMap.put("my_bookings", 0);
         countMap.put("pending", 0);
@@ -85,11 +77,8 @@ public class MeetingManagementActivity extends AppCompatActivity {
     }
 
     private void setupViews() {
-        // ✅ Toolbar components
         backButton = findViewById(R.id.imageViewBack);
         filterIcon = findViewById(R.id.filterIcon);
-        
-        // ✅ Filter components
         chipScrollView = findViewById(R.id.chipScrollView);
         chipGroup = findViewById(R.id.chipGroup);
         chipAll = findViewById(R.id.chipAll);
@@ -97,26 +86,21 @@ public class MeetingManagementActivity extends AppCompatActivity {
         chipPending = findViewById(R.id.chipPending);
         chipApproved = findViewById(R.id.chipApproved);
         chipRejected = findViewById(R.id.chipRejected);
-        
-        // ✅ Content components
         scheduleVisitRecyclerView = findViewById(R.id.rcvScheduleVisit);
         noDataLayout = findViewById(R.id.noHasLovePost);
         noDataTitle = findViewById(R.id.noDataTitle);
         noDataMessage = findViewById(R.id.noDataMessage);
-        
-        // ✅ Setup RecyclerView
+
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         scheduleVisitRecyclerView.setLayoutManager(linearLayoutManager);
-        
+
         meetingAdapter = new MeetingAdapter(this, meetings);
         scheduleVisitRecyclerView.setAdapter(meetingAdapter);
-        
-        // ✅ Setup click listeners
+
         backButton.setOnClickListener(v -> finish());
         filterIcon.setOnClickListener(v -> toggleFilterVisibility());
-        
-        // ✅ Set default chip selection
+
         chipAll.setChecked(true);
     }
 
@@ -162,15 +146,13 @@ public class MeetingManagementActivity extends AppCompatActivity {
         isFilterVisible = !isFilterVisible;
     }
 
-    // ✅ Load all schedules and calculate counts
     private void loadAllSchedulesAndCount() {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 calculateCounts(snapshot);
                 updateChipCounts();
-                
-                // ✅ Load data for current filter
+
                 switch (currentFilter) {
                     case "all":
                         loadAllSchedules();
@@ -204,31 +186,39 @@ public class MeetingManagementActivity extends AppCompatActivity {
         int approvedCount = 0;
         int rejectedCount = 0;
         
-        if (snapshot.exists()) {
+        if (snapshot.exists() && currentUser != null) {
+            String currentUserId = currentUser.getUid();
+            
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
-                if (isValidSchedule(schedule)) {
-                    allCount++;
+                if (schedule != null) {
+                    // ✅ Kiểm tra meeting có liên quan đến user hiện tại không
+                    boolean isFromUser = currentUserId.equals(schedule.getIdFrom());
+                    boolean isToUser = currentUserId.equals(schedule.getIdTo());
+                    boolean isRelated = isFromUser || isToUser;
                     
-                    boolean isMyBooking = schedule.getIdFrom().equals(currentUser.getUid());
-                    boolean isPendingForMe = schedule.getIdTo().equals(currentUser.getUid()) && "0".equals(schedule.getStatus());
-                    boolean isRelatedUser = schedule.getIdFrom().equals(currentUser.getUid()) || 
-                                          schedule.getIdTo().equals(currentUser.getUid());
-                    
-                    if (isMyBooking) {
-                        myBookingsCount++;
-                    }
-                    
-                    if (isPendingForMe) {
-                        pendingCount++;
-                    }
-                    
-                    if (isRelatedUser && "1".equals(schedule.getStatus())) {
-                        approvedCount++;
-                    }
-                    
-                    if (isRelatedUser && "2".equals(schedule.getStatus())) {
-                        rejectedCount++;
+                    if (isRelated) {
+                        allCount++;
+                        
+                        // ✅ Tính "Tôi đặt" - chỉ những lịch user hiện tại tạo ra
+                        if (isFromUser) {
+                            myBookingsCount++;
+                        }
+                        
+                        // ✅ Tính "Chờ duyệt" - chỉ những lịch gửi tới user hiện tại và status = 0
+                        if (isToUser && schedule.getStatus() == 0) {
+                            pendingCount++;
+                        }
+                        
+                        // ✅ Tính "Đã duyệt" - tất cả lịch liên quan và status = 1
+                        if (schedule.getStatus() == 1) {
+                            approvedCount++;
+                        }
+                        
+                        // ✅ Tính "Từ chối" - tất cả lịch liên quan và status = 2
+                        if (schedule.getStatus() == 2) {
+                            rejectedCount++;
+                        }
                     }
                 }
             }

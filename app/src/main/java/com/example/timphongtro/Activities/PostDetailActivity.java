@@ -725,7 +725,7 @@ public class PostDetailActivity extends AppCompatActivity {
                 combinedDateTime,
                 room.getId_own_post(), 
                 currentUser.getUid(), 
-                "0", 
+                0,
                 room.getId_room()
             );
 

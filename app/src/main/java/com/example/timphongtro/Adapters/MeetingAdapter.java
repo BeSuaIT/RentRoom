@@ -23,11 +23,13 @@ import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -41,7 +43,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     Context context;
     ArrayList<Meeting> schedules;
     ArrayList<Room> availableRooms;
-
+    
     public MeetingAdapter(Context context, ArrayList<Meeting> schedules) {
         this.context = context;
         this.schedules = schedules;
@@ -52,44 +54,14 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     @NonNull
     @Override
     public MeetingAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.view_holder_schedule_visit_room, parent, false);
-        return new ViewHolder(v);
+        View view = LayoutInflater.from(context).inflate(R.layout.view_holder_schedule_visit_room, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MeetingAdapter.ViewHolder holder, int position) {
-        Meeting schedule = schedules.get(position);
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        
-        if (schedule == null || currentUser == null) return;
-
-        holder.tvName.setText(schedule.getName() != null ? schedule.getName() : "Không có tên");
-        holder.tvTime.setText(formatDateTime(schedule.getTimeVisitRoom()));
-
-        loadUserAvatar(holder, schedule.getIdFrom(), schedule.getName());
-
-        loadRoomInfo(holder, schedule.getIdRoom());
-
-        String note = schedule.getNote();
-        if (note == null || note.trim().isEmpty() || "Không có ghi chú".equals(note)) {
-            holder.tvNote.setText("Không có ghi chú đặc biệt");
-            holder.tvNote.setTextColor(ContextCompat.getColor(context, R.color.text_hint));
-        } else {
-            holder.tvNote.setText(note);
-            holder.tvNote.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
-        }
-
-        setupStatusView(holder.tvStatus, schedule, currentUser.getUid());
-
-        if (shouldShowConfirmButtons(schedule, currentUser.getUid())) {
-            holder.tvStatus.setOnClickListener(v -> showConfirmationDialog(schedule));
-            holder.tvStatus.setClickable(true);
-        } else {
-            holder.tvStatus.setOnClickListener(null);
-            holder.tvStatus.setClickable(false);
-        }
-
-        holder.itemView.setOnClickListener(v -> navigateToDetail(schedule, currentUser.getUid()));
+        Meeting meeting = schedules.get(position);
+        holder.bind(meeting, position);
     }
 
     private void loadUserAvatar(ViewHolder holder, String userId, String userName) {
@@ -102,15 +74,17 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        User user = snapshot.getValue(User.class);
-                        if (user != null) {
-                            updateAvatarUI(holder, user, userName);
+                        if (snapshot.exists()) {
+                            User user = snapshot.getValue(User.class);
+                            if (user != null) {
+                                updateAvatarUI(holder, user, userName);
+                            }
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-
+                        // Giữ nguyên text nếu lỗi
                     }
                 });
     }
@@ -118,7 +92,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     private void updateAvatarUI(ViewHolder holder, User user, String fallbackName) {
         String avatarUrl = user != null ? user.getAvatarUrl() : null;
         String displayName = user != null ? user.getName() : fallbackName;
-        
+
         if (!TextUtils.isEmpty(avatarUrl)) {
             holder.circleImageView.setVisibility(View.GONE);
             holder.profileImageView.setVisibility(View.VISIBLE);
@@ -127,14 +101,14 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                     .load(avatarUrl)
                     .placeholder(R.drawable.avatar)
                     .error(R.drawable.avatar)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL) // Only use Glide's built-in cache
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(holder.profileImageView);
         } else {
             holder.profileImageView.setVisibility(View.GONE);
             holder.circleImageView.setVisibility(View.VISIBLE);
             holder.circleImageView.setText(getFirstLetter(displayName));
 
-            // ✅ Setup avatar background color
+            //Setup background color cho text avatar
             setupAvatarColor(holder.circleImageView, schedules.get(holder.getAbsoluteAdapterPosition()));
         }
     }
@@ -221,7 +195,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
         boolean isReceiver = userId.equals(schedule.getIdTo());
         boolean isSender = userId.equals(schedule.getIdFrom());
         
-        int status = Integer.parseInt(schedule.getStatus());
+        int status = schedule.getStatus();
 
         switch (status) {
             case STATUS_PENDING:
@@ -265,8 +239,13 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     }
 
     private void setupAvatarColor(TextView avatarView, Meeting schedule) {
+        if (schedule == null) {
+            avatarView.setBackgroundResource(R.drawable.circle_avatar_background);
+            return;
+        }
+
         int backgroundColor;
-        int status = Integer.parseInt(schedule.getStatus());
+        int status = schedule.getStatus();
         
         switch (status) {
             case STATUS_PENDING:
@@ -311,36 +290,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     }
 
     private boolean shouldShowConfirmButtons(Meeting schedule, String userId) {
-        return STATUS_PENDING == Integer.parseInt(schedule.getStatus()) 
-               && userId.equals(schedule.getIdTo());
-    }
-
-    private void showConfirmationDialog(Meeting schedule) {
-        new AlertDialog.Builder(context)
-                .setTitle("Xác nhận lịch hẹn")
-                .setMessage("Bạn có muốn xác nhận lịch hẹn này không?")
-                .setPositiveButton("Xác nhận", (dialog, which) ->
-                    updateScheduleStatus(schedule, STATUS_APPROVED))
-                .setNegativeButton("Từ chối", (dialog, which) ->
-                    updateScheduleStatus(schedule, STATUS_REJECTED))
-                .setNeutralButton("Hủy", null)
-                .show();
-    }
-
-    private void updateScheduleStatus(Meeting schedule, int status) {
-        FirebaseDatabase.getInstance()
-                .getReference("MeetingSchedules")
-                .child(schedule.getIdSchedule())
-                .child("status")
-                .setValue(String.valueOf(status))
-                .addOnSuccessListener(unused -> {
-                    String message = status == STATUS_APPROVED ? 
-                            "Đã xác nhận lịch hẹn" : "Đã từ chối lịch hẹn";
-                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(context, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        return STATUS_PENDING == schedule.getStatus() && userId.equals(schedule.getIdTo());
     }
 
     private void navigateToDetail(Meeting schedule, String currentUserId) {
@@ -364,20 +314,144 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
         return schedules.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvTime, tvNote, tvStatus, tvRoomTitle, tvAddress, circleImageView;
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tvName, tvRoomTitle, tvTime, tvNote, tvAddress, tvStatus;
+        TextView circleImageView;
         ShapeableImageView profileImageView;
+        MaterialButton btn_revoke;
 
-        public ViewHolder(@NonNull View view) {
-            super(view);
-            circleImageView = view.findViewById(R.id.circleImageView);
-            profileImageView = view.findViewById(R.id.profileImageView);
-            tvName = view.findViewById(R.id.tvName);
-            tvTime = view.findViewById(R.id.tvTime);
-            tvNote = view.findViewById(R.id.tvNote);
-            tvStatus = view.findViewById(R.id.tvStatus);
-            tvRoomTitle = view.findViewById(R.id.tvRoomTitle);
-            tvAddress = view.findViewById(R.id.tvAddress);
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            
+            tvName = itemView.findViewById(R.id.tvName);
+            tvRoomTitle = itemView.findViewById(R.id.tvRoomTitle);
+            tvTime = itemView.findViewById(R.id.tvTime);
+            tvNote = itemView.findViewById(R.id.tvNote);
+            tvAddress = itemView.findViewById(R.id.tvAddress);
+            tvStatus = itemView.findViewById(R.id.tvStatus);
+            circleImageView = itemView.findViewById(R.id.circleImageView);
+            profileImageView = itemView.findViewById(R.id.profileImageView);
+            btn_revoke = itemView.findViewById(R.id.btn_revoke);
+        }
+
+        public void bind(Meeting meeting, int position) {
+            if (meeting == null) return;
+
+            bindExistingData(meeting);
+            setupRevokeButton(meeting, position);
+            setupItemClickListener(meeting);
+        }
+
+        private void bindExistingData(Meeting meeting) {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) return;
+            
+            String currentUserId = currentUser.getUid();
+
+            String contactUserId = currentUserId.equals(meeting.getIdFrom()) ? 
+                                  meeting.getIdTo() : meeting.getIdFrom();
+            
+            loadUserInfo(contactUserId);
+            loadRoomInfo(this, meeting.getIdRoom());
+            String formattedTime = formatDateTime(meeting.getTimeVisitRoom());
+            tvTime.setText(formattedTime);
+            tvNote.setText(meeting.getNote() != null ? meeting.getNote() : "Không có ghi chú");
+            setupStatusView(tvStatus, meeting, currentUserId);
+        }
+
+        private void loadUserInfo(String userId) {
+            FirebaseDatabase.getInstance().getReference("Users")
+                    .child(userId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                User user = snapshot.getValue(User.class);
+                                if (user != null) {
+                                    tvName.setText(user.getName() != null ? user.getName() : "Người dùng");
+                                    loadUserAvatar(ViewHolder.this, userId, user.getName());
+                                }
+                            } else {
+                                tvName.setText("Người dùng không tồn tại");
+
+                                circleImageView.setVisibility(View.VISIBLE);
+                                profileImageView.setVisibility(View.GONE);
+                                circleImageView.setText("?");
+                                setupAvatarColor(circleImageView, schedules.get(getAbsoluteAdapterPosition()));
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            tvName.setText("Lỗi tải thông tin");
+
+                            circleImageView.setVisibility(View.VISIBLE);
+                            profileImageView.setVisibility(View.GONE);
+                            circleImageView.setText("?");
+                            setupAvatarColor(circleImageView, schedules.get(getAbsoluteAdapterPosition()));
+                        }
+                    });
+        }
+
+        private void setupRevokeButton(Meeting meeting, int position) {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                btn_revoke.setVisibility(View.GONE);
+                return;
+            }
+
+            if (meeting.getStatus() == STATUS_PENDING && 
+                currentUser.getUid().equals(meeting.getIdFrom())) {
+                btn_revoke.setVisibility(View.VISIBLE);
+                btn_revoke.setOnClickListener(v -> showRevokeDialog(meeting, position));
+            } else {
+                btn_revoke.setVisibility(View.GONE);
+            }
+        }
+
+        private void setupItemClickListener(Meeting meeting) {
+            itemView.setOnClickListener(v -> {
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser != null) {
+                    navigateToDetail(meeting, currentUser.getUid());
+                }
+            });
+        }
+
+        private void showRevokeDialog(Meeting meeting, int position) {
+            new AlertDialog.Builder(context)
+                    .setTitle("Thu hồi lịch hẹn")
+                    .setMessage("Bạn có chắc chắn muốn thu hồi lịch hẹn này không?\n\nHành động này không thể hoàn tác.")
+                    .setPositiveButton("Thu hồi", (dialog, which) -> {
+                        revokeMeeting(meeting, position);
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
+        }
+
+        private void revokeMeeting(Meeting meeting, int position) {
+            if (meeting == null || TextUtils.isEmpty(meeting.getIdSchedule())) {
+                Toast.makeText(context, "Lỗi: Thông tin lịch hẹn không hợp lệ", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            btn_revoke.setEnabled(false);
+            btn_revoke.setText("Đang xử lý...");
+
+            DatabaseReference meetingRef = FirebaseDatabase.getInstance()
+                    .getReference("MeetingSchedules")
+                    .child(meeting.getIdSchedule());
+
+            meetingRef.removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Toast.makeText(context, "Thu hồi lịch hẹn thành công", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Lỗi thu hồi lịch hẹn", Toast.LENGTH_SHORT).show();
+
+                    btn_revoke.setEnabled(true);
+                    btn_revoke.setText("Thu hồi");
+                }
+            });
         }
     }
 

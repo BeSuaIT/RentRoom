@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/background_primary">
 
-    <!-- ✅ AppBar với gradient -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -47,7 +46,6 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
-                <!-- ✅ Status indicator -->
                 <TextView
                     android:id="@+id/tvStatusIndicator"
                     android:layout_width="wrap_content"
@@ -68,7 +66,6 @@
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- ✅ Main Content -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -81,7 +78,6 @@
             android:orientation="vertical"
             android:paddingBottom="100dp">
 
-            <!-- ✅ Meeting Summary Card với Avatar Loading -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -96,14 +92,12 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- ✅ Meeting Header với Avatar Loading -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <!-- ✅ Avatar Container với Image và Text -->
                         <FrameLayout
                             android:layout_width="60dp"
                             android:layout_height="60dp">
@@ -157,14 +151,12 @@
 
                     </LinearLayout>
 
-                    <!-- ✅ Divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="16dp"
                         android:background="@color/divider"/>
 
-                    <!-- ✅ Meeting Time Info -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -207,7 +199,6 @@
 
                     </LinearLayout>
 
-                    <!-- ✅ Note Section -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -254,7 +245,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ✅ Room Info Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardViewRoom"
                 android:layout_width="match_parent"
@@ -270,7 +260,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- ✅ Card Header -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -302,7 +291,6 @@
 
                     </LinearLayout>
 
-                    <!-- ✅ Room Content -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -316,7 +304,7 @@
                             app:cardCornerRadius="12dp"
                             app:cardElevation="0dp"
                             app:strokeWidth="1dp"
-                            app:strokeColor="@color/orange_100">
+                            app:strokeColor="@color/gray_500">
 
                             <ImageView
                                 android:id="@+id/imgPost"
@@ -405,7 +393,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ✅ Owner Info Card với Avatar Loading -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -436,7 +423,6 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"/>
 
-                    <!-- ✅ Owner Avatar Container -->
                     <FrameLayout
                         android:layout_width="40dp"
                         android:layout_height="40dp"
@@ -488,7 +474,6 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- ✅ Bottom Action Buttons -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/bottomActionCard"
         android:layout_width="match_parent"
@@ -511,7 +496,7 @@
                 android:layout_height="52dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="❌ Từ chối"
+                android:text="Từ chối"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 style="@style/Widget.Material3.Button.OutlinedButton"
@@ -527,7 +512,7 @@
                 android:layout_height="52dp"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="✅ Xác nhận"
+                android:text="Xác nhận"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:backgroundTint="@color/green_100"

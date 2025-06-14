@@ -7,13 +7,13 @@ public class Meeting {
     private String timeVisitRoom;
     private String idTo;
     private String idFrom;
-    private String status; //0 la tao, 1 la chap nhan, 2 la tu choi
+    private int status; //0 la tao, 1 la chap nhan, 2 la tu choi
     private String idRoom;
     private String idSchedule;
     public Meeting() {
     }
 
-    public Meeting(String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, String status, String idRoom) {
+    public Meeting(String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, int status, String idRoom) {
         this.idSchedule = idSchedule;
         this.idTo = idTo;
         this.idRoom = idRoom;
@@ -49,11 +49,11 @@ public class Meeting {
         this.idFrom = idFrom;
     }
 
-    public String getStatus() {
+    public int getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 

@@ -208,7 +208,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private void setupStatusIndicator() {
         if (schedule == null || currentUser == null) return;
         
-        int status = Integer.parseInt(schedule.getStatus());
+        int status = schedule.getStatus();
         boolean isReceiver = currentUser.getUid().equals(schedule.getIdTo());
         boolean isSender = currentUser.getUid().equals(schedule.getIdFrom());
         
@@ -388,11 +388,11 @@ public class MeetingDetailActivity extends AppCompatActivity {
             .getReference("MeetingSchedules")
             .child(schedule.getIdSchedule());
             
-        scheduleRef.child("status").setValue(String.valueOf(status))
+        scheduleRef.child("status").setValue(status)
             .addOnSuccessListener(unused -> {
                 showToast(message);
 
-                schedule.setStatus(String.valueOf(status));
+                schedule.setStatus(status);
                 setupStatusIndicator();
                 bottomActionCard.setVisibility(View.GONE);
 
