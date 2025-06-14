@@ -18,6 +18,7 @@
             android:id="@+id/tv_orderId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="ORD-123456"
             android:textStyle="bold"
             android:textSize="16sp"/>
 
@@ -25,12 +26,14 @@
             android:id="@+id/tv_dateTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="14/06/2025 10:30"
             android:layout_marginTop="8dp"/>
 
         <TextView
             android:id="@+id/tv_location"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="Số 123, Đuong ABC, Quan XYZ, TP HCM"
             android:layout_marginTop="8dp"/>
 
         <TextView
@@ -38,6 +41,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:text="20,000 VNĐ"
             android:textColor="@color/orange_100"
             android:textStyle="bold"/>
 
@@ -46,8 +50,32 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:text="Đang xử lý"
             android:background="@drawable/status_background"
             android:padding="4dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel_order"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Hủy đơn"
+                android:textSize="12sp"
+                android:textColor="@color/white_100"
+                android:backgroundTint="@color/red"
+                android:visibility="gone"
+                app:cornerRadius="18dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/white_100" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -16,6 +16,7 @@ import com.example.timphongtro.Models.Bill;
 import com.example.timphongtro.Models.BillItem;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -51,34 +52,80 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
 
         holder.tvOrderId.setText(bill.getId());
         holder.tvDateTime.setText(formatDate(bill.getOrderDate()));
-        holder.tvTotalAmount.setText(String.format("%,d đ", bill.getTotalAmount()));
+        holder.tvTotalAmount.setText(String.format("%,d VNĐ", bill.getTotalAmount()));
         String fullAddress = bill.getDetailAddress() + ", " +
                 bill.getDistrict() + ", " +
                 bill.getCity();
         holder.tvLocation.setText(fullAddress);
 
+        setupStatusAndCancelButton(holder, bill, position);
+
+        holder.itemView.setOnClickListener(v -> showBillDetail(bill));
+    }
+
+    private void setupStatusAndCancelButton(BillViewHolder holder, Bill bill, int position) {
         switch (bill.getStatus()) {
             case 0:
                 holder.tvStatus.setText("Đang xử lý");
                 holder.tvStatus.setBackgroundResource(R.drawable.status_pending);
                 holder.tvStatus.setTextColor(context.getColor(R.color.orange_100));
+                holder.btnCancelOrder.setVisibility(View.VISIBLE);
+                holder.btnCancelOrder.setOnClickListener(v -> showCancelConfirmDialog(bill, position));
                 break;
+                
             case 1:
                 holder.tvStatus.setText("Hoàn thành");
                 holder.tvStatus.setBackgroundResource(R.drawable.status_completed);
                 holder.tvStatus.setTextColor(context.getColor(R.color.green));
+                holder.btnCancelOrder.setVisibility(View.GONE);
                 break;
+                
             case 2:
                 holder.tvStatus.setText("Đã hủy");
                 holder.tvStatus.setBackgroundResource(R.drawable.status_canceled);
                 holder.tvStatus.setTextColor(context.getColor(R.color.red));
+                holder.btnCancelOrder.setVisibility(View.GONE);
                 break;
+                
             default:
                 holder.tvStatus.setText("Không xác định");
                 holder.tvStatus.setBackgroundResource(R.drawable.status_background);
                 holder.tvStatus.setTextColor(context.getColor(R.color.gray));
+                holder.btnCancelOrder.setVisibility(View.GONE);
         }
-        holder.itemView.setOnClickListener(v -> showBillDetail(bill));
+    }
+
+    private void showCancelConfirmDialog(Bill bill, int position) {
+        new AlertDialog.Builder(context)
+                .setTitle("Hủy đơn hàng")
+                .setMessage("Bạn có chắc chắn muốn hủy đơn hàng này không?\n\nMã đơn: " + bill.getId())
+                .setPositiveButton("Hủy đơn", (dialog, which) -> {
+                    cancelOrder(bill, position);
+                })
+                .setNegativeButton("Không", null)
+                .show();
+    }
+
+    private void cancelOrder(Bill bill, int position) {
+        if (bill == null || bill.getId() == null) {
+            Toast.makeText(context, "Lỗi: Thông tin đơn hàng không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DatabaseReference billRef = FirebaseDatabase.getInstance()
+                .getReference("Bills")
+                .child(bill.getId());
+
+        billRef.child("status").setValue(2)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(context, "Hủy đơn hàng thành công", Toast.LENGTH_SHORT).show();
+
+                    bill.setStatus(2);
+                    notifyItemChanged(position);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Lỗi hủy đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void showBillDetail(Bill bill) {
@@ -99,7 +146,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
                 bill.getCity();
         tvBillAddress.setText("Địa chỉ: " + fullAddress);
         tvPayMethod.setText("Phương thức thanh toán: " + bill.getPaymentMethod());
-        tvBillTotal.setText(String.format("Tổng tiền: %,d đ", bill.getTotalAmount()));
+        tvBillTotal.setText(String.format("Tổng tiền: %,d VNĐ", bill.getTotalAmount()));
 
         DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
         servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -160,6 +207,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
 
     public static class BillViewHolder extends RecyclerView.ViewHolder {
         TextView tvOrderId, tvDateTime, tvTotalAmount, tvStatus, tvLocation;
+        MaterialButton btnCancelOrder;
 
         public BillViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -168,6 +216,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
             tvTotalAmount = itemView.findViewById(R.id.tv_totalAmount);
             tvStatus = itemView.findViewById(R.id.tv_status);
             tvLocation = itemView.findViewById(R.id.tv_location);
+            btnCancelOrder = itemView.findViewById(R.id.btn_cancel_order);
         }
     }
 }
