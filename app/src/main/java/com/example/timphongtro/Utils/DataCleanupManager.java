@@ -93,7 +93,7 @@ public class DataCleanupManager {
      * Cleanup tất cả các node liên quan
      */
     private void cleanupAllNodes(List<String> validUserIds) {
-        CleanupTaskCounter taskCounter = new CleanupTaskCounter(7, onCompleted);
+        CleanupTaskCounter taskCounter = new CleanupTaskCounter(8, onCompleted);
 
         cleanupPosts(validUserIds, taskCounter);
         cleanupHistories(validUserIds, taskCounter);
@@ -102,6 +102,7 @@ public class DataCleanupManager {
         cleanupServices(validUserIds, taskCounter);
         cleanupCarts(validUserIds, taskCounter);
         cleanupFollowPosts(validUserIds, taskCounter);
+        cleanupContracts(validUserIds, taskCounter);
     }
 
     /**
@@ -336,6 +337,44 @@ public class DataCleanupManager {
 
                 if (!updates.isEmpty()) {
                     databaseRef.child("FollowPosts").updateChildren(updates)
+                        .addOnCompleteListener(task -> counter.taskCompleted());
+                } else {
+                    counter.taskCompleted();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                counter.taskCompleted();
+            }
+        });
+    }
+
+    /**
+     * ✅ Cleanup Contracts node - METHOD MỚI
+     */
+    private void cleanupContracts(List<String> validUserIds, CleanupTaskCounter counter) {
+        databaseRef.child("Contracts").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Map<String, Object> updates = new HashMap<>();
+
+                for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
+                    // ✅ Kiểm tra landlordId - chủ trọ
+                    String landlordId = contractSnapshot.child("landlordId").getValue(String.class);
+                    
+                    // ✅ Nếu chủ trọ không còn tồn tại → xóa contract
+                    if (landlordId != null && !validUserIds.contains(landlordId)) {
+                        updates.put(contractSnapshot.getKey(), null);
+                    }
+                    
+                    // ✅ Note: Không xóa contract nếu chỉ tenant không tồn tại
+                    // vì tenant có thể được tạo thủ công trong contract
+                    // chỉ xóa khi landlord (người tạo contract) không tồn tại
+                }
+
+                if (!updates.isEmpty()) {
+                    databaseRef.child("Contracts").updateChildren(updates)
                         .addOnCompleteListener(task -> counter.taskCompleted());
                 } else {
                     counter.taskCompleted();
