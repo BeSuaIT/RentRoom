@@ -135,13 +135,23 @@ public class ProfileFragment extends Fragment {
                     nameTextView.setText(user.getName());
                     emailTextView.setText(user.getEmail());
                     updateProfileImage(user);
+                    checkUserRoleAndSetupUI(user.getRole());
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                manageRoomsButton.setVisibility(View.GONE);
             }
         });
+    }
+
+    private void checkUserRoleAndSetupUI(String userRole) {
+        if ("Chủ trọ".equals(userRole)) {
+            manageRoomsButton.setVisibility(View.VISIBLE);
+        } else {
+            manageRoomsButton.setVisibility(View.GONE);
+        }
     }
 
     private void handleSignOut() {

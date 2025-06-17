@@ -2,6 +2,7 @@ package com.example.timphongtro.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -44,6 +45,7 @@ public class ContractManagementActivity extends AppCompatActivity {
         initializeFirebase();
         setupListeners();
         setupRecyclerView();
+        checkUserRoleAndSetupFAB();
         loadContracts();
     }
 
@@ -60,16 +62,6 @@ public class ContractManagementActivity extends AppCompatActivity {
 
     private void setupListeners() {
         backButton.setOnClickListener(v -> finish());
-
-        fabAddContract.setOnClickListener(v -> {
-            FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-            if (currentUser != null) {
-                Intent intent = new Intent(this, AddContractActivity.class);
-                startActivity(intent);
-            } else {
-                Toast.makeText(this, "Vui lòng đăng nhập để tiếp tục", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void setupRecyclerView() {
@@ -104,6 +96,44 @@ public class ContractManagementActivity extends AppCompatActivity {
                                 "Lỗi tải danh sách hợp đồng", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void checkUserRoleAndSetupFAB() {
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser == null) {
+            fabAddContract.setVisibility(View.GONE);
+            return;
+        }
+
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(currentUser.getUid());
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String userRole = snapshot.child("role").getValue(String.class);
+
+                    if ("Chủ trọ".equals(userRole)) {
+                        fabAddContract.setVisibility(View.VISIBLE);
+                        fabAddContract.setOnClickListener(v -> {
+                            Intent intent = new Intent(ContractManagementActivity.this, AddContractActivity.class);
+                            startActivity(intent);
+                        });
+                    } else {
+                        fabAddContract.setVisibility(View.GONE);
+                    }
+                } else {
+                    fabAddContract.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                fabAddContract.setVisibility(View.GONE);
+            }
+        });
     }
 
     @Override
