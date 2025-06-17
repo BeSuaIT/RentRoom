@@ -83,6 +83,7 @@ public class AddContractActivity extends AppCompatActivity {
     private StorageReference storageRef;
     private ActivityResultLauncher<Intent> galleryLauncher, cameraLauncher;
     private BottomSheetDialog imagePickerDialog;
+    private String contractId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -185,7 +186,7 @@ public class AddContractActivity extends AppCompatActivity {
             cccdFrontImages.add(imageUri);
             cccdFrontAdapter.notifyDataSetChanged();
             cccdFrontRecyclerView.setVisibility(View.VISIBLE);
-            
+
         } else if (CCCD_BACK.equals(currentImageType)) {
             // Chỉ cho phép 1 ảnh mặt sau
             cccdBackImages.clear();
@@ -272,10 +273,10 @@ public class AddContractActivity extends AppCompatActivity {
             File cacheDir = getCacheDir();
             File imageFile = new File(cacheDir, "cccd_" + currentImageType + "_" + System.currentTimeMillis() + ".jpg");
             fos = new FileOutputStream(imageFile);
-            
+
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             return Uri.fromFile(imageFile);
-            
+
         } catch (IOException e) {
             return null;
         } finally {
@@ -292,7 +293,7 @@ public class AddContractActivity extends AppCompatActivity {
         try {
             input = getContentResolver().openInputStream(sourceUri);
             if (input == null) return null;
-            
+
             File cacheDir = getCacheDir();
             File outputFile = new File(cacheDir, "cccd_" + currentImageType + "_" + System.currentTimeMillis() + ".jpg");
             output = new FileOutputStream(outputFile);
@@ -305,7 +306,7 @@ public class AddContractActivity extends AppCompatActivity {
 
             output.flush();
             return Uri.fromFile(outputFile);
-            
+
         } catch (Exception e) {
             return sourceUri;
         } finally {
@@ -372,7 +373,7 @@ public class AddContractActivity extends AppCompatActivity {
     }
 
     private void uploadCCCDImages() {
-        String contractId = UUID.randomUUID().toString();
+        contractId = UUID.randomUUID().toString();
 
         Uri frontUri = cccdFrontImages.get(0);
         Uri backUri = cccdBackImages.get(0);
@@ -522,23 +523,24 @@ public class AddContractActivity extends AppCompatActivity {
         Contract contract = new Contract(
                 contractId,
                 selectedRoom.getId_room(),
-                selectedRoom.getTitle_room(),
-                selectedRoom.getAddress().getAddress_combine(),
-                selectedRoom.getPrice_room(),
+                currentUser.getUid(),
                 landlordNameEdt.getText().toString().trim(),
                 landlordPhoneEdt.getText().toString().trim(),
-                currentUser.getUid(),
                 tenantNameEdt.getText().toString().trim(),
                 tenantPhoneEdt.getText().toString().trim(),
                 tenantCCCDEdt.getText().toString().trim(),
+                frontImageUrl,
+                backImageUrl,
                 startDateEdt.getText().toString().trim(),
                 endDateEdt.getText().toString().trim(),
-                frontImageUrl,
-                backImageUrl
+                0,
+                System.currentTimeMillis()
         );
 
         contractsRef.child(contractId).setValue(contract)
-                .addOnSuccessListener(aVoid -> updateRoomStatus())
+                .addOnSuccessListener(aVoid -> {
+                    updateRoomStatus();
+                })
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
                     createContractBtn.setEnabled(true);
@@ -551,24 +553,34 @@ public class AddContractActivity extends AppCompatActivity {
                 .child("status_room")
                 .setValue(1)
                 .addOnSuccessListener(aVoid -> {
-                    progressBar.setVisibility(View.GONE);
-                    createContractBtn.setEnabled(true);
-
-                    Toast.makeText(this, "Tạo hợp đồng thành công!", Toast.LENGTH_SHORT).show();
-                    finish();
+                    contractsRef.child(contractId).child("status").setValue(1)
+                            .addOnSuccessListener(unused -> {
+                                progressBar.setVisibility(View.GONE);
+                                createContractBtn.setEnabled(true);
+                                Toast.makeText(this, "Tạo hợp đồng thành công!", Toast.LENGTH_SHORT).show();
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                progressBar.setVisibility(View.GONE);
+                                createContractBtn.setEnabled(true);
+                                Toast.makeText(this, "Hợp đồng đã tạo nhưng không thể cập nhật trạng thái", 
+                                        Toast.LENGTH_LONG).show();
+                                finish();
+                            });
                 })
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
                     createContractBtn.setEnabled(true);
                     Toast.makeText(this, "Hợp đồng đã tạo nhưng không thể cập nhật trạng thái phòng",
                             Toast.LENGTH_LONG).show();
+                    finish();
                 });
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        
+
         if (requestCode == PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Quyền đã được cấp, vui lòng thử lại", Toast.LENGTH_SHORT).show();

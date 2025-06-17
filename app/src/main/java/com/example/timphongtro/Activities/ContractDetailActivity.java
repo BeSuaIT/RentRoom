@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -15,12 +14,20 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Adapters.ZoomImageAdapter;
 import com.example.timphongtro.Models.Contract;
+import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -36,7 +43,6 @@ public class ContractDetailActivity extends AppCompatActivity {
     private TextView tenantNameTv, tenantPhoneTv, tenantCCCDTv;
     private TextView contractPeriodTv, statusTv, createdAtTv;
     private ImageView cccdFrontImg, cccdBackImg;
-    
     private Dialog dialogZoomImg;
     private Contract contract;
 
@@ -70,8 +76,10 @@ public class ContractDetailActivity extends AppCompatActivity {
 
     private void getContractData() {
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("contract")) {
-            contract = (Contract) intent.getSerializableExtra("contract");
+        if (intent != null && intent.hasExtra("contractJson")) {
+            String contractJson = intent.getStringExtra("contractJson");
+            contract = GsonUtils.fromJson(contractJson, Contract.class);
+            
             if (contract == null) {
                 Toast.makeText(this, "Lỗi tải thông tin hợp đồng", Toast.LENGTH_SHORT).show();
                 finish();
@@ -85,10 +93,9 @@ public class ContractDetailActivity extends AppCompatActivity {
     private void setupListeners() {
         backButton.setOnClickListener(v -> finish());
         
-        // ✅ Click để xem ảnh CCCD full screen với zoom
         cccdFrontImg.setOnClickListener(v -> {
             if (contract != null && contract.getCccdFrontImage() != null && !contract.getCccdFrontImage().isEmpty()) {
-                showZoomImgDialog(0); // Index 0 cho ảnh mặt trước
+                showZoomImgDialog(0);
             } else {
                 Toast.makeText(this, "Không có ảnh CCCD mặt trước", Toast.LENGTH_SHORT).show();
             }
@@ -96,7 +103,7 @@ public class ContractDetailActivity extends AppCompatActivity {
         
         cccdBackImg.setOnClickListener(v -> {
             if (contract != null && contract.getCccdBackImage() != null && !contract.getCccdBackImage().isEmpty()) {
-                showZoomImgDialog(1); // Index 1 cho ảnh mặt sau
+                showZoomImgDialog(1);
             } else {
                 Toast.makeText(this, "Không có ảnh CCCD mặt sau", Toast.LENGTH_SHORT).show();
             }
@@ -106,38 +113,76 @@ public class ContractDetailActivity extends AppCompatActivity {
     private void displayContractInfo() {
         if (contract == null) return;
 
-        // Thông tin phòng
-        roomTitleTv.setText(contract.getRoomTitle());
-        roomAddressTv.setText(contract.getRoomAddress());
-        
-        // Format giá phòng
-        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.getDefault());
-        String formattedPrice = formatter.format(contract.getRoomPrice()) + " VNĐ/tháng";
-        roomPriceTv.setText(formattedPrice);
+        loadRoomData();
+        displayBasicContractInfo();
+        loadCCCDImages();
+    }
 
-        // Thông tin chủ trọ
+    private void loadRoomData() {
+        if (contract.getRoomId() == null) {
+            roomTitleTv.setText("Phòng không xác định");
+            roomAddressTv.setText("Địa chỉ không xác định");
+            roomPriceTv.setText("0 VNĐ/tháng");
+            return;
+        }
+
+        DatabaseReference roomRef = FirebaseDatabase.getInstance()
+                .getReference("Posts")
+                .child(contract.getRoomId());
+
+        roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Room room = snapshot.getValue(Room.class);
+                    if (room != null) {
+                        roomTitleTv.setText(room.getTitle_room() != null ? 
+                                          room.getTitle_room() : "Phòng trọ");
+
+                        String address = "Địa chỉ không xác định";
+                        if (room.getAddress() != null) {
+                            address = room.getAddress().getAddress_combine();
+                        }
+                        roomAddressTv.setText(address);
+
+                        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.getDefault());
+                        String formattedPrice = formatter.format(room.getPrice_room()) + " VNĐ/tháng";
+                        roomPriceTv.setText(formattedPrice);
+                    }
+                } else {
+                    roomTitleTv.setText("Phòng đã bị xóa");
+                    roomAddressTv.setText("Không tìm thấy thông tin");
+                    roomPriceTv.setText("N/A");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                roomTitleTv.setText("Lỗi tải thông tin phòng");
+                roomAddressTv.setText("Vui lòng thử lại");
+                roomPriceTv.setText("N/A");
+            }
+        });
+    }
+
+    private void displayBasicContractInfo() {
         landlordNameTv.setText(contract.getLandlordName());
         landlordPhoneTv.setText(contract.getLandlordPhone());
-
-        // Thông tin người thuê
         tenantNameTv.setText(contract.getTenantName());
         tenantPhoneTv.setText(contract.getTenantPhone());
         tenantCCCDTv.setText(contract.getTenantCCCD());
-
-        // Thời gian hợp đồng
         contractPeriodTv.setText(contract.getStartDate() + " - " + contract.getEndDate());
 
-        // Trạng thái
         String statusText = getStatusText(contract.getStatus());
         statusTv.setText(statusText);
         statusTv.setTextColor(getStatusColor(contract.getStatus()));
 
-        // Ngày tạo
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         String createdDate = sdf.format(new Date(contract.getCreatedAt()));
         createdAtTv.setText("Tạo lúc: " + createdDate);
+    }
 
-        // Load ảnh CCCD
+    private void loadCCCDImages() {
         if (contract.getCccdFrontImage() != null && !contract.getCccdFrontImage().isEmpty()) {
             Glide.with(this)
                     .load(contract.getCccdFrontImage())
@@ -155,7 +200,6 @@ public class ContractDetailActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ Sử dụng ZoomImageAdapter giống DetailRoomActivity
     private void showZoomImgDialog(int currentPosition) {
         dialogZoomImg = new Dialog(ContractDetailActivity.this);
         dialogZoomImg.setContentView(R.layout.dialog_zoom_img);
@@ -163,25 +207,20 @@ public class ContractDetailActivity extends AppCompatActivity {
         ViewPager2 viewPager = dialogZoomImg.findViewById(R.id.viewPagerZoom);
         ImageView imageViewBack = dialogZoomImg.findViewById(R.id.imageViewBack);
 
-        // ✅ Tạo list ảnh CCCD để zoom
         ArrayList<String> cccdImages = new ArrayList<>();
         
-        // Thêm ảnh mặt trước nếu có
         if (contract.getCccdFrontImage() != null && !contract.getCccdFrontImage().isEmpty()) {
             cccdImages.add(contract.getCccdFrontImage());
         }
         
-        // Thêm ảnh mặt sau nếu có
         if (contract.getCccdBackImage() != null && !contract.getCccdBackImage().isEmpty()) {
             cccdImages.add(contract.getCccdBackImage());
         }
 
         if (!cccdImages.isEmpty()) {
-            // ✅ Sử dụng ZoomImageAdapter
             ZoomImageAdapter adapter = new ZoomImageAdapter(this, cccdImages);
             viewPager.setAdapter(adapter);
             
-            // ✅ Adjust position nếu chỉ có 1 ảnh
             int adjustedPosition = currentPosition;
             if (cccdImages.size() == 1) {
                 adjustedPosition = 0;
@@ -192,14 +231,12 @@ public class ContractDetailActivity extends AppCompatActivity {
             viewPager.setCurrentItem(adjustedPosition, false);
         }
 
-        // ✅ Close button
         imageViewBack.setOnClickListener(v -> {
             if (dialogZoomImg.isShowing()) {
                 dialogZoomImg.dismiss();
             }
         });
 
-        // ✅ Show dialog với fullscreen style giống DetailRoomActivity
         dialogZoomImg.show();
         Window window = dialogZoomImg.getWindow();
         if (window != null) {
@@ -227,11 +264,11 @@ public class ContractDetailActivity extends AppCompatActivity {
 
     private int getStatusColor(int status) {
         switch (status) {
-            case 0: return getResources().getColor(R.color.gray);
-            case 1: return getResources().getColor(R.color.green);
-            case 2: return getResources().getColor(R.color.red);
-            case 3: return getResources().getColor(R.color.orange_100);
-            default: return getResources().getColor(R.color.black);
+            case 0: return ContextCompat.getColor(this, R.color.gray);
+            case 1: return ContextCompat.getColor(this, R.color.green);
+            case 2: return ContextCompat.getColor(this, R.color.red);
+            case 3: return ContextCompat.getColor(this, R.color.orange_100);
+            default: return ContextCompat.getColor(this, R.color.black);
         }
     }
 }

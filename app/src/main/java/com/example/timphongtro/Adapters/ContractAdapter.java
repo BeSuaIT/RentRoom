@@ -8,11 +8,19 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Activities.ContractDetailActivity;
 import com.example.timphongtro.Models.Contract;
+import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.GsonUtils;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -40,53 +48,99 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
     @Override
     public void onBindViewHolder(@NonNull ContractViewHolder holder, int position) {
         Contract contract = contractsList.get(position);
-
-        holder.roomTitleTv.setText(contract.getRoomTitle());
-        holder.tenantNameTv.setText("Người thuê: " + contract.getTenantName());
-        holder.tenantPhoneTv.setText("SĐT: " + contract.getTenantPhone());
-        holder.contractPeriodTv.setText(contract.getStartDate() + " - " + contract.getEndDate());
-
-        // Format giá phòng
-        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.getDefault());
-        String formattedPrice = formatter.format(contract.getRoomPrice()) + " VNĐ/tháng";
-        holder.roomPriceTv.setText(formattedPrice);
-
-        // Hiển thị trạng thái
-        String statusText = getStatusText(contract.getStatus());
-        holder.statusTv.setText(statusText);
-        holder.statusTv.setTextColor(getStatusColor(contract.getStatus()));
-
-        // Format ngày tạo
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        String createdDate = sdf.format(new Date(contract.getCreatedAt()));
-        holder.createdAtTv.setText("Tạo: " + createdDate);
-        
-        // ✅ Set click listener để mở ContractDetailActivity
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ContractDetailActivity.class);
-            intent.putExtra("contract", contract);
-            intent.putExtra("position", position);
-            context.startActivity(intent);
-        });
-        
-        // ✅ Visual feedback khi click
-        holder.itemView.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    v.setAlpha(0.7f);
-                    break;
-                case android.view.MotionEvent.ACTION_UP:
-                case android.view.MotionEvent.ACTION_CANCEL:
-                    v.setAlpha(1.0f);
-                    break;
-            }
-            return false;
-        });
+        holder.bind(contract, position);
     }
 
     @Override
     public int getItemCount() {
         return contractsList.size();
+    }
+
+    class ContractViewHolder extends RecyclerView.ViewHolder {
+        TextView roomTitleTv, tenantNameTv, tenantPhoneTv, contractPeriodTv,
+                roomPriceTv, statusTv, createdAtTv;
+
+        public ContractViewHolder(@NonNull View itemView) {
+            super(itemView);
+            roomTitleTv = itemView.findViewById(R.id.room_title_tv);
+            tenantNameTv = itemView.findViewById(R.id.tenant_name_tv);
+            tenantPhoneTv = itemView.findViewById(R.id.tenant_phone_tv);
+            contractPeriodTv = itemView.findViewById(R.id.contract_period_tv);
+            roomPriceTv = itemView.findViewById(R.id.room_price_tv);
+            statusTv = itemView.findViewById(R.id.status_tv);
+            createdAtTv = itemView.findViewById(R.id.created_at_tv);
+        }
+
+        public void bind(Contract contract, int position) {
+            loadRoomData(contract);
+            bindContractData(contract);
+            setupClickListener(contract, position);
+        }
+
+        private void loadRoomData(Contract contract) {
+            if (contract.getRoomId() == null) {
+                roomTitleTv.setText("Phòng không xác định");
+                roomPriceTv.setText("0 VNĐ/tháng");
+                return;
+            }
+
+            DatabaseReference roomRef = FirebaseDatabase.getInstance()
+                    .getReference("Posts")
+                    .child(contract.getRoomId());
+
+            roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        Room room = snapshot.getValue(Room.class);
+                        if (room != null) {
+                            roomTitleTv.setText(room.getTitle_room() != null ? 
+                                              room.getTitle_room() : "Phòng trọ");
+                            
+                            NumberFormat formatter = NumberFormat.getNumberInstance(Locale.getDefault());
+                            String formattedPrice = formatter.format(room.getPrice_room()) + " VNĐ/tháng";
+                            roomPriceTv.setText(formattedPrice);
+                        }
+                    } else {
+                        roomTitleTv.setText("Phòng đã bị xóa");
+                        roomPriceTv.setText("N/A");
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    roomTitleTv.setText("Lỗi tải phòng");
+                    roomPriceTv.setText("N/A");
+                }
+            });
+        }
+
+        private void bindContractData(Contract contract) {
+            tenantNameTv.setText("Người thuê: " + contract.getTenantName());
+            tenantPhoneTv.setText("SĐT: " + contract.getTenantPhone());
+            contractPeriodTv.setText(contract.getStartDate() + " - " + contract.getEndDate());
+
+            // Hiển thị trạng thái
+            String statusText = getStatusText(contract.getStatus());
+            statusTv.setText(statusText);
+            statusTv.setTextColor(getStatusColor(contract.getStatus()));
+
+            // Format ngày tạo
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            String createdDate = sdf.format(new Date(contract.getCreatedAt()));
+            createdAtTv.setText("Tạo: " + createdDate);
+        }
+
+        private void setupClickListener(Contract contract, int position) {
+            itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(context, ContractDetailActivity.class);
+                String contractJson = GsonUtils.toJson(contract);
+                intent.putExtra("contractJson", contractJson);
+                intent.putExtra("position", position);
+                
+                context.startActivity(intent);
+            });
+        }
     }
 
     private String getStatusText(int status) {
@@ -101,33 +155,11 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
 
     private int getStatusColor(int status) {
         switch (status) {
-            case 0: return context.getResources().getColor(R.color.gray);
-            case 1: return context.getResources().getColor(R.color.green);
-            case 2: return context.getResources().getColor(R.color.red);
-            case 3: return context.getResources().getColor(R.color.orange_100);
-            default: return context.getResources().getColor(R.color.black);
-        }
-    }
-    
-    // ✅ Method để update data
-    public void updateData(ArrayList<Contract> newContracts) {
-        this.contractsList = newContracts;
-        notifyDataSetChanged();
-    }
-
-    static class ContractViewHolder extends RecyclerView.ViewHolder {
-        TextView roomTitleTv, tenantNameTv, tenantPhoneTv, contractPeriodTv,
-                roomPriceTv, statusTv, createdAtTv;
-
-        public ContractViewHolder(@NonNull View itemView) {
-            super(itemView);
-            roomTitleTv = itemView.findViewById(R.id.room_title_tv);
-            tenantNameTv = itemView.findViewById(R.id.tenant_name_tv);
-            tenantPhoneTv = itemView.findViewById(R.id.tenant_phone_tv);
-            contractPeriodTv = itemView.findViewById(R.id.contract_period_tv);
-            roomPriceTv = itemView.findViewById(R.id.room_price_tv);
-            statusTv = itemView.findViewById(R.id.status_tv);
-            createdAtTv = itemView.findViewById(R.id.created_at_tv);
+            case 0: return ContextCompat.getColor(context, R.color.gray);
+            case 1: return ContextCompat.getColor(context, R.color.green);
+            case 2: return ContextCompat.getColor(context, R.color.red);
+            case 3: return ContextCompat.getColor(context, R.color.orange_100);
+            default: return ContextCompat.getColor(context, R.color.black);
         }
     }
 }
