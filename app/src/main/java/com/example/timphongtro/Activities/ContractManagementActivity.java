@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,6 +26,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ContractManagementActivity extends AppCompatActivity {
 
@@ -32,9 +35,11 @@ public class ContractManagementActivity extends AppCompatActivity {
     private ArrayList<Contract> contractsList;
     private FloatingActionButton fabAddContract;
     private ImageView backButton;
-
+    private LinearLayout noDataLayout;
+    private TextView noDataTitle, noDataMessage;
     private FirebaseAuth firebaseAuth;
-    private DatabaseReference contractsRef;
+    private DatabaseReference contractsRef, usersRef;
+    private String currentUserRole;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,19 +50,22 @@ public class ContractManagementActivity extends AppCompatActivity {
         initializeFirebase();
         setupListeners();
         setupRecyclerView();
-        checkUserRoleAndSetupFAB();
-        loadContracts();
+        loadUserRoleAndSetup();
     }
 
     private void initializeViews() {
         contractsRecyclerView = findViewById(R.id.contracts_recycler_view);
         fabAddContract = findViewById(R.id.fab_add_contract);
         backButton = findViewById(R.id.back_button);
+        noDataLayout = findViewById(R.id.no_data_layout);
+        noDataTitle = findViewById(R.id.no_data_title);
+        noDataMessage = findViewById(R.id.no_data_message);
     }
 
     private void initializeFirebase() {
         firebaseAuth = FirebaseAuth.getInstance();
         contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
+        usersRef = FirebaseDatabase.getInstance().getReference("Users");
     }
 
     private void setupListeners() {
@@ -71,74 +79,139 @@ public class ContractManagementActivity extends AppCompatActivity {
         contractsRecyclerView.setAdapter(contractAdapter);
     }
 
-    private void loadContracts() {
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser == null) return;
-
-        contractsRef.orderByChild("landlordId")
-                .equalTo(currentUser.getUid())
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        contractsList.clear();
-                        for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
-                            Contract contract = contractSnapshot.getValue(Contract.class);
-                            if (contract != null) {
-                                contractsList.add(contract);
-                            }
-                        }
-                        contractAdapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(ContractManagementActivity.this,
-                                "Lỗi tải danh sách hợp đồng", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void checkUserRoleAndSetupFAB() {
+    private void loadUserRoleAndSetup() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser == null) {
+            showNoDataState("Chưa đăng nhập", "Vui lòng đăng nhập để xem hợp đồng");
             fabAddContract.setVisibility(View.GONE);
             return;
         }
 
-        DatabaseReference userRef = FirebaseDatabase.getInstance()
-                .getReference("Users")
-                .child(currentUser.getUid());
-
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        usersRef.child(currentUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    String userRole = snapshot.child("role").getValue(String.class);
-
-                    if ("Chủ trọ".equals(userRole)) {
-                        fabAddContract.setVisibility(View.VISIBLE);
-                        fabAddContract.setOnClickListener(v -> {
-                            Intent intent = new Intent(ContractManagementActivity.this, AddContractActivity.class);
-                            startActivity(intent);
-                        });
-                    } else {
-                        fabAddContract.setVisibility(View.GONE);
-                    }
+                    currentUserRole = snapshot.child("role").getValue(String.class);
+                    setupUIBasedOnRole();
+                    loadContracts();
                 } else {
+                    currentUserRole = null;
+                    showNoDataState("Lỗi tài khoản", "Không tìm thấy thông tin tài khoản");
                     fabAddContract.setVisibility(View.GONE);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                currentUserRole = null;
+                showNoDataState("Lỗi kết nối", "Không thể tải thông tin người dùng");
                 fabAddContract.setVisibility(View.GONE);
             }
         });
     }
 
+    private void setupUIBasedOnRole() {
+        if ("Chủ trọ".equals(currentUserRole)) {
+            fabAddContract.setVisibility(View.VISIBLE);
+            fabAddContract.setOnClickListener(v -> {
+                Intent intent = new Intent(ContractManagementActivity.this, AddContractActivity.class);
+                startActivity(intent);
+            });
+        } else {
+            fabAddContract.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadContracts() {
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser == null || currentUserRole == null) {
+            showNoDataState("Chưa xác định quyền", "Không thể xác định quyền truy cập");
+            return;
+        }
+
+        contractsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                contractsList.clear();
+
+                if (!snapshot.exists()) {
+                    showNoDataState();
+                    return;
+                }
+
+                for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
+                    Contract contract = contractSnapshot.getValue(Contract.class);
+                    if (contract != null && shouldShowContract(contract, currentUser.getUid())) {
+                        contractsList.add(contract);
+                    }
+                }
+
+                Collections.sort(contractsList, (c1, c2) -> Long.compare(c2.getCreatedAt(), c1.getCreatedAt()));
+
+                if (contractsList.isEmpty()) {
+                    showNoDataState();
+                } else {
+                    showDataState();
+                }
+
+                contractAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                showNoDataState("Lỗi tải dữ liệu", "Không thể tải danh sách hợp đồng");
+                Toast.makeText(ContractManagementActivity.this,
+                        "Lỗi tải danh sách hợp đồng", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private boolean shouldShowContract(Contract contract, String currentUserId) {
+        switch (currentUserRole) {
+            case "Chủ trọ":
+                return currentUserId.equals(contract.getLandlordId());
+            case "Người thuê":
+                return currentUserId.equals(contract.getTenantId());
+            default:
+                return false;
+        }
+    }
+
+    private void showNoDataState() {
+        if ("Chủ trọ".equals(currentUserRole)) {
+            showNoDataState("Chưa có hợp đồng", "Bạn chưa tạo hợp đồng nào.\nNhấn nút + để tạo hợp đồng mới.");
+        } else if ("Người thuê".equals(currentUserRole)) {
+            showNoDataState("Chưa có hợp đồng", "Bạn chưa có hợp đồng thuê nào.");
+        } else if ("Admin".equals(currentUserRole)) {
+            showNoDataState("Chưa có hợp đồng", "Hệ thống chưa có hợp đồng nào.");
+        } else {
+            showNoDataState("Không có quyền truy cập", "Bạn không có quyền xem hợp đồng.");
+        }
+    }
+
+    private void showNoDataState(String title, String message) {
+        contractsRecyclerView.setVisibility(View.GONE);
+        if (noDataLayout != null) {
+            noDataLayout.setVisibility(View.VISIBLE);
+            if (noDataTitle != null) noDataTitle.setText(title);
+            if (noDataMessage != null) noDataMessage.setText(message);
+        } else {
+            Toast.makeText(this, title + ": " + message, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void showDataState() {
+        contractsRecyclerView.setVisibility(View.VISIBLE);
+        if (noDataLayout != null) {
+            noDataLayout.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        loadContracts(); // Refresh khi quay lại từ AddContractActivity
+        if (currentUserRole != null) {
+            loadContracts();
+        }
     }
 }

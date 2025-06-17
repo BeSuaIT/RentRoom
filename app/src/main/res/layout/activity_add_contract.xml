@@ -83,8 +83,6 @@
                     android:id="@+id/landlord_name_edt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    app:boxStrokeColor="@color/orange_100"
                     android:hint="Tên chủ trọ" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -111,6 +109,69 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tìm kiếm người thuê (tùy chọn)"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="@color/gray"
+                android:layout_marginBottom="8dp" />
+
+            <!-- ✅ Cập nhật phần tìm kiếm với nút Clear -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    app:boxStrokeColor="@color/orange_100">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tenant_email_edt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Email người thuê"
+                        android:inputType="textEmailAddress" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/search_tenant_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="4dp"
+                    android:text="Tìm"
+                    android:backgroundTint="@color/orange_100"
+                    android:textColor="@color/white_100" />
+
+                <ImageButton
+                    android:id="@+id/clear_search_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/ic_clear"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Xóa tìm kiếm"
+                    android:padding="12dp"
+                    app:tint="@color/gray_600" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="* Nếu không tìm thấy hoặc thông tin không đầy đủ, có thể nhập/sửa thông tin bên dưới"
+                android:textSize="12sp"
+                android:textColor="@color/gray"
+                android:layout_marginBottom="16dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"

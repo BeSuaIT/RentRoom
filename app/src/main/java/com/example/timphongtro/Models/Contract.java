@@ -6,6 +6,7 @@ public class Contract {
     private String landlordId;
     private String landlordName;
     private String landlordPhone;
+    private String tenantId;
     private String tenantName;
     private String tenantPhone;
     private String tenantCCCD;
@@ -19,14 +20,15 @@ public class Contract {
     public Contract() {}
 
     public Contract(String contractId, String roomId, String landlordId, String landlordName, 
-                   String landlordPhone, String tenantName, String tenantPhone, String tenantCCCD,
-                   String cccdFrontImage, String cccdBackImage, String startDate, String endDate, 
-                   int status, long createdAt) {
+                   String landlordPhone, String tenantId, String tenantName, String tenantPhone, 
+                   String tenantCCCD, String cccdFrontImage, String cccdBackImage, 
+                   String startDate, String endDate, int status, long createdAt) {
         this.contractId = contractId;
         this.roomId = roomId;
         this.landlordId = landlordId;
         this.landlordName = landlordName;
         this.landlordPhone = landlordPhone;
+        this.tenantId = tenantId;
         this.tenantName = tenantName;
         this.tenantPhone = tenantPhone;
         this.tenantCCCD = tenantCCCD;
@@ -36,6 +38,15 @@ public class Contract {
         this.endDate = endDate;
         this.status = status;
         this.createdAt = createdAt;
+    }
+
+    public Contract(String contractId, String roomId, String landlordId, String landlordName, 
+                   String landlordPhone, String tenantName, String tenantPhone, String tenantCCCD,
+                   String cccdFrontImage, String cccdBackImage, String startDate, String endDate, 
+                   int status, long createdAt) {
+        this(contractId, roomId, landlordId, landlordName, landlordPhone, null, 
+             tenantName, tenantPhone, tenantCCCD, cccdFrontImage, cccdBackImage, 
+             startDate, endDate, status, createdAt);
     }
 
     public String getContractId() { return contractId; }
@@ -52,6 +63,9 @@ public class Contract {
 
     public String getLandlordPhone() { return landlordPhone; }
     public void setLandlordPhone(String landlordPhone) { this.landlordPhone = landlordPhone; }
+
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
 
     public String getTenantName() { return tenantName; }
     public void setTenantName(String tenantName) { this.tenantName = tenantName; }

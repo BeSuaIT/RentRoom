@@ -10,7 +10,6 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Header -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -41,17 +40,63 @@
                 android:textStyle="bold" />
         </RelativeLayout>
 
-        <!-- Content -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/contracts_recycler_view"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp"
-            android:clipToPadding="false" />
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/contracts_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp"
+                android:clipToPadding="false"
+                android:visibility="visible" />
+
+            <LinearLayout
+                android:id="@+id/no_data_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone"
+                android:padding="32dp">
+
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/ic_contract_empty"
+                    android:alpha="0.6"
+                    app:tint="@color/gray_500"
+                    android:layout_marginBottom="24dp" />
+
+                <TextView
+                    android:id="@+id/no_data_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chưa có hợp đồng"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray_700"
+                    android:gravity="center"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/no_data_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bạn chưa tạo hợp đồng nào.\nNhấn nút + để tạo hợp đồng mới."
+                    android:textSize="16sp"
+                    android:textColor="@color/gray_600"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:layout_marginBottom="24dp" />
+
+            </LinearLayout>
+
+        </FrameLayout>
 
     </LinearLayout>
 
-    <!-- FAB Add Contract -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add_contract"
         android:layout_width="wrap_content"
@@ -59,6 +104,8 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@drawable/ic_add"
+        android:contentDescription="Tạo hợp đồng mới"
+        android:visibility="gone"
         app:backgroundTint="@color/orange_100"
         app:tint="@color/white_100" />
 
