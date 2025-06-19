@@ -269,6 +269,10 @@ public class ConfirmOrderActivity extends AppCompatActivity {
 
                     ordersRef.child(orderId).setValue(orderData)
                         .addOnSuccessListener(aVoid -> {
+                            if (status == 1) {
+                                updateServiceSoldCount(sellerSnapshot);
+                            }
+                            
                             successCount[0]++;
                             if (successCount[0] == totalOrders) {
                                 showPaymentNotification(selectedPaymentMethod, true);
@@ -295,6 +299,51 @@ public class ConfirmOrderActivity extends AppCompatActivity {
                     "Lỗi truy cập giỏ hàng: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void updateServiceSoldCount(DataSnapshot sellerSnapshot) {
+        DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
+        
+        for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
+            String serviceId = itemSnapshot.getKey();
+            Integer quantity = itemSnapshot.getValue(Integer.class);
+            
+            if (serviceId == null || quantity == null || quantity <= 0) continue;
+
+            findAndUpdateServiceSold(servicesRef, serviceId, quantity);
+        }
+    }
+
+    private void findAndUpdateServiceSold(DatabaseReference servicesRef, String serviceId, int quantity) {
+        String[] categories = {"chothuenoithat", "doibinhnuoc", "giatla", "suachuadiennuoc", "tuvanthietkephong"};
+        
+        for (String category : categories) {
+            servicesRef.child(category).child(serviceId).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        Integer currentSold = snapshot.child("sold").getValue(Integer.class);
+                        if (currentSold == null) currentSold = 0;
+                        
+                        int newSold = currentSold + quantity;
+
+                        servicesRef.child(category).child(serviceId).child("sold")
+                                .setValue(newSold)
+                                .addOnSuccessListener(aVoid -> {
+
+                                })
+                                .addOnFailureListener(e -> {
+
+                                });
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        }
     }
 
     private Map<String, Object> createOrderData(String userId, String sellerId, 
