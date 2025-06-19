@@ -55,10 +55,8 @@ public class SearchActivity extends AppCompatActivity {
         roomRef = FirebaseDatabase.getInstance().getReference("Posts");
         citiesRef = FirebaseDatabase.getInstance().getReference("Cities");
 
-        fetchCitiesData();
+        fetchCitiesData(); // ✅ Sẽ call handleIncomingSelection sau khi load xong
         fetchRoomDatabase();
-
-        handleIncomingSelection();
     }
 
     private void initializeViews() {
@@ -87,6 +85,10 @@ public class SearchActivity extends AppCompatActivity {
         spinnerCity.setAdapter(cityAdapter);
         spinnerDistrict.setAdapter(districtAdapter);
 
+        // ✅ Thêm default options
+        cityAdapter.add("Tất cả Thành phố");
+        districtAdapter.add("Tất cả Quận/Huyện");
+
         spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -103,7 +105,8 @@ public class SearchActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
 
         spinnerDistrict.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -114,7 +117,8 @@ public class SearchActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
     }
 
@@ -172,7 +176,8 @@ public class SearchActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
         });
     }
 
@@ -193,12 +198,17 @@ public class SearchActivity extends AppCompatActivity {
                     DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
                     for (DataSnapshot districtSnapshot : districtsSnapshot.getChildren()) {
                         District district = districtSnapshot.getValue(District.class);
-                        districts.add(district);
+                        if (district != null) {
+                            districts.add(district);
+                        }
                     }
                     city.setDistricts(districts);
                     cityList.add(city);
                     cityAdapter.add(city.getName());
                 }
+
+                // ✅ Sau khi load xong cities, handle incoming selection
+                handleIncomingSelection();
             }
 
             @Override
@@ -252,40 +262,90 @@ public class SearchActivity extends AppCompatActivity {
         searchAdapter.searchDataList(filteredList);
     }
 
+    // ✅ Cập nhật method handleIncomingSelection
     private void handleIncomingSelection() {
-        String selectedCity = getIntent().getStringExtra("selectedCity");
-        String selectedDistrict = getIntent().getStringExtra("selectedDistrict");
+        String incomingCity = getIntent().getStringExtra("selectedCity");
+        String incomingDistrict = getIntent().getStringExtra("selectedDistrict");
 
-        if (selectedCity != null && selectedDistrict != null) {
+        if (incomingCity != null || incomingDistrict != null) {
+            // ✅ Đợi cities data load xong rồi mới set selection
             citiesRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    // ✅ Đợi UI setup xong
                     spinnerCity.post(() -> {
-                        for (int i = 0; i < cityAdapter.getCount(); i++) {
-                            if (cityAdapter.getItem(i).equals(selectedCity)) {
-                                spinnerCity.setSelection(i);
-                                districtAdapter.registerDataSetObserver(new DataSetObserver() {
-                                    @Override
-                                    public void onChanged() {
-                                        districtAdapter.unregisterDataSetObserver(this);
-
-                                        for (int j = 0; j < districtAdapter.getCount(); j++) {
-                                            if (districtAdapter.getItem(j).equals(selectedDistrict)) {
-                                                spinnerDistrict.setSelection(j);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                });
-                                break;
-                            }
-                        }
+                        setCitySelection(incomingCity, incomingDistrict);
                     });
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {}
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
             });
+        }
+    }
+
+    // ✅ Thêm method set city selection
+    private void setCitySelection(String incomingCity, String incomingDistrict) {
+        // ✅ Tìm và set city trước
+        if (incomingCity != null) {
+            for (int i = 0; i < cityAdapter.getCount(); i++) {
+                if (cityAdapter.getItem(i).equals(incomingCity)) {
+                    spinnerCity.setSelection(i);
+
+                    // ✅ Đợi district adapter update xong rồi set district
+                    if (incomingDistrict != null) {
+                        setDistrictSelectionAfterCityChange(incomingDistrict);
+                    }
+                    return;
+                }
+            }
+        }
+
+        // ✅ Nếu không có city hoặc không tìm thấy city, chỉ set district
+        if (incomingDistrict != null) {
+            setDistrictSelectionDirectly(incomingDistrict);
+        }
+    }
+
+    // ✅ Set district sau khi city đã thay đổi
+    private void setDistrictSelectionAfterCityChange(String targetDistrict) {
+        // ✅ Sử dụng DataSetObserver để đợi district adapter update
+        districtAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                districtAdapter.unregisterDataSetObserver(this);
+
+                // ✅ Tìm và set district selection
+                spinnerDistrict.post(() -> {
+                    for (int j = 0; j < districtAdapter.getCount(); j++) {
+                        if (districtAdapter.getItem(j).equals(targetDistrict)) {
+                            spinnerDistrict.setSelection(j);
+                            break;
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    // ✅ Set district trực tiếp (khi không có city)
+    private void setDistrictSelectionDirectly(String targetDistrict) {
+        // ✅ Tìm city chứa district này và set cả hai
+        for (int cityIndex = 0; cityIndex < cityList.size(); cityIndex++) {
+            City city = cityList.get(cityIndex);
+            if (city.getDistricts() != null) {
+                for (District district : city.getDistricts()) {
+                    if (district.getName().equals(targetDistrict)) {
+                        // ✅ Tìm thấy → set city trước
+                        spinnerCity.setSelection(cityIndex + 1); // +1 vì có "Tất cả Thành phố"
+
+                        // ✅ Rồi set district
+                        setDistrictSelectionAfterCityChange(targetDistrict);
+                        return;
+                    }
+                }
+            }
         }
     }
 }
