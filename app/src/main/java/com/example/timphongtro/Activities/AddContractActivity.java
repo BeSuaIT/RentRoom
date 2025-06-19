@@ -68,7 +68,6 @@ public class AddContractActivity extends AppCompatActivity {
     
     private Spinner roomSpinner;
     private EditText landlordNameEdt, landlordPhoneEdt;
-    // ✅ Thêm field tìm kiếm tenant
     private EditText tenantEmailEdt;
     private Button searchTenantBtn;
     private EditText tenantNameEdt, tenantPhoneEdt, tenantCCCDEdt;
@@ -83,17 +82,14 @@ public class AddContractActivity extends AppCompatActivity {
     private ArrayAdapter<String> roomAdapter;
     private Room selectedRoom;
     private String currentImageType;
-    
-    // ✅ Thêm field để lưu tenant tìm được
     private String foundTenantId = null;
-    
     private FirebaseAuth firebaseAuth;
     private DatabaseReference postsRef, usersRef, contractsRef;
     private StorageReference storageRef;
     private ActivityResultLauncher<Intent> galleryLauncher, cameraLauncher;
     private BottomSheetDialog imagePickerDialog;
     private String contractId;
-    private ImageButton clearSearchBtn; // ✅ Thêm field
+    private ImageButton clearSearchBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,11 +109,8 @@ public class AddContractActivity extends AppCompatActivity {
         roomSpinner = findViewById(R.id.room_spinner);
         landlordNameEdt = findViewById(R.id.landlord_name_edt);
         landlordPhoneEdt = findViewById(R.id.landlord_phone_edt);
-        
-        // ✅ Thêm views mới
         tenantEmailEdt = findViewById(R.id.tenant_email_edt);
         searchTenantBtn = findViewById(R.id.search_tenant_btn);
-        
         tenantNameEdt = findViewById(R.id.tenant_name_edt);
         tenantPhoneEdt = findViewById(R.id.tenant_phone_edt);
         tenantCCCDEdt = findViewById(R.id.tenant_cccd_edt);
@@ -130,7 +123,7 @@ public class AddContractActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button);
         cccdFrontRecyclerView = findViewById(R.id.cccd_front_recycler_view);
         cccdBackRecyclerView = findViewById(R.id.cccd_back_recycler_view);
-        clearSearchBtn = findViewById(R.id.clear_search_btn); // ✅ Thêm view
+        clearSearchBtn = findViewById(R.id.clear_search_btn);
     }
 
     private void initializeFirebase() {
@@ -197,31 +190,21 @@ public class AddContractActivity extends AppCompatActivity {
 
     private void setupListeners() {
         backButton.setOnClickListener(v -> finish());
-        
-        // ✅ Thêm listener cho tìm kiếm tenant
         searchTenantBtn.setOnClickListener(v -> searchTenantByEmail());
-        
         selectCCCDFrontBtn.setOnClickListener(v -> {
             currentImageType = CCCD_FRONT;
             showImagePickerDialog();
         });
-
         selectCCCDBackBtn.setOnClickListener(v -> {
             currentImageType = CCCD_BACK;
             showImagePickerDialog();
         });
-
         startDateEdt.setOnClickListener(v -> showDatePicker(startDateEdt));
         endDateEdt.setOnClickListener(v -> showDatePicker(endDateEdt));
         createContractBtn.setOnClickListener(v -> createContract());
-
-        // ✅ Thêm listener clear search
         clearSearchBtn.setOnClickListener(v -> clearTenantSearch());
-        
-        // ✅ Thêm listener cho email field để auto reset khi user thay đổi
         tenantEmailEdt.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus && foundTenantId != null) {
-                // User đang chỉnh sửa email mà đã có tenant được tìm → suggest clear
                 Toast.makeText(this, "Nhấn nút X để xóa kết quả tìm kiếm hiện tại", Toast.LENGTH_SHORT).show();
             }
         });
@@ -229,7 +212,6 @@ public class AddContractActivity extends AppCompatActivity {
         setupRoomSpinner();
     }
 
-    // ✅ Cập nhật method tìm kiếm tenant với logic smart fill
     private void searchTenantByEmail() {
         String email = tenantEmailEdt.getText().toString().trim();
         if (email.isEmpty()) {
@@ -249,31 +231,22 @@ public class AddContractActivity extends AppCompatActivity {
 
                         if (snapshot.exists()) {
                             for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                                foundTenantId = userSnapshot.getKey();
+                                String name = userSnapshot.child("name").getValue(String.class);
+                                String phone = userSnapshot.child("phone").getValue(String.class);
                                 String role = userSnapshot.child("role").getValue(String.class);
-                                
-                                // ✅ Chỉ cho phép role "Người thuê"
-                                if ("Người thuê".equals(role)) {
-                                    foundTenantId = userSnapshot.getKey();
-                                    String name = userSnapshot.child("name").getValue(String.class);
-                                    String phone = userSnapshot.child("phone").getValue(String.class);
 
-                                    // ✅ Smart fill dựa trên dữ liệu có sẵn
-                                    handleTenantDataFill(name, phone);
+                                handleTenantDataFill(name, phone);
 
-                                    Toast.makeText(AddContractActivity.this, 
-                                        "Tìm thấy người thuê: " + (name != null ? name : email), Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
+                                String message = "Tìm thấy: " + (name != null ? name : email);
+                                Toast.makeText(AddContractActivity.this, message, Toast.LENGTH_LONG).show();
+                                return;
                             }
-                            // Tìm thấy user nhưng không phải "Người thuê"
-                            resetTenantFields();
-                            Toast.makeText(AddContractActivity.this, 
-                                "Email này không phải của người thuê", Toast.LENGTH_SHORT).show();
                         } else {
-                            // Không tìm thấy user nào
                             resetTenantFields();
-                            Toast.makeText(AddContractActivity.this, 
-                                "Không tìm thấy người dùng. Có thể nhập thông tin thủ công.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(AddContractActivity.this,
+                                    "Không tìm thấy người dùng với email này.\nCó thể nhập thông tin thủ công.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -281,57 +254,43 @@ public class AddContractActivity extends AppCompatActivity {
                     public void onCancelled(@NonNull DatabaseError error) {
                         searchTenantBtn.setEnabled(true);
                         searchTenantBtn.setText("Tìm");
-                        Toast.makeText(AddContractActivity.this, 
-                            "Lỗi tìm kiếm: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AddContractActivity.this, "Lỗi tìm kiếm: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    // ✅ Thêm method xử lý smart fill
     private void handleTenantDataFill(String name, String phone) {
-        // ✅ Xử lý tên
         if (name != null && !name.trim().isEmpty()) {
-            // Có tên → fill và disable
             tenantNameEdt.setText(name.trim());
             tenantNameEdt.setEnabled(false);
-            tenantNameEdt.setAlpha(0.7f); // Visual feedback
+            tenantNameEdt.setAlpha(0.7f);
         } else {
-            // Không có tên → cho phép nhập tay
             tenantNameEdt.setText("");
             tenantNameEdt.setEnabled(true);
             tenantNameEdt.setAlpha(1.0f);
         }
 
-        // ✅ Xử lý số điện thoại
-        if (phone != null && !phone.trim().isEmpty() && 
-            !phone.equals("Chưa cập nhật") && !phone.equals("null")) {
-            // Có phone → fill và disable
+        if (phone != null && !phone.trim().isEmpty() && !phone.equals("Chưa cập nhật") && !phone.equals("null")) {
             tenantPhoneEdt.setText(phone.trim());
             tenantPhoneEdt.setEnabled(false);
-            tenantPhoneEdt.setAlpha(0.7f); // Visual feedback
+            tenantPhoneEdt.setAlpha(0.7f);
         } else {
-            // Không có phone → cho phép nhập tay
             tenantPhoneEdt.setText("");
             tenantPhoneEdt.setEnabled(true);
             tenantPhoneEdt.setAlpha(1.0f);
         }
     }
 
-    // ✅ Cập nhật reset method
     private void resetTenantFields() {
         foundTenantId = null;
-        
-        // Reset tất cả fields về trạng thái có thể edit
         tenantNameEdt.setText("");
         tenantNameEdt.setEnabled(true);
         tenantNameEdt.setAlpha(1.0f);
-        
         tenantPhoneEdt.setText("");
         tenantPhoneEdt.setEnabled(true);
         tenantPhoneEdt.setAlpha(1.0f);
     }
 
-    // ✅ Thêm method clear search để user có thể nhập lại thủ công
     private void clearTenantSearch() {
         tenantEmailEdt.setText("");
         resetTenantFields();
