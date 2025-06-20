@@ -18,6 +18,10 @@ import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -25,6 +29,8 @@ import java.util.ArrayList;
 public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyViewHolder> {
     Context context;
     ArrayList<Room> list;
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+    FirebaseUser user = firebaseAuth.getCurrentUser();
 
     public ShowmoreAdapter(Context context, ArrayList<Room> list) {
         this.context = context;
@@ -80,10 +86,31 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
             if (roomJson != null) {
                 detailRoom.putExtra("DataRoom", roomJson);
                 context.startActivity(detailRoom);
+                saveToUserHistory(room.getId_room());
             } else {
                 android.widget.Toast.makeText(context, "Lỗi mở chi tiết phòng", android.widget.Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void saveToUserHistory(String roomId) {
+        if (user != null && roomId != null) {
+            long timestamp = System.currentTimeMillis();
+            
+            DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
+                    .getReference("Users")
+                    .child(user.getUid())
+                    .child("histories")
+                    .child(roomId);
+                    
+            userHistoryRef.setValue(timestamp)
+                    .addOnSuccessListener(unused -> {
+                        android.util.Log.d("History", "Saved room " + roomId + " to user history");
+                    })
+                    .addOnFailureListener(e -> {
+                        android.util.Log.e("History", "Failed to save history: " + e.getMessage());
+                    });
+        }
     }
 
     @Override

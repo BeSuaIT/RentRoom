@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -28,8 +27,6 @@ public class DataCleanupManager {
     private static final long CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 giờ
 
     private DatabaseReference databaseRef;
-    private Runnable onCompleted;
-    private Consumer<String> onFailed;
 
     public DataCleanupManager() {
         databaseRef = FirebaseDatabase.getInstance().getReference();
@@ -56,14 +53,23 @@ public class DataCleanupManager {
      * Thực hiện cleanup toàn bộ database
      */
     public void performDatabaseCleanup(Runnable onCompleted, Consumer<String> onFailed) {
-        this.onCompleted = onCompleted;
-        this.onFailed = onFailed;
-
         getValidUserIds(validUserIds -> {
             if (validUserIds != null) {
-                cleanupAllNodes(validUserIds);
+                cleanupPosts(validUserIds);
+                cleanupUsersNestedData(validUserIds);
+                cleanupMeetingSchedules(validUserIds);
+                cleanupBills(validUserIds);
+                cleanupServices(validUserIds);
+                cleanupCarts(validUserIds);
+                cleanupContracts(validUserIds);
+
+                if (onCompleted != null) {
+                    onCompleted.run();
+                }
             } else {
-                onFailed.accept("Failed to get valid user IDs");
+                if (onFailed != null) {
+                    onFailed.accept("Failed to get valid user IDs");
+                }
             }
         });
     }
@@ -90,36 +96,18 @@ public class DataCleanupManager {
     }
 
     /**
-     * Cleanup tất cả các node liên quan
-     */
-    private void cleanupAllNodes(List<String> validUserIds) {
-        CleanupTaskCounter taskCounter = new CleanupTaskCounter(8, onCompleted);
-
-        cleanupPosts(validUserIds, taskCounter);
-        cleanupHistories(validUserIds, taskCounter);
-        cleanupMeetingSchedules(validUserIds, taskCounter);
-        cleanupBills(validUserIds, taskCounter);
-        cleanupServices(validUserIds, taskCounter);
-        cleanupCarts(validUserIds, taskCounter);
-        cleanupFollowPosts(validUserIds, taskCounter);
-        cleanupContracts(validUserIds, taskCounter);
-    }
-
-    /**
      * Cleanup Posts node
      */
-    private void cleanupPosts(List<String> validUserIds, CleanupTaskCounter counter) {
+    private void cleanupPosts(List<String> validUserIds) {
         databaseRef.child("Posts").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, Object> updates = new HashMap<>();
-                AtomicInteger removedCount = new AtomicInteger(0);
 
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     String ownerId = postSnapshot.child("id_own_post").getValue(String.class);
                     if (ownerId != null && !validUserIds.contains(ownerId)) {
                         updates.put(postSnapshot.getKey(), null);
-                        removedCount.incrementAndGet();
                     }
                     
                     DataSnapshot userLovePostSnapshot = postSnapshot.child("userLovePost");
@@ -128,54 +116,83 @@ public class DataCleanupManager {
                             String userId = loveSnapshot.getKey();
                             if (userId != null && !validUserIds.contains(userId)) {
                                 updates.put(postSnapshot.getKey() + "/userLovePost/" + userId, null);
-                                removedCount.incrementAndGet();
                             }
                         }
                     }
                 }
 
                 if (!updates.isEmpty()) {
-                    databaseRef.child("Posts").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
+                    databaseRef.child("Posts").updateChildren(updates);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
             }
         });
     }
 
     /**
-     * Cleanup Histories node
+     * Cleanup dữ liệu nested trong Users
      */
-    private void cleanupHistories(List<String> validUserIds, CleanupTaskCounter counter) {
-        databaseRef.child("Histories").addListenerForSingleValueEvent(new ValueEventListener() {
+    private void cleanupUsersNestedData(List<String> validUserIds) {
+        databaseRef.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Map<String, Object> updates = new HashMap<>();
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                    String userId = userSnapshot.getKey();
+                    if (userId != null && validUserIds.contains(userId)) {
+                        // Cleanup histories
+                        DataSnapshot historiesSnapshot = userSnapshot.child("histories");
+                        if (historiesSnapshot.exists()) {
+                            checkAndCleanupRoomReferences(userId, "histories", historiesSnapshot);
+                        }
 
-                for (DataSnapshot historySnapshot : snapshot.getChildren()) {
-                    String userId = historySnapshot.getKey();
-                    if (userId != null && !validUserIds.contains(userId)) {
-                        updates.put(userId, null);
+                        // Cleanup followPosts
+                        DataSnapshot followPostsSnapshot = userSnapshot.child("followPosts");
+                        if (followPostsSnapshot.exists()) {
+                            checkAndCleanupRoomReferences(userId, "followPosts", followPostsSnapshot);
+                        }
                     }
-                }
-
-                if (!updates.isEmpty()) {
-                    databaseRef.child("Histories").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
+            }
+        });
+    }
+
+    /**
+     * Helper method: Kiểm tra và cleanup room references
+     */
+    private void checkAndCleanupRoomReferences(String userId, String nodeName, DataSnapshot roomRefsSnapshot) {
+        databaseRef.child("Posts").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
+                List<String> validRoomIds = new ArrayList<>();
+                for (DataSnapshot postSnapshot : postsSnapshot.getChildren()) {
+                    validRoomIds.add(postSnapshot.getKey());
+                }
+
+                Map<String, Object> updates = new HashMap<>();
+                for (DataSnapshot roomRefSnapshot : roomRefsSnapshot.getChildren()) {
+                    String roomId = roomRefSnapshot.getKey();
+                    if (roomId != null && !validRoomIds.contains(roomId)) {
+                        updates.put(userId + "/" + nodeName + "/" + roomId, null);
+                    }
+                }
+
+                if (!updates.isEmpty()) {
+                    databaseRef.child("Users").updateChildren(updates);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
             }
         });
     }
@@ -183,7 +200,7 @@ public class DataCleanupManager {
     /**
      * Cleanup MeetingSchedules node
      */
-    private void cleanupMeetingSchedules(List<String> validUserIds, CleanupTaskCounter counter) {
+    private void cleanupMeetingSchedules(List<String> validUserIds) {
         databaseRef.child("MeetingSchedules").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -200,16 +217,13 @@ public class DataCleanupManager {
                 }
 
                 if (!updates.isEmpty()) {
-                    databaseRef.child("MeetingSchedules").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
+                    databaseRef.child("MeetingSchedules").updateChildren(updates);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
             }
         });
     }
@@ -217,7 +231,7 @@ public class DataCleanupManager {
     /**
      * Cleanup Bills node
      */
-    private void cleanupBills(List<String> validUserIds, CleanupTaskCounter counter) {
+    private void cleanupBills(List<String> validUserIds) {
         databaseRef.child("Bills").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -234,16 +248,13 @@ public class DataCleanupManager {
                 }
 
                 if (!updates.isEmpty()) {
-                    databaseRef.child("Bills").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
+                    databaseRef.child("Bills").updateChildren(updates);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
             }
         });
     }
@@ -251,7 +262,7 @@ public class DataCleanupManager {
     /**
      * Cleanup Services node
      */
-    private void cleanupServices(List<String> validUserIds, CleanupTaskCounter counter) {
+    private void cleanupServices(List<String> validUserIds) {
         databaseRef.child("Services").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -267,16 +278,13 @@ public class DataCleanupManager {
                 }
 
                 if (!updates.isEmpty()) {
-                    databaseRef.child("Services").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
+                    databaseRef.child("Services").updateChildren(updates);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
             }
         });
     }
@@ -284,7 +292,7 @@ public class DataCleanupManager {
     /**
      * Cleanup Carts node
      */
-    private void cleanupCarts(List<String> validUserIds, CleanupTaskCounter counter) {
+    private void cleanupCarts(List<String> validUserIds) {
         databaseRef.child("Carts").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -305,107 +313,42 @@ public class DataCleanupManager {
                 }
 
                 if (!updates.isEmpty()) {
-                    databaseRef.child("Carts").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
+                    databaseRef.child("Carts").updateChildren(updates);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
             }
         });
     }
 
     /**
-     * Cleanup FollowPosts node
+     * Cleanup Contracts node
      */
-    private void cleanupFollowPosts(List<String> validUserIds, CleanupTaskCounter counter) {
-        databaseRef.child("FollowPosts").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Map<String, Object> updates = new HashMap<>();
-
-                for (DataSnapshot followSnapshot : snapshot.getChildren()) {
-                    String userId = followSnapshot.getKey();
-                    if (userId != null && !validUserIds.contains(userId)) {
-                        updates.put(userId, null);
-                    }
-                }
-
-                if (!updates.isEmpty()) {
-                    databaseRef.child("FollowPosts").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
-            }
-        });
-    }
-
-    /**
-     * ✅ Cleanup Contracts node - METHOD MỚI
-     */
-    private void cleanupContracts(List<String> validUserIds, CleanupTaskCounter counter) {
+    private void cleanupContracts(List<String> validUserIds) {
         databaseRef.child("Contracts").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, Object> updates = new HashMap<>();
 
                 for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
-                    // ✅ Kiểm tra landlordId - chủ trọ
                     String landlordId = contractSnapshot.child("landlordId").getValue(String.class);
-                    
-                    // ✅ Nếu chủ trọ không còn tồn tại → xóa contract
                     if (landlordId != null && !validUserIds.contains(landlordId)) {
                         updates.put(contractSnapshot.getKey(), null);
                     }
-                    
-                    // ✅ Note: Không xóa contract nếu chỉ tenant không tồn tại
-                    // vì tenant có thể được tạo thủ công trong contract
-                    // chỉ xóa khi landlord (người tạo contract) không tồn tại
                 }
 
                 if (!updates.isEmpty()) {
-                    databaseRef.child("Contracts").updateChildren(updates)
-                        .addOnCompleteListener(task -> counter.taskCompleted());
-                } else {
-                    counter.taskCompleted();
+                    databaseRef.child("Contracts").updateChildren(updates);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                counter.taskCompleted();
+
             }
         });
-    }
-
-    /**
-     * Class helper để đếm task hoàn thành
-     */
-    private static class CleanupTaskCounter {
-        private final int totalTasks;
-        private int completedTasks = 0;
-        private final Runnable onAllCompleted;
-
-        public CleanupTaskCounter(int totalTasks, Runnable onAllCompleted) {
-            this.totalTasks = totalTasks;
-            this.onAllCompleted = onAllCompleted;
-        }
-
-        public synchronized void taskCompleted() {
-            completedTasks++;
-            if (completedTasks >= totalTasks) {
-                onAllCompleted.run();
-            }
-        }
     }
 }

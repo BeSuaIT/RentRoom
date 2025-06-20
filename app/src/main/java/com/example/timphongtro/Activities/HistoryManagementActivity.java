@@ -33,7 +33,8 @@ public class HistoryManagementActivity extends AppCompatActivity {
     private View emptyView;
     private RoomAdapter adapter;
     private ArrayList<Room> rooms;
-    private DatabaseReference historyRef;
+    private DatabaseReference userRef;
+    private String currentUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +58,10 @@ public class HistoryManagementActivity extends AppCompatActivity {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            historyRef = FirebaseDatabase.getInstance()
-                .getReference("Histories")
-                .child(user.getUid());
+            currentUserId = user.getUid();
+            userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(currentUserId);
         }
     }
 
@@ -79,9 +81,8 @@ public class HistoryManagementActivity extends AppCompatActivity {
     }
 
     private void clearHistory() {
-        if (historyRef == null) return;
-
-        historyRef.removeValue()
+        if (userRef == null) return;
+        userRef.child("histories").removeValue()
             .addOnSuccessListener(unused -> {
                 rooms.clear();
                 adapter.notifyDataSetChanged();
@@ -94,11 +95,11 @@ public class HistoryManagementActivity extends AppCompatActivity {
     }
 
     private void loadHistory() {
-        if (historyRef == null) return;
+        if (userRef == null) return;
         
         swipeRefresh.setRefreshing(true);
 
-        historyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        userRef.child("histories").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Map<String, Long> timestamps = new HashMap<>();
@@ -147,6 +148,7 @@ public class HistoryManagementActivity extends AppCompatActivity {
                         }
                     }
 
+                    // Sort by timestamp (newest first)
                     rooms.sort((r1, r2) -> {
                         Long t1 = timestamps.get(r1.getId_room());
                         Long t2 = timestamps.get(r2.getId_room());

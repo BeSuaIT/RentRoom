@@ -318,8 +318,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
             roomImageSlider.setItemClickListener(new ItemClickListener() {
                 @Override
-                public void doubleClick(int i) {
-                }
+                public void doubleClick(int i) {}
 
                 @Override
                 public void onItemSelected(int position) {
@@ -781,7 +780,7 @@ public class PostDetailActivity extends AppCompatActivity {
             userProfileTextView.setVisibility(View.GONE);
             userProfileImageView.setVisibility(View.VISIBLE);
 
-            Glide.with(this)
+            Glide.with(getApplicationContext())
                 .load(avatarUrl)
                 .placeholder(R.drawable.avatar)
                 .error(R.drawable.avatar)
@@ -808,10 +807,11 @@ public class PostDetailActivity extends AppCompatActivity {
             }
             
             currentUser = realTimeUser;
-            
+
             DatabaseReference followRef = FirebaseDatabase.getInstance()
-                    .getReference("FollowPosts")
+                    .getReference("Users")
                     .child(currentUser.getUid())
+                    .child("followPosts")
                     .child(room.getId_room());
 
             followRef.get().addOnCompleteListener(task -> {
@@ -821,14 +821,22 @@ public class PostDetailActivity extends AppCompatActivity {
                             .addOnSuccessListener(unused -> {
                                 followButton.setIcon(getDrawable(R.drawable.ic_follow));
                                 Toast.makeText(this, "Đã bỏ theo dõi", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Lỗi bỏ theo dõi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                     } else {
                         followRef.setValue(true)
                             .addOnSuccessListener(unused -> {
                                 followButton.setIcon(getDrawable(R.drawable.ic_unfollow));
                                 Toast.makeText(this, "Đã theo dõi phòng này", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Lỗi theo dõi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                     }
+                } else {
+                    Toast.makeText(this, "Lỗi kiểm tra trạng thái theo dõi", Toast.LENGTH_SHORT).show();
                 }
             });
         });
@@ -837,8 +845,9 @@ public class PostDetailActivity extends AppCompatActivity {
     private void checkFollowStatus() {
         if (currentUser != null) {
             DatabaseReference followRef = FirebaseDatabase.getInstance()
-                    .getReference("FollowPosts")
+                    .getReference("Users")
                     .child(currentUser.getUid())
+                    .child("followPosts")
                     .child(room.getId_room());
 
             followRef.addValueEventListener(new ValueEventListener() {
@@ -853,6 +862,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
+                    followButton.setIcon(getDrawable(R.drawable.ic_follow));
                 }
             });
         }

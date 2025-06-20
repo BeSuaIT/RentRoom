@@ -7,10 +7,13 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.timphongtro.Adapters.FollowRoomAdapter;
@@ -26,13 +29,18 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FollowFragment extends Fragment {
     private RecyclerView rcvFollowPost;
+    private SwipeRefreshLayout swipeRefresh;
+    private LinearLayout emptyView;
+    private TextView emptyTitle, emptyMessage;
     private ArrayList<Room> followedRooms;
     private FollowRoomAdapter roomAdapter;
     private FirebaseUser currentUser;
-    private DatabaseReference followPostsRef;
+    private DatabaseReference userRef;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -45,6 +53,7 @@ public class FollowFragment extends Fragment {
         }
         
         initViews(view);
+        setupListeners();
         loadFollowedRooms();
         return view;
     }
@@ -60,63 +69,136 @@ public class FollowFragment extends Fragment {
 
     private void initViews(View view) {
         rcvFollowPost = view.findViewById(R.id.rcvFollowPost);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        emptyView = view.findViewById(R.id.emptyView);
+        emptyTitle = view.findViewById(R.id.emptyTitle);
+        emptyMessage = view.findViewById(R.id.emptyMessage);
+        
         followedRooms = new ArrayList<>();
         roomAdapter = new FollowRoomAdapter(requireContext(), followedRooms);
         rcvFollowPost.setLayoutManager(new LinearLayoutManager(getContext()));
         rcvFollowPost.setAdapter(roomAdapter);
 
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        followPostsRef = FirebaseDatabase.getInstance().getReference("FollowPosts");
+        if (currentUser != null) {
+            userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(currentUser.getUid());
+        }
+    }
+
+    private void setupListeners() {
+        swipeRefresh.setOnRefreshListener(this::loadFollowedRooms);
     }
 
     private void loadFollowedRooms() {
-        if (currentUser == null) return;
+        if (currentUser == null || userRef == null) {
+            showEmptyState("Chưa đăng nhập", "Vui lòng đăng nhập để xem danh sách theo dõi");
+            return;
+        }
         
-        followPostsRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
+        if (!swipeRefresh.isRefreshing()) {
+            swipeRefresh.setRefreshing(true);
+        }
+
+        userRef.child("followPosts").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 followedRooms.clear();
                 
                 if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
-                    roomAdapter.notifyDataSetChanged();
+                    showEmptyState("Chưa có phòng theo dõi", "Bạn chưa theo dõi phòng nào.\nHãy tìm và theo dõi những phòng yêu thích!");
+                    swipeRefresh.setRefreshing(false);
                     return;
                 }
-                
+
+                Map<String, Boolean> followedRoomIds = new HashMap<>();
                 for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                     String roomId = roomSnapshot.getKey();
-                    loadRoomFromPosts(roomId);
+                    Boolean isFollowed = roomSnapshot.getValue(Boolean.class);
+                    if (roomId != null && Boolean.TRUE.equals(isFollowed)) {
+                        followedRoomIds.put(roomId, true);
+                    }
                 }
+                
+                loadRoomDetails(followedRoomIds);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                swipeRefresh.setRefreshing(false);
+                showEmptyState("Lỗi tải dữ liệu", "Không thể tải danh sách theo dõi: " + error.getMessage());
                 Toast.makeText(getContext(), "Lỗi tải danh sách theo dõi", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void loadRoomFromPosts(String roomId) {
-        DatabaseReference postsRef = FirebaseDatabase.getInstance()
-                .getReference("Posts")
-                .child(roomId);
+    private void loadRoomDetails(Map<String, Boolean> followedRoomIds) {
+        if (followedRoomIds.isEmpty()) {
+            showEmptyState("Chưa có phòng theo dõi", "Bạn chưa theo dõi phòng nào.\nHãy tìm và theo dõi những phòng yêu thích!");
+            swipeRefresh.setRefreshing(false);
+            return;
+        }
 
+        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        
         postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    Room room = snapshot.getValue(Room.class);
-                    if (room != null) {
-                        followedRooms.add(room);
-                        roomAdapter.notifyDataSetChanged();
+                followedRooms.clear();
+
+                for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                    String roomId = roomSnapshot.getKey();
+                    if (followedRoomIds.containsKey(roomId)) {
+                        Room room = roomSnapshot.getValue(Room.class);
+                        if (room != null) {
+                            followedRooms.add(room);
+                        }
                     }
                 }
+
+                roomAdapter.notifyDataSetChanged();
+                updateUIState();
+                swipeRefresh.setRefreshing(false);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getContext(), 
-                    "Lỗi tải thông tin phòng", Toast.LENGTH_SHORT).show();
+                swipeRefresh.setRefreshing(false);
+                showEmptyState("Lỗi tải dữ liệu", "Không thể tải thông tin phòng: " + error.getMessage());
+                Toast.makeText(getContext(), "Lỗi tải thông tin phòng", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showEmptyState(String title, String message) {
+        rcvFollowPost.setVisibility(View.GONE);
+        emptyView.setVisibility(View.VISIBLE);
+        
+        if (emptyTitle != null) emptyTitle.setText(title);
+        if (emptyMessage != null) emptyMessage.setText(message);
+    }
+
+    private void updateUIState() {
+        if (followedRooms.isEmpty()) {
+            showEmptyState("Chưa có phòng theo dõi", "Bạn chưa theo dõi phòng nào.\nHãy tìm và theo dõi những phòng yêu thích!");
+        } else {
+            emptyView.setVisibility(View.GONE);
+            rcvFollowPost.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            userRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(currentUser.getUid());
+            loadFollowedRooms();
+        } else {
+            navigateToLogin();
+        }
     }
 }

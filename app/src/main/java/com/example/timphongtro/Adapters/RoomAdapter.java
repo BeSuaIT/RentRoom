@@ -21,15 +21,11 @@ import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> {
 
@@ -38,7 +34,6 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
     int maxitemcount = 10;
     FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     FirebaseUser user = firebaseAuth.getCurrentUser();
-    Room room;
 
     public RoomAdapter(Context context, ArrayList<Room> list) {
         this.context = context;
@@ -68,7 +63,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
         if (images != null && !images.isEmpty()) {
             String firstImage = images.get(0);
             if (firstImage != null && !firstImage.isEmpty()) {
-                Glide.with(context)
+                Glide.with(context.getApplicationContext())
                         .load(firstImage)
                         .placeholder(R.drawable.loading)
                         .error(R.drawable.img_no_image)
@@ -104,36 +99,30 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
             if (roomJson != null) {
                 detailRoom.putExtra("DataRoom", roomJson);
                 context.startActivity(detailRoom);
-
-                RecentlyRead(userID, holder);
+                saveToUserHistory(userID, room.getId_room());
             } else {
                 Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void RecentlyRead(String userID, MyViewHolder holder) {
-        if (user != null) {
-            room = list.get(holder.getAbsoluteAdapterPosition());
-            Date timeRead = new Date();
-            long timestamp = timeRead.getTime();
+    private void saveToUserHistory(String userId, String roomId) {
+        if (user != null && roomId != null) {
+            long timestamp = System.currentTimeMillis();
             
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance()
-                    .getReference("Histories/" + userID);
+            DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
+                    .getReference("Users")
+                    .child(userId)
+                    .child("histories")
+                    .child(roomId);
                     
-            databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    if (room != null && room.getId_room() != null) {
-                        databaseReference.child(room.getId_room()).setValue(timestamp);
-                    }
-                }
-                
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Handle error silently
-                }
-            });
+            userHistoryRef.setValue(timestamp)
+                    .addOnSuccessListener(unused -> {
+
+                    })
+                    .addOnFailureListener(e -> {
+
+                    });
         }
     }
 

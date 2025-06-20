@@ -1,8 +1,6 @@
 package com.example.timphongtro.Fragments;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -63,8 +61,6 @@ public class HomeFragment extends Fragment {
     private ArrayAdapter<String> spinnerAdapter;
     private ArrayList<City> cityArrayList;
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
-    private Handler timeoutHandler = new Handler(Looper.getMainLooper());
-    private Runnable cityTimeout, roomTimeout, imageTimeout;
     private boolean isInitialLoad = true;
     private SwipeRefreshLayout swipeRefreshLayout;
 
@@ -135,13 +131,8 @@ public class HomeFragment extends Fragment {
 
     private void setupListeners(View view) {
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            try {
-                isInitialLoad = true;
-                loadData();
-            } catch (Exception e) {
-                showToast("Lỗi refresh: " + e.getMessage());
-                forceStopRefresh();
-            }
+            isInitialLoad = true;
+            loadData();
         });
 
         view.findViewById(R.id.searchEditText).setOnClickListener(v -> 
@@ -235,16 +226,7 @@ public class HomeFragment extends Fragment {
         ImageSlider imageSlider = view.findViewById(R.id.imageSlider);
         StorageReference storageReference = storage.getReference().child("HomeImageSlider");
 
-        imageTimeout = () -> {
-            if (getContext() != null) {
-                showToast("Không thể tải ảnh slider");
-            }
-        };
-        timeoutHandler.postDelayed(imageTimeout, 8000);
-
         storageReference.listAll().addOnSuccessListener(listResult -> {
-            timeoutHandler.removeCallbacks(imageTimeout);
-            
             if (listResult.getItems().isEmpty()) {
                 return;
             }
@@ -262,12 +244,8 @@ public class HomeFragment extends Fragment {
                             imageSlider.setImageList(slideModels, ScaleTypes.FIT);
                         }
                     }
-                }).addOnFailureListener(e -> {
-                    loadedCount.incrementAndGet();
-                });
+                }).addOnFailureListener(e -> loadedCount.incrementAndGet());
             }
-        }).addOnFailureListener(e -> {
-            timeoutHandler.removeCallbacks(imageTimeout);
         });
     }
 
@@ -301,60 +279,39 @@ public class HomeFragment extends Fragment {
 
     private void fetchCityData() {
         startDistrictShimmer();
-
-        cityTimeout = () -> {
-            showToast("Timeout loading cities");
-            stopDistrictShimmer();
-            if (swipeRefreshLayout != null) {
-                swipeRefreshLayout.setRefreshing(false);
-            }
-        };
-        timeoutHandler.postDelayed(cityTimeout, 10000);
         
         spinnerRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                timeoutHandler.removeCallbacks(cityTimeout);
-                
-                try {
-                    spinnerArrayList.clear();
-                    cityArrayList.clear();
+                spinnerArrayList.clear();
+                cityArrayList.clear();
 
-                    for (DataSnapshot citySnapshot : snapshot.getChildren()) {
-                        String cityName = citySnapshot.child("name").getValue(String.class);
-                        String cityId = citySnapshot.child("id_city").getValue(String.class);
+                for (DataSnapshot citySnapshot : snapshot.getChildren()) {
+                    String cityName = citySnapshot.child("name").getValue(String.class);
+                    String cityId = citySnapshot.child("id_city").getValue(String.class);
 
-                        DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
-                        if (cityName != null && cityId != null &&
-                                districtsSnapshot.exists() &&
-                                districtsSnapshot.getChildrenCount() > 0) {
+                    DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
+                    if (cityName != null && cityId != null &&
+                            districtsSnapshot.exists() &&
+                            districtsSnapshot.getChildrenCount() > 0) {
 
-                            ArrayList<District> districts = new ArrayList<>();
-                            for (DataSnapshot ds : districtsSnapshot.getChildren()) {
-                                District district = ds.getValue(District.class);
-                                if (district != null) districts.add(district);
-                            }
+                        ArrayList<District> districts = new ArrayList<>();
+                        for (DataSnapshot ds : districtsSnapshot.getChildren()) {
+                            District district = ds.getValue(District.class);
+                            if (district != null) districts.add(district);
+                        }
 
-                            if (!districts.isEmpty()) {
-                                cityArrayList.add(new City(cityId, cityName, districts));
-                                spinnerArrayList.add(cityName);
-                            }
+                        if (!districts.isEmpty()) {
+                            cityArrayList.add(new City(cityId, cityName, districts));
+                            spinnerArrayList.add(cityName);
                         }
                     }
-                    updateSpinnerUI();
-                    
-                } catch (Exception e) {
-                    showToast("Lỗi không thể load thành phố: " + e.getMessage());
-                    stopDistrictShimmer();
-                    if (swipeRefreshLayout != null) {
-                        swipeRefreshLayout.setRefreshing(false);
-                    }
                 }
+                updateSpinnerUI();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                timeoutHandler.removeCallbacks(cityTimeout);
                 showToast("Lỗi không xác định");
                 stopDistrictShimmer();
                 if (swipeRefreshLayout != null) {
@@ -374,15 +331,6 @@ public class HomeFragment extends Fragment {
         
         startRoomShimmer();
 
-        roomTimeout = () -> {
-            stopRoomShimmer();
-            showToast("Timeout loading rooms");
-            if (swipeRefreshLayout != null) {
-                swipeRefreshLayout.setRefreshing(false);
-            }
-        };
-        timeoutHandler.postDelayed(roomTimeout, 15000);
-
         DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Posts");
 
         roomRef.orderByChild("address/city")
@@ -391,8 +339,6 @@ public class HomeFragment extends Fragment {
                .addListenerForSingleValueEvent(new ValueEventListener() {
                    @Override
                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                       timeoutHandler.removeCallbacks(roomTimeout);
-                       
                        roomArrayList.clear();
                        if (snapshot.exists()) {
                            for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
@@ -413,7 +359,6 @@ public class HomeFragment extends Fragment {
 
                    @Override
                    public void onCancelled(@NonNull DatabaseError error) {
-                       timeoutHandler.removeCallbacks(roomTimeout);
                        stopRoomShimmer();
                        showToast("Lỗi không thể tải bài đăng");
                        if (swipeRefreshLayout != null) {
@@ -512,34 +457,11 @@ public class HomeFragment extends Fragment {
         startActivity(intent);
     }
 
-    private void forceStopRefresh() {
-        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(false);
-        }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-
-        forceStopRefresh();
-        
-        if (timeoutHandler != null) {
-            if (cityTimeout != null) {
-                timeoutHandler.removeCallbacks(cityTimeout);
-            }
-            if (roomTimeout != null) {
-                timeoutHandler.removeCallbacks(roomTimeout);
-            }
-            if (imageTimeout != null) {
-                timeoutHandler.removeCallbacks(imageTimeout);
-            }
-        }
-    }
-
     @Override
     public void onPause() {
         super.onPause();
-        forceStopRefresh();
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 }
