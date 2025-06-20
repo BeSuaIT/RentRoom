@@ -42,14 +42,8 @@ public class FurnitureAdapter extends RecyclerView.Adapter<FurnitureAdapter.View
                     .load(list.get(holder.getAdapterPosition()).getImg())
                     .apply(new RequestOptions()
                             .centerCrop()
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)) // để lưu ảnh trong bộ nhớ cache.
+                            .diskCacheStrategy(DiskCacheStrategy.ALL))
                     .into(holder.imageViewFuniture);
-//        String svgPath = list.get(holder.getAdapterPosition()).getImg();
-//        Uri svgUri = Uri.parse(svgPath);
-//
-//        Glide.with(context)
-//                .load(svgUri)
-//                .into(holder.imageViewFuniture);
         }
     }
 
