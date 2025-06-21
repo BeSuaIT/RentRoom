@@ -17,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.content.Intent;
 import android.widget.Toast;
+import android.widget.ProgressBar;
 
 import com.denzcoskun.imageslider.ImageSlider;
 import com.denzcoskun.imageslider.constants.ScaleTypes;
@@ -34,7 +35,6 @@ import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Adapters.RoomAdapter;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
-import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -49,7 +49,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class HomeFragment extends Fragment {
-    private ShimmerFrameLayout districtShimmer, roomShimmer;
+    private ProgressBar districtProgressBar, roomProgressBar;
     private DatabaseReference spinnerRef;
     private DistrictAdapter districtAdapter;
     private Spinner spinner;
@@ -63,6 +63,9 @@ public class HomeFragment extends Fragment {
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private boolean isInitialLoad = true;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private ValueEventListener cityDataListener;
+    private ValueEventListener roomDataListener;
+    private DatabaseReference roomRef;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -79,14 +82,41 @@ public class HomeFragment extends Fragment {
         loadData();
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
+    // ✅ THÊM: onDestroyView để cleanup listeners
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        removeListeners();
+    }
+
+    // ✅ THÊM: Method để remove listeners
+    private void removeListeners() {
+        if (spinnerRef != null && cityDataListener != null) {
+            spinnerRef.removeEventListener(cityDataListener);
+        }
+        if (roomRef != null && roomDataListener != null) {
+            roomRef.removeEventListener(roomDataListener);
+        }
+    }
+
     private void initializeViews(View view) {
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
-        districtShimmer = view.findViewById(R.id.district_shimmer);
-        roomShimmer = view.findViewById(R.id.room_shimmer);
+        districtProgressBar = view.findViewById(R.id.district_progress_bar);
+        roomProgressBar = view.findViewById(R.id.room_progress_bar);
+        
         spinner = view.findViewById(R.id.city_spinner);
         spinnerArrayList = new ArrayList<>();
         cityArrayList = new ArrayList<>();
         spinnerRef = FirebaseDatabase.getInstance().getReference("Cities");
+        roomRef = FirebaseDatabase.getInstance().getReference("Posts");
 
         setupRecyclerViews(view);
         setupCitySpinner();
@@ -108,6 +138,8 @@ public class HomeFragment extends Fragment {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded() || getContext() == null) return;
+
                 if (snapshot.exists()) {
                     String userRole = snapshot.child("role").getValue(String.class);
                     
@@ -123,8 +155,10 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                postRoomLayout.setVisibility(View.GONE);
-                showToast("Lỗi kiểm tra quyền người dùng");
+                if (isAdded() && getContext() != null) {
+                    postRoomLayout.setVisibility(View.GONE);
+                    showToast("Lỗi kiểm tra quyền người dùng");
+                }
             }
         });
     }
@@ -173,6 +207,8 @@ public class HomeFragment extends Fragment {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded() || getContext() == null) return;
+
                 if (snapshot.exists()) {
                     String userRole = snapshot.child("role").getValue(String.class);
                     
@@ -188,7 +224,9 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                showToast("Lỗi kiểm tra quyền người dùng");
+                if (isAdded() && getContext() != null) {
+                    showToast("Lỗi kiểm tra quyền người dùng");
+                }
             }
         });
     }
@@ -222,7 +260,7 @@ public class HomeFragment extends Fragment {
 
     private void setupImageSlider(View view) {
         if (getContext() == null || view == null) return;
-        
+
         ImageSlider imageSlider = view.findViewById(R.id.imageSlider);
         StorageReference storageReference = storage.getReference().child("HomeImageSlider");
 
@@ -278,11 +316,17 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchCityData() {
-        startDistrictShimmer();
-        
-        spinnerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        showDistrictLoading();
+
+        if (cityDataListener != null) {
+            spinnerRef.removeEventListener(cityDataListener);
+        }
+
+        cityDataListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded() || getContext() == null) return;
+                
                 spinnerArrayList.clear();
                 cityArrayList.clear();
 
@@ -312,13 +356,17 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                showToast("Lỗi không xác định");
-                stopDistrictShimmer();
-                if (swipeRefreshLayout != null) {
-                    swipeRefreshLayout.setRefreshing(false);
+                if (isAdded() && getContext() != null) {
+                    showToast("Lỗi không xác định");
+                    hideDistrictLoading();
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 }
             }
-        });
+        };
+
+        spinnerRef.addValueEventListener(cityDataListener);
     }
 
     private void fetchRoomDatabase() {
@@ -329,43 +377,83 @@ public class HomeFragment extends Fragment {
             return;
         }
         
-        startRoomShimmer();
+        showRoomLoading();
 
-        DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Posts");
+        if (roomDataListener != null) {
+            roomRef.removeEventListener(roomDataListener);
+        }
+
+        roomDataListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded() || getContext() == null) return;
+                
+                roomArrayList.clear();
+                if (snapshot.exists()) {
+                    for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                        Room room = roomSnapshot.getValue(Room.class);
+                        if (room != null && room.getAddress() != null) {
+                            roomArrayList.add(room);
+                        }
+                    }
+                }
+                
+                hideRoomLoading();
+                roomAdapter.notifyDataSetChanged();
+
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (isAdded() && getContext() != null) {
+                    hideRoomLoading();
+                    showToast("Lỗi không thể tải bài đăng");
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
+                }
+            }
+        };
 
         roomRef.orderByChild("address/city")
                .equalTo(selectedSpinner)
                .limitToFirst(20)
-               .addListenerForSingleValueEvent(new ValueEventListener() {
-                   @Override
-                   public void onDataChange(@NonNull DataSnapshot snapshot) {
-                       roomArrayList.clear();
-                       if (snapshot.exists()) {
-                           for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
-                               Room room = roomSnapshot.getValue(Room.class);
-                               if (room != null && room.getAddress() != null) {
-                                   roomArrayList.add(room);
-                               }
-                           }
-                       }
-                       
-                       stopRoomShimmer();
-                       roomAdapter.notifyDataSetChanged();
+               .addValueEventListener(roomDataListener);
+    }
 
-                       if (swipeRefreshLayout != null) {
-                           swipeRefreshLayout.setRefreshing(false);
-                       }
-                   }
+    private void updateDistrictList(ArrayList<District> districts) {
+        districtArrayList.clear();
+        districtArrayList.addAll(districts);
+        
+        hideDistrictLoading();
+        districtAdapter.notifyDataSetChanged();
+    }
 
-                   @Override
-                   public void onCancelled(@NonNull DatabaseError error) {
-                       stopRoomShimmer();
-                       showToast("Lỗi không thể tải bài đăng");
-                       if (swipeRefreshLayout != null) {
-                           swipeRefreshLayout.setRefreshing(false);
-                       }
-                   }
-               });
+    private void showDistrictLoading() {
+        if (districtProgressBar != null) {
+            districtProgressBar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideDistrictLoading() {
+        if (districtProgressBar != null) {
+            districtProgressBar.setVisibility(View.GONE);
+        }
+    }
+
+    private void showRoomLoading() {
+        if (roomProgressBar != null) {
+            roomProgressBar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideRoomLoading() {
+        if (roomProgressBar != null) {
+            roomProgressBar.setVisibility(View.GONE);
+        }
     }
 
     private void updateSpinnerUI() {
@@ -409,42 +497,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void updateDistrictList(ArrayList<District> districts) {
-        districtArrayList.clear();
-        districtArrayList.addAll(districts);
-        
-        stopDistrictShimmer();
-        districtAdapter.notifyDataSetChanged();
-    }
-
-    private void startDistrictShimmer() {
-        if (districtShimmer != null) {
-            districtShimmer.setVisibility(View.VISIBLE);
-            districtShimmer.startShimmer();
-        }
-    }
-
-    private void stopDistrictShimmer() {
-        if (districtShimmer != null) {
-            districtShimmer.stopShimmer();
-            districtShimmer.setVisibility(View.GONE);
-        }
-    }
-
-    private void startRoomShimmer() {
-        if (roomShimmer != null) {
-            roomShimmer.setVisibility(View.VISIBLE);
-            roomShimmer.startShimmer();
-        }
-    }
-
-    private void stopRoomShimmer() {
-        if (roomShimmer != null) {
-            roomShimmer.stopShimmer();
-            roomShimmer.setVisibility(View.GONE);
-        }
-    }
-
     private void showToast(String message) {
         if (getContext() != null) {
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
@@ -455,13 +507,5 @@ public class HomeFragment extends Fragment {
         Intent intent = new Intent(getContext(), ServiceActivity.class);
         intent.putExtra("item", item);
         startActivity(intent);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(false);
-        }
     }
 }

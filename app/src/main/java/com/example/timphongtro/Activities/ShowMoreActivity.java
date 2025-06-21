@@ -3,6 +3,7 @@ package com.example.timphongtro.Activities;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.ProgressBar; // ✅ THÊM: ProgressBar
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Adapters.ShowmoreAdapter;
 import com.example.timphongtro.R;
-import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -24,9 +24,11 @@ import java.util.ArrayList;
 public class ShowMoreActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ShowmoreAdapter adapter;
-    private ShimmerFrameLayout shimmerLayout;
+    private ProgressBar progressBar;
+    
     private final ArrayList<Room> roomList = new ArrayList<>();
     private DatabaseReference roomsRef;
+    private ValueEventListener roomListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +42,7 @@ public class ShowMoreActivity extends AppCompatActivity {
 
     private void initializeViews() {
         recyclerView = findViewById(R.id.rcv_showmore);
-        shimmerLayout = findViewById(R.id.room_shimmer);
+        progressBar = findViewById(R.id.progress_bar);
         
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         roomsRef = FirebaseDatabase.getInstance().getReference("Posts");
@@ -48,24 +50,24 @@ public class ShowMoreActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         adapter = new ShowmoreAdapter(this, roomList);
-        recyclerView.setLayoutManager(
-            new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(adapter);
     }
 
     private void loadRooms() {
-        shimmerLayout.startShimmer();
+        showLoading();
+        if (roomListener != null) {
+            roomsRef.removeEventListener(roomListener);
+        }
         
-        roomsRef.addValueEventListener(new ValueEventListener() {
+        roomListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 roomList.clear();
-                
                 if (snapshot.exists()) {
                     processRoomData(snapshot);
                 }
-                
                 updateUI();
             }
 
@@ -75,7 +77,9 @@ public class ShowMoreActivity extends AppCompatActivity {
                     "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 updateUI();
             }
-        });
+        };
+        
+        roomsRef.addValueEventListener(roomListener);
     }
 
     private void processRoomData(DataSnapshot snapshot) {
@@ -88,21 +92,30 @@ public class ShowMoreActivity extends AppCompatActivity {
     }
 
     private void updateUI() {
-        shimmerLayout.stopShimmer();
-        shimmerLayout.setVisibility(View.GONE);
+        hideLoading();
         recyclerView.setVisibility(View.VISIBLE);
         adapter.notifyDataSetChanged();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        shimmerLayout.startShimmer();
+    private void showLoading() {
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        }
+    }
+
+    private void hideLoading() {
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
-    protected void onPause() {
-        shimmerLayout.stopShimmer();
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
+        if (roomsRef != null && roomListener != null) {
+            roomsRef.removeEventListener(roomListener);
+        }
     }
 }

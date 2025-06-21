@@ -62,24 +62,12 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp" />
 
-        <com.facebook.shimmer.ShimmerFrameLayout
-            android:id="@+id/room_shimmer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <include layout="@layout/view_holder_room_shimmer" />
-                <include layout="@layout/view_holder_room_shimmer" />
-                <include layout="@layout/view_holder_room_shimmer" />
-                <include layout="@layout/view_holder_room_shimmer" />
-
-            </LinearLayout>
-        </com.facebook.shimmer.ShimmerFrameLayout>
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
     </FrameLayout>
 

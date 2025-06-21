@@ -861,7 +861,7 @@
                                     android:layout_weight="1"
                                     android:background="@drawable/border_change_state_btn"
                                     android:button="@null"
-                                    android:drawableStart="@drawable/ic_time"
+                                    android:drawableStart="@drawable/ic_clock"
                                     android:gravity="center"
                                     android:padding="10dp"
                                     android:text="Giờ linh hoạt"

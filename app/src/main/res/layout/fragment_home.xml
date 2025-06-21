@@ -110,11 +110,9 @@
                                 android:id="@+id/tin_dang_cho_thue"
                                 style="@style/ShortcutButtonStyle"
                                 android:visibility="gone">
-
                                 <ImageView
                                     style="@style/ShortcutIconStyle"
                                     android:src="@drawable/img_post_room" />
-
                                 <TextView
                                     style="@style/ShortcutTextStyle"
                                     android:text="Đăng tin cho thuê" />
@@ -245,14 +243,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp">
 
-                <com.facebook.shimmer.ShimmerFrameLayout
-                    android:id="@+id/district_shimmer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <include layout="@layout/view_holder_district_shimmer"/>
-                </com.facebook.shimmer.ShimmerFrameLayout>
+                <ProgressBar
+                    android:id="@+id/district_progress_bar"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rcv_district"
@@ -294,14 +293,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp">
 
-                <com.facebook.shimmer.ShimmerFrameLayout
-                    android:id="@+id/room_shimmer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintTop_toTopOf="parent">
-                    
-                    <include layout="@layout/view_holder_room_shimmer"/>
-                </com.facebook.shimmer.ShimmerFrameLayout>
+                <ProgressBar
+                    android:id="@+id/room_progress_bar"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rcv_room"
