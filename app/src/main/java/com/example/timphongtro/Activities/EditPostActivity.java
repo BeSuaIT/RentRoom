@@ -202,6 +202,7 @@ public class EditPostActivity extends AppCompatActivity {
         districts = new ArrayList<>();
     }
 
+    // ✅ Cập nhật method populateDataFromRoom()
     private void populateDataFromRoom() {
         if (roomData == null) return;
 
@@ -218,19 +219,28 @@ public class EditPostActivity extends AppCompatActivity {
         edtWater.setText(String.valueOf(roomData.getPrice_water()));
         edtInternet.setText(String.valueOf(roomData.getPrice_internet()));
 
+        // ✅ SỬA: Handle Address với model mới
         address = roomData.getAddress();
-        if (address != null && address.getDetail() != null) {
-            edtAddress.setText(address.getDetail());
+        if (address != null) {
+            // ✅ Lấy detail để hiển thị trong edtAddress
+            String detail = address.getDetail();
+            edtAddress.setText(detail != null ? detail : "");
         } else {
             edtAddress.setText("");
         }
 
+        // ✅ SỬA: Logic gender với null safety
         String gender = roomData.getGender_room();
         if (gender != null) {
             genderCheckboxes[0].setChecked(gender.contains("Nam"));
             genderCheckboxes[1].setChecked(gender.contains("Nữ"));
+        } else {
+            // ✅ Default: Nam/Nữ
+            genderCheckboxes[0].setChecked(true);
+            genderCheckboxes[1].setChecked(true);
         }
 
+        // ✅ Room type với null safety
         String roomType = roomData.getType_room();
         if ("Chung cư Mini".equals(roomType)) {
             radioGroupType.check(R.id.radiobtnChungCu);
@@ -238,8 +248,10 @@ public class EditPostActivity extends AppCompatActivity {
             radioGroupType.check(R.id.radiobtnTro);
         }
         
+        // ✅ Room status
         radioGroupState.check(roomData.getStatus_room() == 1 ? R.id.radiobtnUnavailable : R.id.radiobtnAvailable);
 
+        // ✅ Images với null safety
         if (roomData.getImages() != null && !roomData.getImages().isEmpty()) {
             uploadedImageUrls = new ArrayList<>(roomData.getImages());
             selectedImages.clear();
@@ -251,6 +263,7 @@ public class EditPostActivity extends AppCompatActivity {
             imageAdapter.notifyDataSetChanged();
         }
 
+        // ✅ Utilities và Furniture với null safety
         setUtilityCheckboxes(roomData.getRoomUtilities());
         setFurnitureCheckboxes(roomData.getRoomFurniture());
     }
@@ -676,7 +689,7 @@ public class EditPostActivity extends AppCompatActivity {
 
             for (Uri imageUri : selectedImages) {
                 if (imageUri.toString().startsWith("https://")) {
-                    continue; // Skip already uploaded images
+                    continue;
                 }
 
                 String fileName = "room_" + System.currentTimeMillis() + "_" + uploadCount + ".jpg";
@@ -706,7 +719,6 @@ public class EditPostActivity extends AppCompatActivity {
                         });
             }
 
-            // Delete old images that are no longer used
             if (roomData.getImages() != null) {
                 for (String oldImageUrl : roomData.getImages()) {
                     if (!newUploadedUrls.contains(oldImageUrl)) {
@@ -720,7 +732,7 @@ public class EditPostActivity extends AppCompatActivity {
                             StorageReference oldImageRef = storage.getReference().child(filePath);
                             oldImageRef.delete();
                         } catch (Exception ignored) {
-                            // Ignore delete errors
+
                         }
                     }
                 }
@@ -762,13 +774,72 @@ public class EditPostActivity extends AppCompatActivity {
             isValid = false;
         }
 
-        if (TextUtils.isEmpty(edtAddress.getText())) {
-            edtAddress.setError("Vui lòng nhập địa chỉ chi tiết");
+        if (spinnerCity.getSelectedItemPosition() == -1 || 
+            spinnerCity.getSelectedItem() == null ||
+            spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn thành phố", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (spinnerDistrict.getSelectedItemPosition() == -1 || 
+            spinnerDistrict.getSelectedItem() == null ||
+            spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn quận/huyện", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        String addressDetail = edtAddress.getText().toString().trim();
+        if (!addressDetail.isEmpty() && addressDetail.length() < 5) {
+            edtAddress.setError("Địa chỉ chi tiết phải ít nhất 5 ký tự");
             isValid = false;
         }
 
         if (!genderCheckboxes[0].isChecked() && !genderCheckboxes[1].isChecked()) {
             Toast.makeText(this, "Vui lòng chọn giới tính", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        String phone = edtPhone.getText().toString().trim();
+        if (!phone.isEmpty() && !phone.matches("^\\d{10}$")) {
+            edtPhone.setError("Số điện thoại phải có 10 chữ số");
+            isValid = false;
+        }
+
+        try {
+            if (!TextUtils.isEmpty(edtPrice.getText())) {
+                long price = Long.parseLong(edtPrice.getText().toString());
+                if (price <= 0) {
+                    edtPrice.setError("Giá phòng phải lớn hơn 0");
+                    isValid = false;
+                }
+            }
+
+            if (!TextUtils.isEmpty(edtDeposit.getText())) {
+                long deposit = Long.parseLong(edtDeposit.getText().toString());
+                if (deposit < 0) {
+                    edtDeposit.setError("Tiền cọc không được âm");
+                    isValid = false;
+                }
+            }
+
+            if (!TextUtils.isEmpty(edtFloor.getText())) {
+                int floor = Integer.parseInt(edtFloor.getText().toString());
+                if (floor <= 0) {
+                    edtFloor.setError("Tầng phải lớn hơn 0");
+                    isValid = false;
+                }
+            }
+
+            if (!TextUtils.isEmpty(edtPerson.getText())) {
+                int person = Integer.parseInt(edtPerson.getText().toString());
+                if (person <= 0) {
+                    edtPerson.setError("Số người phải lớn hơn 0");
+                    isValid = false;
+                }
+            }
+
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Vui lòng nhập số hợp lệ cho các trường số", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
 
@@ -793,24 +864,24 @@ public class EditPostActivity extends AppCompatActivity {
                 district = spinnerDistrict.getSelectedItem().toString();
             }
             
-            String detail = edtAddress.getText().toString();
-            String address_combine = detail + ", " + district + ", " + city;
+            String detail = edtAddress.getText().toString().trim();
+
+            address = new Address(city, district, detail);
 
             int status_room = radioGroupState.getCheckedRadioButtonId() == R.id.radiobtnUnavailable ? 1 : 0;
 
-            if ("".equals(detail)) {
-                address = new Address(city, district);
-            } else {
-                address = new Address(city, district, detail, address_combine);
-            }
-
             String gender_room;
-            if (genderCheckboxes[0].isChecked() && genderCheckboxes[1].isChecked()) {
+            boolean isMaleChecked = genderCheckboxes[0].isChecked();
+            boolean isFemaleChecked = genderCheckboxes[1].isChecked();
+            
+            if (isMaleChecked && isFemaleChecked) {
                 gender_room = "Nam/Nữ";
-            } else if (genderCheckboxes[0].isChecked()) {
+            } else if (isMaleChecked) {
                 gender_room = "Nam";
-            } else {
+            } else if (isFemaleChecked) {
                 gender_room = "Nữ";
+            } else {
+                gender_room = "Nam/Nữ";
             }
 
             String type_room = radioGroupType.getCheckedRadioButtonId() == R.id.radiobtnChungCu ? "Chung cư Mini" : "Trọ";
@@ -827,8 +898,8 @@ public class EditPostActivity extends AppCompatActivity {
                 images = new ArrayList<>();
             }
 
-            long price = 0, deposit = 0, electric = 0, water = 0, internet = 0;
-            int park = 0, person = 0, floor = 0;
+            long price, deposit, electric , water, internet;
+            int park, person, floor;
             
             try {
                 price = Long.parseLong(edtPrice.getText().toString());

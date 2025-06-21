@@ -375,29 +375,19 @@ public class AddPostActivity extends AppCompatActivity {
         String city = spinnerCity.getSelectedItem().toString();
         String district = spinnerDistrict.getSelectedItem().toString();
         String detail = edtAddress.getText().toString();
-        String address_combine = detail + ", " + district + ", " + city;
         int status_room = 0;
         String id_own_post = userCurrent.getUid();
 
-        if ("".equals(detail)) {
-            address = new Address(city, district);
-        } else {
-            address = new Address(city, district, detail, address_combine);
-        }
-
+        address = new Address(city, district, detail);
         String gender_room;
-        if (genderCheckboxes[0].isChecked()) {
-            if (!genderCheckboxes[1].isChecked()) {
-                gender_room = "Nam";
-            } else {
-                gender_room = "Nam/Nữ";
-            }
+        if (genderCheckboxes[0].isChecked() && genderCheckboxes[1].isChecked()) {
+            gender_room = "Nam/Nữ";
+        } else if (genderCheckboxes[0].isChecked()) {
+            gender_room = "Nam";
+        } else if (genderCheckboxes[1].isChecked()) {
+            gender_room = "Nữ";
         } else {
-            if (!genderCheckboxes[0].isChecked()) {
-                gender_room = "Nữ";
-            } else {
-                gender_room = "Nam/Nữ";
-            }
+            gender_room = "Nam/Nữ";
         }
 
         String title_room = edtTitleRoom.getText().toString();
@@ -528,14 +518,36 @@ public class AddPostActivity extends AppCompatActivity {
             isValid = false;
         }
 
+        if (isEmpty(edtPrice)) {
+            edtPrice.setError("Vui lòng nhập giá phòng");
+            isValid = false;
+        } else {
+            try {
+                long price = Long.parseLong(edtPrice.getText().toString());
+                if (price <= 0) {
+                    edtPrice.setError("Giá phòng phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtPrice.setError("Vui lòng nhập số hợp lệ cho giá phòng");
+                isValid = false;
+            }
+        }
+
         if (isEmpty(edtDeposit)) {
             edtDeposit.setError("Vui lòng nhập tiền cọc");
             isValid = false;
-        }
-
-        if (isEmpty(edtPrice)) {
-            edtPrice.setError("Vui lòng nhập tiền cọc");
-            isValid = false;
+        } else {
+            try {
+                long deposit = Long.parseLong(edtDeposit.getText().toString());
+                if (deposit < 0) {
+                    edtDeposit.setError("Tiền cọc không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtDeposit.setError("Vui lòng nhập số hợp lệ cho tiền cọc");
+                isValid = false;
+            }
         }
 
         if (radioGroup.getCheckedRadioButtonId() == -1) {
@@ -552,11 +564,9 @@ public class AddPostActivity extends AppCompatActivity {
             edtPhone.setError("Vui lòng nhập số điện thoại");
             isValid = false;
         } else {
-            String regex = "^\\d{10}$";
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(edtPhone.getText().toString());
-            if (!matcher.matches()) {
-                edtPhone.setError("Vui lòng nhập đúng định dạng số điện thoại");
+            String phone = edtPhone.getText().toString().trim();
+            if (!phone.matches("^\\d{10}$")) {
+                edtPhone.setError("Số điện thoại phải có 10 chữ số");
                 isValid = false;
             }
         }
@@ -564,34 +574,138 @@ public class AddPostActivity extends AppCompatActivity {
         if (isEmpty(edtFloor)) {
             edtFloor.setError("Vui lòng nhập số tầng");
             isValid = false;
+        } else {
+            try {
+                int floor = Integer.parseInt(edtFloor.getText().toString());
+                if (floor <= 0) {
+                    edtFloor.setError("Tầng phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtFloor.setError("Vui lòng nhập số hợp lệ cho tầng");
+                isValid = false;
+            }
         }
 
         if (isEmpty(edtPerson)) {
             edtPerson.setError("Vui lòng nhập số người/phòng");
             isValid = false;
+        } else {
+            try {
+                int person = Integer.parseInt(edtPerson.getText().toString());
+                if (person <= 0) {
+                    edtPerson.setError("Số người phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtPerson.setError("Vui lòng nhập số hợp lệ cho số người");
+                isValid = false;
+            }
         }
 
         if (isEmpty(edtDescriptionRoom)) {
-            edtDescriptionRoom.setError("Vui lòng nhập số mô tả phòng chi tiết");
+            edtDescriptionRoom.setError("Vui lòng nhập mô tả phòng chi tiết");
             isValid = false;
+        } else {
+            String description = edtDescriptionRoom.getText().toString().trim();
+            if (description.length() < 10) {
+                edtDescriptionRoom.setError("Mô tả phòng phải ít nhất 10 ký tự");
+                isValid = false;
+            }
         }
 
         if (isEmpty(edtPark)) {
             edtPark.setError("Vui lòng nhập số chỗ để xe trong 1 phòng");
             isValid = false;
+        } else {
+            try {
+                int park = Integer.parseInt(edtPark.getText().toString());
+                if (park < 0) {
+                    edtPark.setError("Số chỗ để xe không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtPark.setError("Vui lòng nhập số hợp lệ cho chỗ để xe");
+                isValid = false;
+            }
         }
 
-        if (isEmpty(edtElectric) || isEmpty(edtInternet) || isEmpty(edtWater)) {
+        if (spinnerCity.getSelectedItemPosition() == -1 || 
+            spinnerCity.getSelectedItem() == null ||
+            spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn thành phố", Toast.LENGTH_SHORT).show();
             isValid = false;
-            if (isEmpty(edtInternet)) {
-                edtInternet.setError("Vui lòng nhập giá Internet");
+        }
+
+        if (spinnerDistrict.getSelectedItemPosition() == -1 || 
+            spinnerDistrict.getSelectedItem() == null ||
+            spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn quận/huyện", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        String addressDetail = edtAddress.getText().toString().trim();
+        if (!addressDetail.isEmpty() && addressDetail.length() < 5) {
+            edtAddress.setError("Địa chỉ chi tiết phải ít nhất 5 ký tự");
+            isValid = false;
+        }
+
+        if (!genderCheckboxes[0].isChecked() && !genderCheckboxes[1].isChecked()) {
+            Toast.makeText(this, "Vui lòng chọn giới tính", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (isEmpty(edtElectric)) {
+            edtElectric.setError("Vui lòng nhập giá điện");
+            isValid = false;
+        } else {
+            try {
+                long electric = Long.parseLong(edtElectric.getText().toString());
+                if (electric < 0) {
+                    edtElectric.setError("Giá điện không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtElectric.setError("Vui lòng nhập số hợp lệ cho giá điện");
+                isValid = false;
             }
-            if (isEmpty(edtElectric)) {
-                edtElectric.setError("Vui lòng nhập giá điện");
+        }
+
+        if (isEmpty(edtWater)) {
+            edtWater.setError("Vui lòng nhập giá nước");
+            isValid = false;
+        } else {
+            try {
+                long water = Long.parseLong(edtWater.getText().toString());
+                if (water < 0) {
+                    edtWater.setError("Giá nước không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtWater.setError("Vui lòng nhập số hợp lệ cho giá nước");
+                isValid = false;
             }
-            if (isEmpty(edtWater)) {
-                edtWater.setError("Vui lòng nhập giá nước");
+        }
+
+        if (isEmpty(edtInternet)) {
+            edtInternet.setError("Vui lòng nhập giá Internet");
+            isValid = false;
+        } else {
+            try {
+                long internet = Long.parseLong(edtInternet.getText().toString());
+                if (internet < 0) {
+                    edtInternet.setError("Giá Internet không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtInternet.setError("Vui lòng nhập số hợp lệ cho giá Internet");
+                isValid = false;
             }
+        }
+
+        if (selectedImages.isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_SHORT).show();
+            isValid = false;
         }
 
         return isValid;
