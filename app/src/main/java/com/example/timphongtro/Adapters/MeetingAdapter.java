@@ -268,26 +268,6 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
         avatarView.setBackground(background);
     }
 
-    private String formatDateTime(String dateTime) {
-        if (dateTime == null || dateTime.isEmpty()) {
-            return "Chưa xác định";
-        }
-        
-        try {
-            if (dateTime.contains(",")) {
-                String[] parts = dateTime.split(",");
-                if (parts.length >= 2) {
-                    String time = parts[0].trim();
-                    String date = parts[1].trim();
-                    return time + ", " + date;
-                }
-            }
-            return dateTime;
-        } catch (Exception e) {
-            return dateTime;
-        }
-    }
-
     private boolean shouldShowConfirmButtons(Meeting schedule, String userId) {
         return STATUS_PENDING == schedule.getStatus() && userId.equals(schedule.getIdTo());
     }
@@ -352,8 +332,10 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
             
             loadUserInfo(contactUserId);
             loadRoomInfo(this, meeting.getIdRoom());
-            String formattedTime = formatDateTime(meeting.getTimeVisitRoom());
+
+            String formattedTime = Meeting.formatTimestamp(meeting.getTimeVisitRoom());
             tvTime.setText(formattedTime);
+            
             tvNote.setText(meeting.getNote() != null ? meeting.getNote() : "Không có ghi chú");
             setupStatusView(tvStatus, meeting, currentUserId);
         }

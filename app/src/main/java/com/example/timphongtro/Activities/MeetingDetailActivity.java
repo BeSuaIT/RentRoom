@@ -138,7 +138,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         if (schedule == null) return;
 
         tvName.setText(schedule.getName() != null ? schedule.getName() : "Không có tên");
-        tvTime.setText(formatDateTime(schedule.getTimeVisitRoom()));
+        tvTime.setText(Meeting.formatTimestamp(schedule.getTimeVisitRoom()));
 
         String note = schedule.getNote();
         if (note == null || note.trim().isEmpty() || "Không có ghi chú".equals(note)) {
@@ -487,27 +487,6 @@ public class MeetingDetailActivity extends AppCompatActivity {
             startActivity(intent);
         } else {
             showToast("Thông tin người đặt lịch chưa được tải");
-        }
-    }
-
-    private String formatDateTime(String dateTime) {
-        if (dateTime == null || dateTime.trim().isEmpty()) {
-            return "Chưa xác định thời gian";
-        }
-        
-        try {
-            // format: "14:30, 25/12/2024"
-            if (dateTime.contains(",")) {
-                String[] parts = dateTime.split(",");
-                if (parts.length >= 2) {
-                    String time = parts[0].trim();
-                    String date = parts[1].trim();
-                    return time + ", " + date;
-                }
-            }
-            return dateTime;
-        } catch (Exception e) {
-            return dateTime;
         }
     }
 

@@ -699,7 +699,7 @@ public class PostDetailActivity extends AppCompatActivity {
             phoneEditText.setError("Vui lòng nhập số điện thoại");
             isValid = false;
         } else {
-            String regex = "^0\\d{9}$"; // format: 0xxxxxxxxx
+            String regex = "^0\\d{9}$";
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(phone);
             if (!matcher.matches()) {
@@ -709,19 +709,28 @@ public class PostDetailActivity extends AppCompatActivity {
         }
 
         if (isValid) {
-            String combinedDateTime = scheduleDate.getText().toString() + " lúc " + scheduleTime.getText().toString();
+            Calendar selectedDateTime = Calendar.getInstance();
+            selectedDateTime.set(Calendar.YEAR, bookingDate.get(Calendar.YEAR));
+            selectedDateTime.set(Calendar.MONTH, bookingDate.get(Calendar.MONTH));
+            selectedDateTime.set(Calendar.DAY_OF_MONTH, bookingDate.get(Calendar.DAY_OF_MONTH));
+            selectedDateTime.set(Calendar.HOUR_OF_DAY, bookingTime.get(Calendar.HOUR_OF_DAY));
+            selectedDateTime.set(Calendar.MINUTE, bookingTime.get(Calendar.MINUTE));
+            selectedDateTime.set(Calendar.SECOND, 0);
+            selectedDateTime.set(Calendar.MILLISECOND, 0);
+            
+            long meetingTimestamp = selectedDateTime.getTimeInMillis();
 
             String note = noteEditText.getText().toString().trim();
             if (TextUtils.isEmpty(note)) {
                 note = "Không có ghi chú";
             }
-            
+
             Meeting schedule = new Meeting(
                 uuid.toString(), 
                 name,
                 phone,
                 note, 
-                combinedDateTime,
+                meetingTimestamp,
                 room.getId_own_post(), 
                 currentUser.getUid(), 
                 0,

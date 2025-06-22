@@ -4,16 +4,17 @@ public class Meeting {
     private String name;
     private String phone;
     private String note;
-    private String timeVisitRoom;
+    private long timeVisitRoom;
     private String idTo;
     private String idFrom;
     private int status; //0 la tao, 1 la chap nhan, 2 la tu choi
     private String idRoom;
     private String idSchedule;
+    
     public Meeting() {
     }
 
-    public Meeting(String idSchedule, String name, String phone, String note, String timeVisitRoom, String idTo, String idFrom, int status, String idRoom) {
+    public Meeting(String idSchedule, String name, String phone, String note, long timeVisitRoom, String idTo, String idFrom, int status, String idRoom) {
         this.idSchedule = idSchedule;
         this.idTo = idTo;
         this.idRoom = idRoom;
@@ -89,11 +90,30 @@ public class Meeting {
         this.note = note;
     }
 
-    public String getTimeVisitRoom() {
+    public long getTimeVisitRoom() {
         return timeVisitRoom;
     }
 
-    public void setTimeVisitRoom(String timeVisitRoom) {
+    public void setTimeVisitRoom(long timeVisitRoom) {
         this.timeVisitRoom = timeVisitRoom;
+    }
+
+    public static String formatTimestamp(long timestamp) {
+        if (timestamp <= 0) {
+            return "Chưa xác định thời gian";
+        }
+        
+        try {
+            java.util.Date date = new java.util.Date(timestamp);
+            java.text.SimpleDateFormat dayFormat = new java.text.SimpleDateFormat("EEEE", new java.util.Locale("vi", "VN"));
+            java.text.SimpleDateFormat dateTimeFormat = new java.text.SimpleDateFormat("HH:mm, dd/MM/yyyy", new java.util.Locale("vi", "VN"));
+            
+            String dayOfWeek = dayFormat.format(date);
+            String dateTime = dateTimeFormat.format(date);
+            
+            return dayOfWeek + ", " + dateTime; // "Thứ Hai, 14:30, 25/12/2024"
+        } catch (Exception e) {
+            return "Thời gian không hợp lệ";
+        }
     }
 }
