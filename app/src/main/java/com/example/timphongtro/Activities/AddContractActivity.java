@@ -57,6 +57,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -65,7 +66,6 @@ public class AddContractActivity extends AppCompatActivity {
     private static final int PERMISSION_CODE = 1001;
     private static final String CCCD_FRONT = "front";
     private static final String CCCD_BACK = "back";
-    
     private Spinner roomSpinner;
     private EditText landlordNameEdt, landlordPhoneEdt;
     private EditText tenantEmailEdt;
@@ -417,6 +417,16 @@ public class AddContractActivity extends AppCompatActivity {
         }
     }
 
+    private long parseDateToTimestamp(String dateString) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            Date date = sdf.parse(dateString);
+            return date != null ? date.getTime() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     private boolean validateInputs() {
         if (selectedRoom == null) {
             Toast.makeText(this, "Vui lòng chọn phòng cho thuê", Toast.LENGTH_SHORT).show();
@@ -455,6 +465,14 @@ public class AddContractActivity extends AppCompatActivity {
 
         if (endDateEdt.getText().toString().trim().isEmpty()) {
             endDateEdt.setError("Vui lòng chọn ngày kết thúc");
+            return false;
+        }
+
+        long startTimestamp = parseDateToTimestamp(startDateEdt.getText().toString().trim());
+        long endTimestamp = parseDateToTimestamp(endDateEdt.getText().toString().trim());
+        
+        if (startTimestamp >= endTimestamp) {
+            Toast.makeText(this, "Ngày kết thúc phải sau ngày bắt đầu", Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -618,24 +636,25 @@ public class AddContractActivity extends AppCompatActivity {
     private void saveContractToDatabase(String contractId, String frontImageUrl, String backImageUrl) {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser == null) return;
+        long startTimestamp = parseDateToTimestamp(startDateEdt.getText().toString().trim());
+        long endTimestamp = parseDateToTimestamp(endDateEdt.getText().toString().trim());
 
-        // ✅ Sử dụng constructor mới với tenantId
         Contract contract = new Contract(
-                contractId,                                        // contractId
-                selectedRoom.getId_room(),                         // roomId
-                currentUser.getUid(),                             // landlordId
-                landlordNameEdt.getText().toString().trim(),      // landlordName
-                landlordPhoneEdt.getText().toString().trim(),     // landlordPhone
-                foundTenantId,                                    // tenantId (có thể null)
-                tenantNameEdt.getText().toString().trim(),        // tenantName
-                tenantPhoneEdt.getText().toString().trim(),       // tenantPhone
-                tenantCCCDEdt.getText().toString().trim(),        // tenantCCCD
-                frontImageUrl,                                    // cccdFrontImage
-                backImageUrl,                                     // cccdBackImage
-                startDateEdt.getText().toString().trim(),         // startDate
-                endDateEdt.getText().toString().trim(),           // endDate
-                0,                                                // status (0: Nháp)
-                System.currentTimeMillis()                        // createdAt
+                contractId,
+                selectedRoom.getId_room(),
+                currentUser.getUid(),
+                landlordNameEdt.getText().toString().trim(),
+                landlordPhoneEdt.getText().toString().trim(),
+                foundTenantId,
+                tenantNameEdt.getText().toString().trim(),
+                tenantPhoneEdt.getText().toString().trim(),
+                tenantCCCDEdt.getText().toString().trim(),
+                frontImageUrl,
+                backImageUrl,
+                startTimestamp,
+                endTimestamp,
+                0,
+                System.currentTimeMillis()
         );
 
         contractsRef.child(contractId).setValue(contract)

@@ -40,6 +40,9 @@
         android:theme="@style/Base.Theme.TimPhongTro"
         tools:targetApi="31">
         <activity
+            android:name=".Activities.EditContractActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activities.ContractDetailActivity"
             android:exported="false" />
         <activity

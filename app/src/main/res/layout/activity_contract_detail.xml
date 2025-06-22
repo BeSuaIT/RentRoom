@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="@color/white_90">
 
-    <!-- Header -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -37,7 +36,6 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <!-- Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -48,7 +46,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Thông tin phòng -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -102,7 +99,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Thông tin chủ trọ -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -175,7 +171,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Thông tin người thuê -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -272,7 +267,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Thời gian hợp đồng -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -332,7 +326,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Ảnh CCCD -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -432,10 +425,10 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Thông tin tạo -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp">
 
@@ -456,6 +449,45 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/edit_contract_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Chỉnh sửa / Gia hạn"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="@color/orange_100"
+                    app:cornerRadius="12dp"
+                    app:rippleColor="@color/orange_20"
+                    android:visibility="gone" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/delete_contract_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Xóa hợp đồng"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    app:strokeColor="@color/red"
+                    app:strokeWidth="2dp"
+                    android:textColor="@color/red"
+                    app:cornerRadius="12dp"
+                    app:rippleColor="@color/red_20"
+                    android:visibility="gone" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

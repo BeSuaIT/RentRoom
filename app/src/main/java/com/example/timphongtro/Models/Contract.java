@@ -1,5 +1,9 @@
 package com.example.timphongtro.Models;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class Contract {
     private String contractId;
     private String roomId;
@@ -12,9 +16,9 @@ public class Contract {
     private String tenantCCCD;
     private String cccdFrontImage;
     private String cccdBackImage;
-    private String startDate;
-    private String endDate;
-    private int status; // 0: Nháp, 1: Đang hiệu lực, 2: Hết hạn, 3: Đã chấm dứt
+    private long startDate;
+    private long endDate;
+    private int status; // 0: Nháp, 1: Đang hiệu lực, 2: Hết hạn
     private long createdAt;
 
     public Contract() {}
@@ -22,7 +26,7 @@ public class Contract {
     public Contract(String contractId, String roomId, String landlordId, String landlordName, 
                    String landlordPhone, String tenantId, String tenantName, String tenantPhone, 
                    String tenantCCCD, String cccdFrontImage, String cccdBackImage, 
-                   String startDate, String endDate, int status, long createdAt) {
+                   long startDate, long endDate, int status, long createdAt) {
         this.contractId = contractId;
         this.roomId = roomId;
         this.landlordId = landlordId;
@@ -40,13 +44,52 @@ public class Contract {
         this.createdAt = createdAt;
     }
 
-    public Contract(String contractId, String roomId, String landlordId, String landlordName, 
-                   String landlordPhone, String tenantName, String tenantPhone, String tenantCCCD,
-                   String cccdFrontImage, String cccdBackImage, String startDate, String endDate, 
-                   int status, long createdAt) {
-        this(contractId, roomId, landlordId, landlordName, landlordPhone, null, 
-             tenantName, tenantPhone, tenantCCCD, cccdFrontImage, cccdBackImage, 
-             startDate, endDate, status, createdAt);
+    public String getFormattedStartDate() {
+        return formatTimestamp(this.startDate);
+    }
+
+    public String getFormattedEndDate() {
+        return formatTimestamp(this.endDate);
+    }
+
+    public String getFormattedPeriod() {
+        return getFormattedStartDate() + " - " + getFormattedEndDate();
+    }
+
+    public boolean shouldUpdateStatus() {
+        if (this.status == 0) return false; 
+
+        if (this.status == 2) return false;
+
+        long now = System.currentTimeMillis();
+        return (now > this.endDate && this.status == 1);
+    }
+
+    public void autoUpdateStatusIfNeeded() {
+        if (shouldUpdateStatus()) {
+            this.status = 2;
+        }
+    }
+
+    public int getCurrentStatus() {
+        autoUpdateStatusIfNeeded();
+        return this.status;
+    }
+
+    public boolean isExpired() {
+        return getCurrentStatus() == 2;
+    }
+
+    private static String formatTimestamp(long timestamp) {
+        if (timestamp <= 0) return "Chưa xác định";
+        
+        try {
+            Date date = new Date(timestamp);
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"));
+            return formatter.format(date);
+        } catch (Exception e) {
+            return "Thời gian không hợp lệ";
+        }
     }
 
     public String getContractId() { return contractId; }
@@ -82,11 +125,11 @@ public class Contract {
     public String getCccdBackImage() { return cccdBackImage; }
     public void setCccdBackImage(String cccdBackImage) { this.cccdBackImage = cccdBackImage; }
 
-    public String getStartDate() { return startDate; }
-    public void setStartDate(String startDate) { this.startDate = startDate; }
+    public long getStartDate() { return startDate; }
+    public void setStartDate(long startDate) { this.startDate = startDate; }
 
-    public String getEndDate() { return endDate; }
-    public void setEndDate(String endDate) { this.endDate = endDate; }
+    public long getEndDate() { return endDate; }
+    public void setEndDate(long endDate) { this.endDate = endDate; }
 
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }

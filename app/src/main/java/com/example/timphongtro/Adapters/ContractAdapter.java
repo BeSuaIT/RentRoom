@@ -118,17 +118,41 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
         private void bindContractData(Contract contract) {
             tenantNameTv.setText("Người thuê: " + contract.getTenantName());
             tenantPhoneTv.setText("SĐT: " + contract.getTenantPhone());
-            contractPeriodTv.setText(contract.getStartDate() + " - " + contract.getEndDate());
+            
+            contractPeriodTv.setText(contract.getFormattedPeriod());
+            syncContractStatusWithDatabase(contract);
 
-            // Hiển thị trạng thái
-            String statusText = getStatusText(contract.getStatus());
+            int currentStatus = contract.getCurrentStatus();
+            String statusText = getStatusText(currentStatus);
             statusTv.setText(statusText);
-            statusTv.setTextColor(getStatusColor(contract.getStatus()));
+            statusTv.setTextColor(getStatusColor(currentStatus));
 
-            // Format ngày tạo
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             String createdDate = sdf.format(new Date(contract.getCreatedAt()));
             createdAtTv.setText("Tạo: " + createdDate);
+        }
+
+        private void syncContractStatusWithDatabase(Contract contract) {
+            // Lấy status cũ trước khi auto update
+            int oldStatus = contract.getStatus();
+            int newStatus = contract.getCurrentStatus(); // Tự động update nếu cần
+            
+            // Nếu status thay đổi, cập nhật database
+            if (oldStatus != newStatus) {
+                DatabaseReference contractRef = FirebaseDatabase.getInstance()
+                        .getReference("Contracts")
+                        .child(contract.getContractId())
+                        .child("status");
+                
+                contractRef.setValue(newStatus)
+                        .addOnSuccessListener(aVoid -> {
+
+                        })
+                        .addOnFailureListener(e -> {
+                            // Revert status in object if database update failed
+                            contract.setStatus(oldStatus);
+                        });
+            }
         }
 
         private void setupClickListener(Contract contract, int position) {
@@ -148,7 +172,6 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
             case 0: return "Nháp";
             case 1: return "Đang hiệu lực";
             case 2: return "Hết hạn";
-            case 3: return "Đã chấm dứt";
             default: return "Không xác định";
         }
     }
@@ -158,7 +181,6 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
             case 0: return ContextCompat.getColor(context, R.color.gray);
             case 1: return ContextCompat.getColor(context, R.color.green);
             case 2: return ContextCompat.getColor(context, R.color.red);
-            case 3: return ContextCompat.getColor(context, R.color.orange_100);
             default: return ContextCompat.getColor(context, R.color.black);
         }
     }

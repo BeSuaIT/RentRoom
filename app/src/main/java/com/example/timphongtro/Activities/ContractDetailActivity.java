@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,6 +25,9 @@ import com.example.timphongtro.Models.Contract;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,16 +48,25 @@ public class ContractDetailActivity extends AppCompatActivity {
     private TextView tenantNameTv, tenantPhoneTv, tenantCCCDTv;
     private TextView contractPeriodTv, statusTv, createdAtTv;
     private ImageView cccdFrontImg, cccdBackImg;
+    private MaterialButton editContractBtn, deleteContractBtn;
     private Dialog dialogZoomImg;
     private Contract contract;
+    private DatabaseReference contractsRef, usersRef;
+    private FirebaseAuth firebaseAuth;
+    private String currentUserRole = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contract_detail);
 
+        contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
+        firebaseAuth = FirebaseAuth.getInstance();
+        usersRef = FirebaseDatabase.getInstance().getReference("Users");
+        
         initializeViews();
         getContractData();
+        loadCurrentUserRole();
         setupListeners();
         displayContractInfo();
     }
@@ -72,6 +86,32 @@ public class ContractDetailActivity extends AppCompatActivity {
         createdAtTv = findViewById(R.id.created_at_tv);
         cccdFrontImg = findViewById(R.id.cccd_front_img);
         cccdBackImg = findViewById(R.id.cccd_back_img);
+        editContractBtn = findViewById(R.id.edit_contract_btn);
+        deleteContractBtn = findViewById(R.id.delete_contract_btn);
+    }
+
+    private void loadCurrentUserRole() {
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser != null) {
+            usersRef.child(currentUser.getUid())
+                .child("role")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            currentUserRole = snapshot.getValue(String.class);
+                            if (currentUserRole == null) currentUserRole = "";
+                            setupActionButtons();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        currentUserRole = "";
+                        setupActionButtons();
+                    }
+                });
+        }
     }
 
     private void getContractData() {
@@ -108,6 +148,15 @@ public class ContractDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Không có ảnh CCCD mặt sau", Toast.LENGTH_SHORT).show();
             }
         });
+
+        editContractBtn.setOnClickListener(v -> {
+            Intent editIntent = new Intent(this, EditContractActivity.class);
+            String contractJson = GsonUtils.toJson(contract);
+            editIntent.putExtra("contractJson", contractJson);
+            startActivityForResult(editIntent, 1001);
+        });
+
+        deleteContractBtn.setOnClickListener(v -> showDeleteConfirmationDialog());
     }
 
     private void displayContractInfo() {
@@ -116,6 +165,153 @@ public class ContractDetailActivity extends AppCompatActivity {
         loadRoomData();
         displayBasicContractInfo();
         loadCCCDImages();
+        setupActionButtons();
+    }
+
+    private void displayBasicContractInfo() {
+        landlordNameTv.setText(contract.getLandlordName());
+        landlordPhoneTv.setText(contract.getLandlordPhone());
+        tenantNameTv.setText(contract.getTenantName());
+        tenantPhoneTv.setText(contract.getTenantPhone());
+        tenantCCCDTv.setText(contract.getTenantCCCD());
+        
+        contractPeriodTv.setText(contract.getFormattedPeriod());
+        syncContractStatusWithDatabase();
+
+        int currentStatus = contract.getCurrentStatus();
+        String statusText = getStatusText(currentStatus);
+        statusTv.setText(statusText);
+        statusTv.setTextColor(getStatusColor(currentStatus));
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        String createdDate = sdf.format(new Date(contract.getCreatedAt()));
+        createdAtTv.setText("Tạo lúc: " + createdDate);
+    }
+
+    private void syncContractStatusWithDatabase() {
+        // Lấy status cũ trước khi auto update
+        int oldStatus = contract.getStatus();
+        // Auto update status trong object
+        int newStatus = contract.getCurrentStatus();
+        // Nếu status thay đổi, cập nhật database
+        if (oldStatus != newStatus) {
+            contractsRef.child(contract.getContractId())
+                    .child("status")
+                    .setValue(newStatus)
+                    .addOnSuccessListener(aVoid -> {
+                        setupActionButtons();
+                    })
+                    .addOnFailureListener(e -> {
+                        // Revert status in object if database update failed
+                        contract.setStatus(oldStatus);
+                    });
+        }
+    }
+
+    private void setupActionButtons() {
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        
+        if (currentUser != null && contract != null) {
+            boolean isLandlord = currentUser.getUid().equals(contract.getLandlordId());
+            boolean isLandlordRole = "Chủ trọ".equals(currentUserRole);
+            boolean isExpired = contract.getCurrentStatus() == 2;
+            
+            if (isLandlord && isLandlordRole && isExpired) {
+                editContractBtn.setVisibility(View.VISIBLE);
+                deleteContractBtn.setVisibility(View.VISIBLE);
+                editContractBtn.setText("Chỉnh sửa / Gia hạn");
+                editContractBtn.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.orange_100));
+                deleteContractBtn.setStrokeColor(ContextCompat.getColorStateList(this, R.color.red));
+            } else {
+                editContractBtn.setVisibility(View.GONE);
+                deleteContractBtn.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void showDeleteConfirmationDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("⚠️ Xác nhận xóa hợp đồng")
+                .setMessage("Bạn có chắc chắn muốn xóa hợp đồng này?\n\n" +
+                           "• Hành động này không thể hoàn tác\n" +
+                           "• Phòng sẽ chuyển về trạng thái trống\n" +
+                           "• Tất cả dữ liệu hợp đồng sẽ bị xóa vĩnh viễn")
+                .setPositiveButton("Xóa hợp đồng", (dialog, which) -> deleteContract())
+                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void deleteContract() {
+        if (contract == null) return;
+
+        contractsRef.child(contract.getContractId()).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    updateRoomStatusAfterDelete();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Lỗi xóa hợp đồng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void updateRoomStatusAfterDelete() {
+        DatabaseReference roomRef = FirebaseDatabase.getInstance()
+                .getReference("Posts")
+                .child(contract.getRoomId())
+                .child("status_room");
+
+        roomRef.setValue(0)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Đã xóa hợp đồng thành công!", Toast.LENGTH_SHORT).show();
+                    setResult(RESULT_OK);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Hợp đồng đã xóa nhưng không thể cập nhật trạng thái phòng", 
+                            Toast.LENGTH_LONG).show();
+                    finish();
+                });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (requestCode == 1001) {
+            if (resultCode == RESULT_OK) {
+                finish();
+            } else {
+                refreshContractData();
+            }
+        }
+    }
+
+    private void refreshContractData() {
+        if (contract == null || contract.getContractId() == null) return;
+        
+        contractsRef.child(contract.getContractId())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            Contract updatedContract = snapshot.getValue(Contract.class);
+                            if (updatedContract != null) {
+                                contract = updatedContract;
+                                displayContractInfo();
+                            }
+                        } else {
+                            Toast.makeText(ContractDetailActivity.this, 
+                                    "Hợp đồng đã bị xóa", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(ContractDetailActivity.this, 
+                                "Lỗi tải lại dữ liệu", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void loadRoomData() {
@@ -163,23 +359,6 @@ public class ContractDetailActivity extends AppCompatActivity {
                 roomPriceTv.setText("N/A");
             }
         });
-    }
-
-    private void displayBasicContractInfo() {
-        landlordNameTv.setText(contract.getLandlordName());
-        landlordPhoneTv.setText(contract.getLandlordPhone());
-        tenantNameTv.setText(contract.getTenantName());
-        tenantPhoneTv.setText(contract.getTenantPhone());
-        tenantCCCDTv.setText(contract.getTenantCCCD());
-        contractPeriodTv.setText(contract.getStartDate() + " - " + contract.getEndDate());
-
-        String statusText = getStatusText(contract.getStatus());
-        statusTv.setText(statusText);
-        statusTv.setTextColor(getStatusColor(contract.getStatus()));
-
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        String createdDate = sdf.format(new Date(contract.getCreatedAt()));
-        createdAtTv.setText("Tạo lúc: " + createdDate);
     }
 
     private void loadCCCDImages() {
@@ -257,7 +436,6 @@ public class ContractDetailActivity extends AppCompatActivity {
             case 0: return "Nháp";
             case 1: return "Đang hiệu lực";
             case 2: return "Hết hạn";
-            case 3: return "Đã chấm dứt";
             default: return "Không xác định";
         }
     }
@@ -267,7 +445,6 @@ public class ContractDetailActivity extends AppCompatActivity {
             case 0: return ContextCompat.getColor(this, R.color.gray);
             case 1: return ContextCompat.getColor(this, R.color.green);
             case 2: return ContextCompat.getColor(this, R.color.red);
-            case 3: return ContextCompat.getColor(this, R.color.orange_100);
             default: return ContextCompat.getColor(this, R.color.black);
         }
     }
