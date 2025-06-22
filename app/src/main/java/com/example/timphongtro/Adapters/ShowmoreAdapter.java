@@ -7,7 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
- 
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
@@ -86,31 +87,36 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
             if (roomJson != null) {
                 detailRoom.putExtra("DataRoom", roomJson);
                 context.startActivity(detailRoom);
-                saveToUserHistory(room.getId_room());
+
+                if (user != null && room.getId_room() != null) {
+                    saveToUserHistory(user.getUid(), room.getId_room());
+                }
             } else {
-                android.widget.Toast.makeText(context, "Lỗi mở chi tiết phòng", android.widget.Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void saveToUserHistory(String roomId) {
-        if (user != null && roomId != null) {
-            long timestamp = System.currentTimeMillis();
-            
-            DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
-                    .getReference("Users")
-                    .child(user.getUid())
-                    .child("histories")
-                    .child(roomId);
-                    
-            userHistoryRef.setValue(timestamp)
-                    .addOnSuccessListener(unused -> {
-                        android.util.Log.d("History", "Saved room " + roomId + " to user history");
-                    })
-                    .addOnFailureListener(e -> {
-                        android.util.Log.e("History", "Failed to save history: " + e.getMessage());
-                    });
+    private void saveToUserHistory(String userId, String roomId) {
+        if (userId == null || userId.isEmpty() || roomId == null || roomId.isEmpty()) {
+            return;
         }
+
+        long currentTimestamp = System.currentTimeMillis();
+        
+        DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(userId)
+                .child("histories")
+                .child(roomId);
+
+        userHistoryRef.setValue(currentTimestamp)
+                .addOnSuccessListener(unused -> {
+
+                })
+                .addOnFailureListener(e -> {
+
+                });
     }
 
     @Override

@@ -99,7 +99,9 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
             if (roomJson != null) {
                 detailRoom.putExtra("DataRoom", roomJson);
                 context.startActivity(detailRoom);
-                saveToUserHistory(userID, room.getId_room());
+                if (user != null && room.getId_room() != null) {
+                    saveToUserHistory(userID, room.getId_room());
+                }
             } else {
                 Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
             }
@@ -107,23 +109,25 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
     }
 
     private void saveToUserHistory(String userId, String roomId) {
-        if (user != null && roomId != null) {
-            long timestamp = System.currentTimeMillis();
-            
-            DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
-                    .getReference("Users")
-                    .child(userId)
-                    .child("histories")
-                    .child(roomId);
-                    
-            userHistoryRef.setValue(timestamp)
-                    .addOnSuccessListener(unused -> {
-
-                    })
-                    .addOnFailureListener(e -> {
-
-                    });
+        if (userId == null || userId.isEmpty() || roomId == null || roomId.isEmpty()) {
+            return;
         }
+
+        long currentTimestamp = System.currentTimeMillis();
+        
+        DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(userId)
+                .child("histories")
+                .child(roomId);
+
+        userHistoryRef.setValue(currentTimestamp)
+                .addOnSuccessListener(unused -> {
+
+                })
+                .addOnFailureListener(e -> {
+
+                });
     }
 
     @Override

@@ -18,7 +18,11 @@ import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.PostDetailActivity;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
-import com.example.timphongtro.Utils.GsonUtils; // ✅ Import GsonUtils
+import com.example.timphongtro.Utils.GsonUtils;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -27,6 +31,7 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
     private final Context context;
     private final ArrayList<Room> rooms;
     private final DecimalFormat decimalFormat;
+    private final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
     public FollowRoomAdapter(Context context, ArrayList<Room> rooms) {
         this.context = context;
@@ -87,10 +92,35 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
             if (roomJson != null) {
                 intent.putExtra("DataRoom", roomJson);
                 context.startActivity(intent);
+
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                if (currentUser != null && room.getId_room() != null) {
+                    saveToUserHistory(currentUser.getUid(), room.getId_room());
+                }
             } else {
                 Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void saveToUserHistory(String userId, String roomId) {
+        if (userId == null || userId.isEmpty() || roomId == null || roomId.isEmpty()) {
+            return;
+        }
+
+        long currentTimestamp = System.currentTimeMillis();
+
+        DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(userId)
+                .child("histories")
+                .child(roomId);
+
+        userHistoryRef.setValue(currentTimestamp)
+                .addOnSuccessListener(unused -> {
+                })
+                .addOnFailureListener(e -> {
+                });
     }
 
     @Override

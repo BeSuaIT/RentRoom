@@ -56,6 +56,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private User bookerUser, ownerUser;
     private FirebaseUser currentUser;
     private DatabaseReference scheduleRef;
+    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     private DecimalFormat decimalFormat;
 
     @Override
@@ -411,12 +412,34 @@ public class MeetingDetailActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, PostDetailActivity.class);
                 intent.putExtra("DataRoom", roomJson);
                 startActivity(intent);
-            } else {
-                showToast("Lỗi mở chi tiết phòng");
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                if (currentUser != null && room.getId_room() != null) {
+                    saveToUserHistory(currentUser.getUid(), room.getId_room());
+                }
             }
-        } else {
-            showToast("Thông tin phòng chưa được tải");
         }
+    }
+
+    private void saveToUserHistory(String userId, String roomId) {
+        if (userId == null || userId.isEmpty() || roomId == null || roomId.isEmpty()) {
+            return;
+        }
+
+        long currentTimestamp = System.currentTimeMillis();
+
+        DatabaseReference userHistoryRef = FirebaseDatabase.getInstance()
+                .getReference("Users")
+                .child(userId)
+                .child("histories")
+                .child(roomId);
+
+        userHistoryRef.setValue(currentTimestamp)
+                .addOnSuccessListener(unused -> {
+
+                })
+                .addOnFailureListener(e -> {
+
+                });
     }
 
     private void navigateToOwnerProfile() {
