@@ -37,8 +37,10 @@ import com.example.timphongtro.Adapters.ImageAdapter;
 import com.example.timphongtro.Models.Contract;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.ContractUtils;
 import com.example.timphongtro.Utils.GsonUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -73,26 +75,19 @@ public class EditContractActivity extends AppCompatActivity {
     private EditText tenantNameEdt, tenantPhoneEdt, tenantCCCDEdt;
     private EditText startDateEdt, endDateEdt;
     private RecyclerView cccdFrontRecyclerView, cccdBackRecyclerView;
-    private Button selectCCCDFrontBtn, selectCCCDBackBtn;
-    private Button updateContractBtn;
+    private MaterialButton selectCCCDFrontBtn, selectCCCDBackBtn;
+    private MaterialButton updateContractBtn;
     private ProgressBar progressBar;
-
     private Contract contract;
     private Room selectedRoom;
     private ArrayList<Room> roomsList;
     private ArrayAdapter<String> roomAdapter;
-
-    // ✅ CCCD Images giống AddContract
     private ArrayList<Uri> cccdFrontImages, cccdBackImages;
     private ImageAdapter cccdFrontAdapter, cccdBackAdapter;
     private String currentImageType;
-
-    // Firebase
     private DatabaseReference contractsRef, roomsRef;
     private StorageReference storageRef;
     private FirebaseAuth firebaseAuth;
-
-    // ✅ Activity launchers giống AddContract
     private ActivityResultLauncher<Intent> galleryLauncher, cameraLauncher;
     private BottomSheetDialog imagePickerDialog;
 
@@ -103,8 +98,8 @@ public class EditContractActivity extends AppCompatActivity {
 
         initializeViews();
         initializeFirebase();
-        setupRecyclerViews(); // ✅ THÊM: Setup RecyclerViews giống AddContract
-        setupActivityResultLaunchers(); // ✅ THÊM: Setup launchers giống AddContract
+        setupRecyclerViews();
+        setupActivityResultLaunchers();
         getContractData();
         setupListeners();
         loadRooms();
@@ -124,8 +119,8 @@ public class EditContractActivity extends AppCompatActivity {
         endDateEdt = findViewById(R.id.end_date_edt);
         cccdFrontRecyclerView = findViewById(R.id.cccd_front_recycler_view);
         cccdBackRecyclerView = findViewById(R.id.cccd_back_recycler_view);
-        selectCCCDFrontBtn = findViewById(R.id.select_cccd_front_btn);
-        selectCCCDBackBtn = findViewById(R.id.select_cccd_back_btn);
+        selectCCCDFrontBtn = findViewById(R.id.add_cccd_front_btn);
+        selectCCCDBackBtn = findViewById(R.id.add_cccd_back_btn);
         updateContractBtn = findViewById(R.id.update_contract_btn);
         progressBar = findViewById(R.id.progress_bar);
     }
@@ -137,7 +132,6 @@ public class EditContractActivity extends AppCompatActivity {
         storageRef = FirebaseStorage.getInstance().getReference();
     }
 
-    // ✅ THÊM: Setup RecyclerViews giống AddContract
     private void setupRecyclerViews() {
         cccdFrontImages = new ArrayList<>();
         cccdBackImages = new ArrayList<>();
@@ -304,8 +298,9 @@ public class EditContractActivity extends AppCompatActivity {
     private void displayContractInfo() {
         if (contract == null) return;
 
-        syncContractStatusWithDatabase();
-        int currentStatus = contract.getCurrentStatus();
+        ContractUtils.syncContractStatusWithDatabase(contract);
+
+        int currentStatus = ContractUtils.getCurrentStatus(contract);
         String statusInfo = "";
         
         switch (currentStatus) {
@@ -320,35 +315,26 @@ public class EditContractActivity extends AppCompatActivity {
                 break;
         }
         contractInfoTv.setText(statusInfo);
-
         landlordNameEdt.setText(contract.getLandlordName());
         landlordPhoneEdt.setText(contract.getLandlordPhone());
         tenantNameEdt.setText(contract.getTenantName());
         tenantPhoneEdt.setText(contract.getTenantPhone());
         tenantCCCDEdt.setText(contract.getTenantCCCD());
-        startDateEdt.setText(contract.getFormattedStartDate());
-        endDateEdt.setText(contract.getFormattedEndDate());
+        startDateEdt.setText(formatTimestamp(contract.getStartDate()));
+        endDateEdt.setText(formatTimestamp(contract.getEndDate()));
 
         loadExistingCCCDImages();
     }
 
-    private void syncContractStatusWithDatabase() {
-        int oldStatus = contract.getStatus();
+    private String formatTimestamp(long timestamp) {
+        if (timestamp <= 0) return "Chưa xác định";
         
-        // Auto update status trong object
-        int newStatus = contract.getCurrentStatus(); // Này sẽ tự động update nếu cần
-        
-        // Nếu status thay đổi, cập nhật database
-        if (oldStatus != newStatus) {
-            contractsRef.child(contract.getContractId())
-                    .child("status")
-                    .setValue(newStatus)
-                    .addOnSuccessListener(aVoid -> {
-
-                    })
-                    .addOnFailureListener(e -> {
-                        contract.setStatus(oldStatus);
-                    });
+        try {
+            Date date = new Date(timestamp);
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"));
+            return formatter.format(date);
+        } catch (Exception e) {
+            return "Thời gian không hợp lệ";
         }
     }
 
@@ -655,7 +641,6 @@ public class EditContractActivity extends AppCompatActivity {
         progressBar.setVisibility(View.GONE);
         updateContractBtn.setEnabled(true);
         Toast.makeText(this, "Cập nhật hợp đồng thành công!", Toast.LENGTH_SHORT).show();
-        setResult(RESULT_OK);
         finish();
     }
 

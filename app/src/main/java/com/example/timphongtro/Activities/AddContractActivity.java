@@ -234,7 +234,6 @@ public class AddContractActivity extends AppCompatActivity {
                                 foundTenantId = userSnapshot.getKey();
                                 String name = userSnapshot.child("name").getValue(String.class);
                                 String phone = userSnapshot.child("phone").getValue(String.class);
-                                String role = userSnapshot.child("role").getValue(String.class);
 
                                 handleTenantDataFill(name, phone);
 

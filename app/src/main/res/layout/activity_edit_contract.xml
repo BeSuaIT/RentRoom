@@ -241,7 +241,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ảnh CCCD"
+                android:text="Ảnh CCCD mặt trước"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -259,15 +259,21 @@
                 android:id="@+id/cccd_front_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/add_cccd_front_btn"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="+ Thêm ảnh CCCD mặt trước"
-                android:background="@drawable/button_outline"
-                android:textColor="@color/gray"
+                android:layout_height="48dp"
+                android:text="Chọn ảnh CCCD mặt trước"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:strokeColor="@color/orange_100"
+                app:strokeWidth="2dp"
+                android:textSize="16sp"
+                android:textColor="@color/orange_100"
+                app:cornerRadius="12dp"
+                app:rippleColor="@color/orange_20"
                 android:layout_marginBottom="16dp" />
 
             <TextView
@@ -282,15 +288,21 @@
                 android:id="@+id/cccd_back_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/add_cccd_back_btn"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="+ Thêm ảnh CCCD mặt sau"
-                android:background="@drawable/button_outline"
-                android:textColor="@color/gray"
+                android:layout_height="48dp"
+                android:text="Chọn ảnh CCCD mặt sau"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:strokeColor="@color/orange_100"
+                app:strokeWidth="2dp"
+                android:textSize="16sp"
+                android:textColor="@color/orange_100"
+                app:cornerRadius="12dp"
+                app:rippleColor="@color/orange_20"
                 android:layout_marginBottom="24dp" />
 
             <ProgressBar
@@ -301,17 +313,16 @@
                 android:layout_marginBottom="16dp"
                 android:visibility="gone" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/update_contract_btn"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="Cập nhật hợp đồng"
-                android:background="@color/orange_100"
-                android:backgroundTint="@color/orange_100"
-                android:textColor="@color/white_100"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:backgroundTint="@color/orange_100"
+                app:cornerRadius="12dp"
+                app:rippleColor="@color/orange_20" />
 
         </LinearLayout>
     </ScrollView>

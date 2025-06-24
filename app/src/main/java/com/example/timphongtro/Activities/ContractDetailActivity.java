@@ -1,5 +1,6 @@
 package com.example.timphongtro.Activities;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -9,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +24,7 @@ import com.example.timphongtro.Adapters.ZoomImageAdapter;
 import com.example.timphongtro.Models.Contract;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.ContractUtils;
 import com.example.timphongtro.Utils.GsonUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -153,7 +154,8 @@ public class ContractDetailActivity extends AppCompatActivity {
             Intent editIntent = new Intent(this, EditContractActivity.class);
             String contractJson = GsonUtils.toJson(contract);
             editIntent.putExtra("contractJson", contractJson);
-            startActivityForResult(editIntent, 1001);
+            startActivity(editIntent);
+            finish();
         });
 
         deleteContractBtn.setOnClickListener(v -> showDeleteConfirmationDialog());
@@ -174,37 +176,43 @@ public class ContractDetailActivity extends AppCompatActivity {
         tenantNameTv.setText(contract.getTenantName());
         tenantPhoneTv.setText(contract.getTenantPhone());
         tenantCCCDTv.setText(contract.getTenantCCCD());
-        
-        contractPeriodTv.setText(contract.getFormattedPeriod());
-        syncContractStatusWithDatabase();
 
-        int currentStatus = contract.getCurrentStatus();
+        String startDate = formatTimestamp(contract.getStartDate());
+        String endDate = formatTimestamp(contract.getEndDate());
+        contractPeriodTv.setText(startDate + " - " + endDate);
+
+        ContractUtils.syncContractStatusWithDatabase(contract);
+
+        int currentStatus = ContractUtils.getCurrentStatus(contract);
         String statusText = getStatusText(currentStatus);
         statusTv.setText(statusText);
         statusTv.setTextColor(getStatusColor(currentStatus));
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        String createdDate = sdf.format(new Date(contract.getCreatedAt()));
+        String createdDate = formatTimestampWithTime(contract.getCreatedAt());
         createdAtTv.setText("Tạo lúc: " + createdDate);
     }
 
-    private void syncContractStatusWithDatabase() {
-        // Lấy status cũ trước khi auto update
-        int oldStatus = contract.getStatus();
-        // Auto update status trong object
-        int newStatus = contract.getCurrentStatus();
-        // Nếu status thay đổi, cập nhật database
-        if (oldStatus != newStatus) {
-            contractsRef.child(contract.getContractId())
-                    .child("status")
-                    .setValue(newStatus)
-                    .addOnSuccessListener(aVoid -> {
-                        setupActionButtons();
-                    })
-                    .addOnFailureListener(e -> {
-                        // Revert status in object if database update failed
-                        contract.setStatus(oldStatus);
-                    });
+    private String formatTimestamp(long timestamp) {
+        if (timestamp <= 0) return "Chưa xác định";
+        
+        try {
+            Date date = new Date(timestamp);
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"));
+            return formatter.format(date);
+        } catch (Exception e) {
+            return "Thời gian không hợp lệ";
+        }
+    }
+
+    private String formatTimestampWithTime(long timestamp) {
+        if (timestamp <= 0) return "Chưa xác định";
+        
+        try {
+            Date date = new Date(timestamp);
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm", new Locale("vi", "VN"));
+            return formatter.format(date);
+        } catch (Exception e) {
+            return "Thời gian không hợp lệ";
         }
     }
 
@@ -214,7 +222,7 @@ public class ContractDetailActivity extends AppCompatActivity {
         if (currentUser != null && contract != null) {
             boolean isLandlord = currentUser.getUid().equals(contract.getLandlordId());
             boolean isLandlordRole = "Chủ trọ".equals(currentUserRole);
-            boolean isExpired = contract.getCurrentStatus() == 2;
+            boolean isExpired = ContractUtils.isExpired(contract);
             
             if (isLandlord && isLandlordRole && isExpired) {
                 editContractBtn.setVisibility(View.VISIBLE);
@@ -230,15 +238,14 @@ public class ContractDetailActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirmationDialog() {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("⚠️ Xác nhận xóa hợp đồng")
+        new AlertDialog.Builder(this)
+                .setTitle("Xác nhận xóa hợp đồng")
                 .setMessage("Bạn có chắc chắn muốn xóa hợp đồng này?\n\n" +
                            "• Hành động này không thể hoàn tác\n" +
                            "• Phòng sẽ chuyển về trạng thái trống\n" +
                            "• Tất cả dữ liệu hợp đồng sẽ bị xóa vĩnh viễn")
                 .setPositiveButton("Xóa hợp đồng", (dialog, which) -> deleteContract())
                 .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
-                .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
 
@@ -270,47 +277,6 @@ public class ContractDetailActivity extends AppCompatActivity {
                     Toast.makeText(this, "Hợp đồng đã xóa nhưng không thể cập nhật trạng thái phòng", 
                             Toast.LENGTH_LONG).show();
                     finish();
-                });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        
-        if (requestCode == 1001) {
-            if (resultCode == RESULT_OK) {
-                finish();
-            } else {
-                refreshContractData();
-            }
-        }
-    }
-
-    private void refreshContractData() {
-        if (contract == null || contract.getContractId() == null) return;
-        
-        contractsRef.child(contract.getContractId())
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            Contract updatedContract = snapshot.getValue(Contract.class);
-                            if (updatedContract != null) {
-                                contract = updatedContract;
-                                displayContractInfo();
-                            }
-                        } else {
-                            Toast.makeText(ContractDetailActivity.this, 
-                                    "Hợp đồng đã bị xóa", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(ContractDetailActivity.this, 
-                                "Lỗi tải lại dữ liệu", Toast.LENGTH_SHORT).show();
-                    }
                 });
     }
 

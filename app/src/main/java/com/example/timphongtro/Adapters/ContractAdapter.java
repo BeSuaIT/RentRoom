@@ -15,6 +15,7 @@ import com.example.timphongtro.Activities.ContractDetailActivity;
 import com.example.timphongtro.Models.Contract;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.ContractUtils;
 import com.example.timphongtro.Utils.GsonUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -118,40 +119,43 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
         private void bindContractData(Contract contract) {
             tenantNameTv.setText("Người thuê: " + contract.getTenantName());
             tenantPhoneTv.setText("SĐT: " + contract.getTenantPhone());
-            
-            contractPeriodTv.setText(contract.getFormattedPeriod());
-            syncContractStatusWithDatabase(contract);
 
-            int currentStatus = contract.getCurrentStatus();
+            String startDate = formatTimestamp(contract.getStartDate());
+            String endDate = formatTimestamp(contract.getEndDate());
+            contractPeriodTv.setText(startDate + " - " + endDate);
+
+            ContractUtils.syncContractStatusWithDatabase(contract);
+
+            int currentStatus = ContractUtils.getCurrentStatus(contract);
             String statusText = getStatusText(currentStatus);
             statusTv.setText(statusText);
             statusTv.setTextColor(getStatusColor(currentStatus));
 
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-            String createdDate = sdf.format(new Date(contract.getCreatedAt()));
+            String createdDate = formatTimestampWithTime(contract.getCreatedAt());
             createdAtTv.setText("Tạo: " + createdDate);
         }
 
-        private void syncContractStatusWithDatabase(Contract contract) {
-            // Lấy status cũ trước khi auto update
-            int oldStatus = contract.getStatus();
-            int newStatus = contract.getCurrentStatus(); // Tự động update nếu cần
+        private String formatTimestamp(long timestamp) {
+            if (timestamp <= 0) return "Chưa xác định";
             
-            // Nếu status thay đổi, cập nhật database
-            if (oldStatus != newStatus) {
-                DatabaseReference contractRef = FirebaseDatabase.getInstance()
-                        .getReference("Contracts")
-                        .child(contract.getContractId())
-                        .child("status");
-                
-                contractRef.setValue(newStatus)
-                        .addOnSuccessListener(aVoid -> {
+            try {
+                Date date = new Date(timestamp);
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"));
+                return formatter.format(date);
+            } catch (Exception e) {
+                return "Thời gian không hợp lệ";
+            }
+        }
 
-                        })
-                        .addOnFailureListener(e -> {
-                            // Revert status in object if database update failed
-                            contract.setStatus(oldStatus);
-                        });
+        private String formatTimestampWithTime(long timestamp) {
+            if (timestamp <= 0) return "Chưa xác định";
+            
+            try {
+                Date date = new Date(timestamp);
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm", new Locale("vi", "VN"));
+                return formatter.format(date);
+            } catch (Exception e) {
+                return "Thời gian không hợp lệ";
             }
         }
 
