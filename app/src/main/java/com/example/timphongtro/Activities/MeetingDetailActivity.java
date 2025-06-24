@@ -34,6 +34,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MeetingDetailActivity extends AppCompatActivity {
     
@@ -138,7 +140,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         if (schedule == null) return;
 
         tvName.setText(schedule.getName() != null ? schedule.getName() : "Không có tên");
-        tvTime.setText(Meeting.formatTimestamp(schedule.getTimeVisitRoom()));
+        tvTime.setText(formatTimestamp(schedule.getTimeVisitRoom()));
 
         String note = schedule.getNote();
         if (note == null || note.trim().isEmpty() || "Không có ghi chú".equals(note)) {
@@ -155,6 +157,25 @@ public class MeetingDetailActivity extends AppCompatActivity {
         circleAvatar.setVisibility(View.VISIBLE);
 
         setupStatusIndicator();
+    }
+
+    private String formatTimestamp(long timestamp) {
+        if (timestamp <= 0) {
+            return "Chưa xác định thời gian";
+        }
+
+        try {
+            Date date = new java.util.Date(timestamp);
+            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", new java.util.Locale("vi", "VN"));
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm, dd/MM/yyyy", new java.util.Locale("vi", "VN"));
+
+            String dayOfWeek = dayFormat.format(date);
+            String dateTime = dateTimeFormat.format(date);
+
+            return dayOfWeek + ", " + dateTime; // "Thứ Hai, 14:30, 25/12/2024"
+        } catch (Exception e) {
+            return "Thời gian không hợp lệ";
+        }
     }
 
     private void loadBookerUserData() {

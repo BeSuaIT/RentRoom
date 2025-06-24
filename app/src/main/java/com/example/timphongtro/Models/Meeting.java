@@ -97,23 +97,4 @@ public class Meeting {
     public void setTimeVisitRoom(long timeVisitRoom) {
         this.timeVisitRoom = timeVisitRoom;
     }
-
-    public static String formatTimestamp(long timestamp) {
-        if (timestamp <= 0) {
-            return "Chưa xác định thời gian";
-        }
-        
-        try {
-            java.util.Date date = new java.util.Date(timestamp);
-            java.text.SimpleDateFormat dayFormat = new java.text.SimpleDateFormat("EEEE", new java.util.Locale("vi", "VN"));
-            java.text.SimpleDateFormat dateTimeFormat = new java.text.SimpleDateFormat("HH:mm, dd/MM/yyyy", new java.util.Locale("vi", "VN"));
-            
-            String dayOfWeek = dayFormat.format(date);
-            String dateTime = dateTimeFormat.format(date);
-            
-            return dayOfWeek + ", " + dateTime; // "Thứ Hai, 14:30, 25/12/2024"
-        } catch (Exception e) {
-            return "Thời gian không hợp lệ";
-        }
-    }
 }
