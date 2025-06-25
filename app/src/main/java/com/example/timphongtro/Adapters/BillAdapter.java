@@ -153,33 +153,53 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<BillItem> items = new ArrayList<>();
+                int totalItems = bill.getItems().size();
+                int[] processedItems = {0}; // Counter để track progress
 
                 for (Map.Entry<String, Integer> entry : bill.getItems().entrySet()) {
                     String serviceId = entry.getKey();
                     Integer quantity = entry.getValue();
 
-                    for (DataSnapshot categorySnap : snapshot.getChildren()) {
-                        DataSnapshot serviceSnap = categorySnap.child(serviceId);
-                        if (serviceSnap.exists()) {
-                            Service service = serviceSnap.getValue(Service.class);
-                            if (service != null) {
-                                items.add(new BillItem(service.getTitle(),
-                                        quantity, service.getPrice()));
-                            }
-                            break;
+                    if (serviceId == null || quantity == null) {
+                        processedItems[0]++;
+                        continue;
+                    }
+
+                    DataSnapshot serviceSnap = snapshot.child(serviceId);
+                    if (serviceSnap.exists()) {
+                        Service service = serviceSnap.getValue(Service.class);
+                        if (service != null) {
+                            items.add(new BillItem(
+                                service.getTitle(),
+                                quantity, 
+                                service.getPrice()
+                            ));
                         }
+                    } else {
+                        items.add(new BillItem(
+                            "Sản phẩm đã bị xóa (ID: " + serviceId + ")",
+                            quantity,
+                            0 // Giá 0 vì không tìm thấy
+                        ));
+                    }
+
+                    processedItems[0]++;
+
+                    if (processedItems[0] == totalItems) {
+                        setupBillItemsRecyclerView(rcvBillItems, items);
                     }
                 }
 
-                BillItemAdapter adapter = new BillItemAdapter(items);
-                rcvBillItems.setLayoutManager(new LinearLayoutManager(context));
-                rcvBillItems.setAdapter(adapter);
+                if (totalItems == 0) {
+                    setupBillItemsRecyclerView(rcvBillItems, items);
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(context,
-                        "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Lỗi tải dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                List<BillItem> fallbackItems = createFallbackBillItems(bill);
+                setupBillItemsRecyclerView(rcvBillItems, fallbackItems);
             }
         });
 
@@ -218,5 +238,31 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
             tvLocation = itemView.findViewById(R.id.tv_location);
             btnCancelOrder = itemView.findViewById(R.id.btn_cancel_order);
         }
+    }
+
+    private void setupBillItemsRecyclerView(RecyclerView rcvBillItems, List<BillItem> items) {
+        BillItemAdapter adapter = new BillItemAdapter(items);
+        rcvBillItems.setLayoutManager(new LinearLayoutManager(context));
+        rcvBillItems.setAdapter(adapter);
+    }
+
+    // Fallback method khi không load được services
+    private List<BillItem> createFallbackBillItems(Bill bill) {
+        List<BillItem> fallbackItems = new ArrayList<>();
+        
+        for (Map.Entry<String, Integer> entry : bill.getItems().entrySet()) {
+            String serviceId = entry.getKey();
+            Integer quantity = entry.getValue();
+            
+            if (serviceId != null && quantity != null) {
+                fallbackItems.add(new BillItem(
+                    "Sản phẩm (ID: " + serviceId + ")",
+                    quantity,
+                    0 // Không biết giá
+                ));
+            }
+        }
+        
+        return fallbackItems;
     }
 }

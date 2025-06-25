@@ -90,23 +90,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    // ✅ THÊM: onDestroyView để cleanup listeners
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        removeListeners();
-    }
-
-    // ✅ THÊM: Method để remove listeners
-    private void removeListeners() {
-        if (spinnerRef != null && cityDataListener != null) {
-            spinnerRef.removeEventListener(cityDataListener);
-        }
-        if (roomRef != null && roomDataListener != null) {
-            roomRef.removeEventListener(roomDataListener);
-        }
-    }
-
     private void initializeViews(View view) {
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         districtProgressBar = view.findViewById(R.id.district_progress_bar);
@@ -250,12 +233,24 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupServiceClickListeners(View view) {
-        view.findViewById(R.id.doi_binh_ga).setOnClickListener(v -> openServiceActivity("doibinhga"));
-        view.findViewById(R.id.doi_binh_nuoc).setOnClickListener(v -> openServiceActivity("doibinhnuoc"));
-        view.findViewById(R.id.giat_la).setOnClickListener(v -> openServiceActivity("giatla"));
-        view.findViewById(R.id.sua_chua_dien_nuoc).setOnClickListener(v -> openServiceActivity("suachuadiennuoc"));
-        view.findViewById(R.id.tu_van_thiet_ke_phong).setOnClickListener(v -> openServiceActivity("tuvanthietkephong"));
-        view.findViewById(R.id.cho_thue_noi_that).setOnClickListener(v -> openServiceActivity("chothuenoithat"));
+        view.findViewById(R.id.doi_binh_ga).setOnClickListener(v -> 
+            openServiceActivity("Đổi bình ga"));
+        view.findViewById(R.id.doi_binh_nuoc).setOnClickListener(v -> 
+            openServiceActivity("Đổi bình nước"));
+        view.findViewById(R.id.giat_la).setOnClickListener(v -> 
+            openServiceActivity("Giặt là"));
+        view.findViewById(R.id.sua_chua_dien_nuoc).setOnClickListener(v -> 
+            openServiceActivity("Sửa chữa điện nước"));
+        view.findViewById(R.id.tu_van_thiet_ke_phong).setOnClickListener(v -> 
+            openServiceActivity("Tư vấn thiết kế phòng"));
+        view.findViewById(R.id.cho_thue_noi_that).setOnClickListener(v -> 
+            openServiceActivity("Cho thuê nội thất"));
+    }
+
+    private void openServiceActivity(String categoryName) {
+        Intent intent = new Intent(getContext(), ServiceActivity.class);
+        intent.putExtra("category", categoryName);
+        startActivity(intent);
     }
 
     private void setupImageSlider(View view) {
@@ -501,11 +496,5 @@ public class HomeFragment extends Fragment {
         if (getContext() != null) {
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void openServiceActivity(String item) {
-        Intent intent = new Intent(getContext(), ServiceActivity.class);
-        intent.putExtra("item", item);
-        startActivity(intent);
     }
 }

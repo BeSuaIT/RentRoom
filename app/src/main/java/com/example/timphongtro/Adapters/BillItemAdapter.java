@@ -33,7 +33,7 @@ public class BillItemAdapter extends RecyclerView.Adapter<BillItemAdapter.ViewHo
         BillItem item = items.get(position);
         holder.tvTitle.setText(item.getTitle());
         holder.tvQuantity.setText("x" + item.getQuantity());
-        holder.tvPrice.setText(String.format("%,d đ", item.getTotal()));
+        holder.tvPrice.setText(String.format("%,d VNĐ", item.getTotal()));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.example.timphongtro.Fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,6 +52,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseUser firebaseUser;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
+    private ValueEventListener userDataListener; // ✅ THÊM: Reference để cleanup
     private TextView nameTextView, emailTextView,
             signOutButton, manageRoomsButton, manageContractsButton, scheduleButton,
             historyButton, myProfileButton, billButton, cartButton;
@@ -63,8 +65,7 @@ public class ProfileFragment extends Fragment {
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -100,36 +101,85 @@ public class ProfileFragment extends Fragment {
 
     private void setupClickListeners() {
         myProfileButton.setOnClickListener(v -> {
-            Intent userProfileIntent = new Intent(requireActivity(), UserActivity.class);
-            userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
-            startActivity(userProfileIntent);
+            if (getActivity() != null && firebaseUser != null) {
+                Intent userProfileIntent = new Intent(getActivity(), UserActivity.class);
+                userProfileIntent.putExtra("id_own_post", firebaseUser.getUid());
+                startActivity(userProfileIntent);
+            }
         });
-        historyButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), HistoryManagementActivity.class)));
-        manageRoomsButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), PostManagementActivity.class)));
-        manageContractsButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), ContractManagementActivity.class)));
-        cartButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), CartManagementActivity.class)));
-        billButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), BillManagementActivity.class)));
-        scheduleButton.setOnClickListener(v -> startActivity(new Intent(requireActivity(), MeetingManagementActivity.class)));
-        profileCard.setOnClickListener(v -> startActivity(new Intent(requireActivity(), EditProfileActivity.class)));
+        
+        historyButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), HistoryManagementActivity.class));
+            }
+        });
+        
+        manageRoomsButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), PostManagementActivity.class));
+            }
+        });
+        
+        manageContractsButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), ContractManagementActivity.class));
+            }
+        });
+        
+        cartButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), CartManagementActivity.class));
+            }
+        });
+        
+        billButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), BillManagementActivity.class));
+            }
+        });
+        
+        scheduleButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), MeetingManagementActivity.class));
+            }
+        });
+        
+        profileCard.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new Intent(getActivity(), EditProfileActivity.class));
+            }
+        });
+        
         signOutButton.setOnClickListener(v -> handleSignOut());
     }
 
     private void navigateToLogin() {
-        Intent loginIntent = new Intent(requireActivity(), LoginActivity.class);
-        loginIntent.putExtra("previous_activity", requireActivity().getClass().getName());
-        startActivity(loginIntent);
-        requireActivity().getSupportFragmentManager().beginTransaction()
-            .replace(R.id.frame_layout, new HomeFragment())
-            .commit();
+        if (getActivity() != null) {
+            Intent loginIntent = new Intent(getActivity(), LoginActivity.class);
+            loginIntent.putExtra("previous_activity", getActivity().getClass().getName());
+            startActivity(loginIntent);
+            
+            if (getActivity() != null) {
+                getActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.frame_layout, new HomeFragment())
+                    .commit();
+            }
+        }
     }
 
     private void loadUserData() {
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
         
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        // ✅ Tạo listener riêng để có thể remove
+        userDataListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // ✅ THÊM: Check fragment state trước khi xử lý
+                if (!isAdded() || getContext() == null) {
+                    return;
+                }
+                
                 User user = snapshot.getValue(User.class);
                 if (user != null) {
                     nameTextView.setText(user.getName());
@@ -141,9 +191,14 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                manageRoomsButton.setVisibility(View.GONE);
+                // ✅ THÊM: Check context trước khi update UI
+                if (isAdded() && getContext() != null) {
+                    manageRoomsButton.setVisibility(View.GONE);
+                }
             }
-        });
+        };
+        
+        databaseReference.addValueEventListener(userDataListener);
     }
 
     private void checkUserRoleAndSetupUI(String userRole) {
@@ -155,7 +210,11 @@ public class ProfileFragment extends Fragment {
     }
 
     private void handleSignOut() {
-        CredentialManager credentialManager = CredentialManager.create(requireContext());
+        if (!isAdded() || getContext() == null || getActivity() == null) {
+            return;
+        }
+        
+        CredentialManager credentialManager = CredentialManager.create(getContext());
         ClearCredentialStateRequest request = new ClearCredentialStateRequest();
         CancellationSignal cancellationSignal = new CancellationSignal();
 
@@ -163,7 +222,7 @@ public class ProfileFragment extends Fragment {
             credentialManager.clearCredentialStateAsync(
                     request,
                     cancellationSignal,
-                    requireActivity().getMainExecutor(),
+                    getActivity().getMainExecutor(),
                     new CredentialManagerCallback<Void, ClearCredentialException>() {
                         @Override
                         public void onResult(Void unused) {
@@ -182,36 +241,77 @@ public class ProfileFragment extends Fragment {
     }
 
     private void performSignOut() {
+        if (!isAdded() || getActivity() == null) {
+            return;
+        }
+        
         if (AccessToken.getCurrentAccessToken() != null) {
             LoginManager.getInstance().logOut();
         }
 
         firebaseAuth.signOut();
 
-        Intent mainActivityIntent = new Intent(requireActivity(), MainActivity.class);
+        Intent mainActivityIntent = new Intent(getActivity(), MainActivity.class);
         mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(mainActivityIntent);
-        requireActivity().finish();
+        getActivity().finish();
     }
 
+    // ✅ SỬA: updateProfileImage với safety checks
     private void updateProfileImage(User user) {
-        String avatarUrl = user.getAvatarUrl();
-        if (!TextUtils.isEmpty(avatarUrl)) {
-            profileInitialTextView.setVisibility(View.GONE);
-            profileImageView.setVisibility(View.VISIBLE);
+        // ✅ THÊM: Multiple safety checks
+        if (!isAdded() || getContext() == null || getActivity() == null) {
+            return;
+        }
+        
+        try {
+            String avatarUrl = user.getAvatarUrl();
+            if (!TextUtils.isEmpty(avatarUrl)) {
+                profileInitialTextView.setVisibility(View.GONE);
+                profileImageView.setVisibility(View.VISIBLE);
 
-            Glide.with(requireContext())
-                    .load(avatarUrl)
-                    .placeholder(R.drawable.avatar)
-                    .error(R.drawable.avatar)
-                    .into(profileImageView);
-        } else {
-            profileImageView.setVisibility(View.GONE);
-            profileInitialTextView.setVisibility(View.VISIBLE);
-            profileInitialTextView.setText(getFirstLetter(user.getName()));
+                // ✅ SỬA: Dùng getContext() và check null
+                Context context = getContext();
+                if (context != null) {
+                    Glide.with(context)
+                            .load(avatarUrl)
+                            .placeholder(R.drawable.avatar)
+                            .error(R.drawable.avatar)
+                            .into(profileImageView);
+                }
+            } else {
+                profileImageView.setVisibility(View.GONE);
+                profileInitialTextView.setVisibility(View.VISIBLE);
+                profileInitialTextView.setText(getFirstLetter(user.getName()));
+            }
+        } catch (Exception e) {
+            // ✅ Log error nhưng không crash
+            e.printStackTrace();
         }
     }
 
+    // ✅ THÊM: Cleanup Firebase listeners
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        cleanupFirebaseListeners();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        cleanupFirebaseListeners();
+    }
+
+    // ✅ THÊM: Method cleanup
+    private void cleanupFirebaseListeners() {
+        if (databaseReference != null && userDataListener != null) {
+            databaseReference.removeEventListener(userDataListener);
+            userDataListener = null;
+        }
+    }
+
+    // ✅ GIỮ NGUYÊN: getFirstLetter method
     public static String getFirstLetter(String input) {
         if (input == null || input.isEmpty()) {
             return "";

@@ -32,7 +32,7 @@ public class ServiceActivity extends AppCompatActivity {
     private ArrayList<Service> serviceArrayList;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser user;
-    private String item;
+    private String categoryName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +42,8 @@ public class ServiceActivity extends AppCompatActivity {
         initializeViews();
         initializeFirebase();
 
-        item = getIntent().getStringExtra("item");
-        if (item == null) {
+        categoryName = getIntent().getStringExtra("category");
+        if (categoryName == null) {
             finish();
             return;
         }
@@ -66,9 +66,7 @@ public class ServiceActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        back_button.setOnClickListener(v -> {
-            navigateBackToService();
-        });
+        back_button.setOnClickListener(v -> navigateBackToService());
         
         cart_button.setOnClickListener(v -> {
             if (user != null) {
@@ -107,15 +105,20 @@ public class ServiceActivity extends AppCompatActivity {
 
     private void loadServicesFromDatabase() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference databaseReference = database.getReference("Services/" + item);
+        DatabaseReference databaseReference = database.getReference("Services");
 
         databaseReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 serviceArrayList.clear();
+                
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    Service product = dataSnapshot.getValue(Service.class);
-                    serviceArrayList.add(product);
+                    Service service = dataSnapshot.getValue(Service.class);
+                    if (service != null && service.getCategory() != null) {
+                        if (service.getCategory().equals(categoryName)) {
+                            serviceArrayList.add(service);
+                        }
+                    }
                 }
                 serviceAdapter.notifyDataSetChanged();
             }

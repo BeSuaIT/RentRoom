@@ -310,40 +310,28 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             
             if (serviceId == null || quantity == null || quantity <= 0) continue;
 
-            findAndUpdateServiceSold(servicesRef, serviceId, quantity);
+            updateServiceSoldDirect(servicesRef, serviceId, quantity);
         }
     }
 
-    private void findAndUpdateServiceSold(DatabaseReference servicesRef, String serviceId, int quantity) {
-        String[] categories = {"chothuenoithat", "doibinhnuoc", "giatla", "suachuadiennuoc", "tuvanthietkephong"};
-        
-        for (String category : categories) {
-            servicesRef.child(category).child(serviceId).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        Integer currentSold = snapshot.child("sold").getValue(Integer.class);
-                        if (currentSold == null) currentSold = 0;
-                        
-                        int newSold = currentSold + quantity;
-
-                        servicesRef.child(category).child(serviceId).child("sold")
-                                .setValue(newSold)
-                                .addOnSuccessListener(aVoid -> {
-
-                                })
-                                .addOnFailureListener(e -> {
-
-                                });
-                    }
+    private void updateServiceSoldDirect(DatabaseReference servicesRef, String serviceId, int quantity) {
+        servicesRef.child(serviceId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Integer currentSold = snapshot.child("sold").getValue(Integer.class);
+                    if (currentSold == null) currentSold = 0;
+                    
+                    int newSold = currentSold + quantity;
+                    servicesRef.child(serviceId).child("sold").setValue(newSold);
                 }
+            }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
 
-                }
-            });
-        }
+            }
+        });
     }
 
     private Map<String, Object> createOrderData(String userId, String sellerId, 

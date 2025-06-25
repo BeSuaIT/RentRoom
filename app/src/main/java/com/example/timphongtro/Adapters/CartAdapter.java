@@ -279,56 +279,43 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                     Toast.makeText(context, "Lỗi: Không có thông tin sản phẩm", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
-                // ✅ Thay vì tạo Service từ Cart, load đầy đủ từ Firebase
                 loadFullServiceData(cart);
             }
 
-            // ✅ Method mới để load đầy đủ thông tin Service từ Firebase
             private void loadFullServiceData(Cart cart) {
                 if (cart == null || TextUtils.isEmpty(cart.getServiceId())) {
                     Toast.makeText(context, "Lỗi: Thông tin sản phẩm không hợp lệ", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // Tìm service category từ serviceId
-                DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
+                DatabaseReference serviceRef = FirebaseDatabase.getInstance()
+                        .getReference("Services")
+                        .child(cart.getServiceId());
                 
-                servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                serviceRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        Service fullService = null;
-                        
-                        // Duyệt qua tất cả categories
-                        for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
-                            DataSnapshot serviceSnapshot = categorySnapshot.child(cart.getServiceId());
-                            if (serviceSnapshot.exists()) {
-                                fullService = serviceSnapshot.getValue(Service.class);
-                                if (fullService != null) {
-                                    fullService.setServiceId(cart.getServiceId());
-                                    break;
+                        if (snapshot.exists()) {
+                            Service fullService = snapshot.getValue(Service.class);
+                            if (fullService != null) {
+                                fullService.setServiceId(cart.getServiceId());
+                                navigateToServiceDetailWithFullData(fullService);
+                            } else {
+                                Service fallbackService = createServiceFromCart(cart);
+                                if (fallbackService != null) {
+                                    navigateToServiceDetailWithFullData(fallbackService);
+                                } else {
+                                    Toast.makeText(context, "Lỗi: Không thể tải thông tin sản phẩm", Toast.LENGTH_SHORT).show();
                                 }
                             }
-                        }
-                        
-                        if (fullService != null) {
-                            navigateToServiceDetailWithFullData(fullService);
                         } else {
-                            // Fallback: tạo Service từ Cart nếu không tìm thấy
-                            Service fallbackService = createServiceFromCart(cart);
-                            if (fallbackService != null) {
-                                navigateToServiceDetailWithFullData(fallbackService);
-                            } else {
-                                Toast.makeText(context, "Lỗi: Không thể tải thông tin sản phẩm", Toast.LENGTH_SHORT).show();
-                            }
+                            Toast.makeText(context, "Sản phẩm không tồn tại hoặc đã bị xóa", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(context, "Lỗi tải dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                        
-                        // Fallback: tạo Service từ Cart
                         Service fallbackService = createServiceFromCart(cart);
                         if (fallbackService != null) {
                             navigateToServiceDetailWithFullData(fallbackService);
@@ -337,7 +324,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                 });
             }
 
-            // ✅ Method để navigate với đầy đủ dữ liệu
             private void navigateToServiceDetailWithFullData(Service service) {
                 String serviceJson = GsonUtils.toJson(service);
                 if (serviceJson != null) {
@@ -350,7 +336,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                 }
             }
 
-            // ✅ Cập nhật method createServiceFromCart để có đầy đủ thông tin hơn
             private Service createServiceFromCart(Cart cart) {
                 if (cart == null) return null;
                 
@@ -362,12 +347,11 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                     service.setId_seller(cart.getId_seller());
                     service.setImages(cart.getImages());
                     service.setAmount(cart.getAmount());
-                    
-                    // ✅ Set default values cho các field còn thiếu
                     service.setDescription("Đang tải mô tả...");
                     service.setSold(0);
-                    service.setCreateAt(String.valueOf(System.currentTimeMillis()));
+                    service.setCreatedAt(System.currentTimeMillis());
                     service.setId_own_post(cart.getId_seller());
+                    service.setCategory("Không xác định");
                     
                     return service;
                 } catch (Exception e) {

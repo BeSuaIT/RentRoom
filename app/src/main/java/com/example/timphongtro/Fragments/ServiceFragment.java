@@ -22,8 +22,7 @@ import com.google.firebase.auth.FirebaseUser;
 public class ServiceFragment extends Fragment {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser user;
-    private LinearLayout chothuenoithat, tuvanthietkephong, suachuadiennuoc, 
-                        giatla, doibinhnuoc, doibinhga;
+    private LinearLayout chothuenoithat, tuvanthietkephong, suachuadiennuoc, giatla, doibinhnuoc, doibinhga;
     private ImageView button_cart;
 
     @Override
@@ -61,18 +60,18 @@ public class ServiceFragment extends Fragment {
             }
         });
 
-        chothuenoithat.setOnClickListener(v -> openServiceActivity("chothuenoithat"));
-        tuvanthietkephong.setOnClickListener(v -> openServiceActivity("tuvanthietkephong"));
-        suachuadiennuoc.setOnClickListener(v -> openServiceActivity("suachuadiennuoc"));
-        giatla.setOnClickListener(v -> openServiceActivity("giatla"));
-        doibinhnuoc.setOnClickListener(v -> openServiceActivity("doibinhnuoc"));
-        doibinhga.setOnClickListener(v -> openServiceActivity("doibinhga"));
+        chothuenoithat.setOnClickListener(v -> openServiceActivity("Cho thuê nội thất"));
+        tuvanthietkephong.setOnClickListener(v -> openServiceActivity("Tư vấn thiết kế phòng"));
+        suachuadiennuoc.setOnClickListener(v -> openServiceActivity("Sửa chữa điện nước"));
+        giatla.setOnClickListener(v -> openServiceActivity("Giặt là"));
+        doibinhnuoc.setOnClickListener(v -> openServiceActivity("Đổi bình nước"));
+        doibinhga.setOnClickListener(v -> openServiceActivity("Đổi bình ga"));
     }
 
-    private void openServiceActivity(String item) {
+    private void openServiceActivity(String categoryName) {
         if (isAdded()) {
             Intent intent = new Intent(requireContext(), ServiceActivity.class);
-            intent.putExtra("item", item);
+            intent.putExtra("category", categoryName);
             startActivity(intent);
         }
     }
