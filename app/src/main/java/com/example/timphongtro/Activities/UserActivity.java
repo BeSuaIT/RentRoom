@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback; // ✅ THÊM import
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -60,7 +61,7 @@ public class UserActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
-
+        
         initializeViews();
         setupRecyclerView();
         handleIntentData();
@@ -77,7 +78,7 @@ public class UserActivity extends AppCompatActivity {
         rcvUser = findViewById(R.id.rcvUser);
         emailLinear = findViewById(R.id.emailLinear);
         phoneLinear = findViewById(R.id.phoneLinear);
-        
+
         findViewById(R.id.imageView_back).setOnClickListener(v -> finish());
         
         database = FirebaseDatabase.getInstance();
@@ -128,7 +129,7 @@ public class UserActivity extends AppCompatActivity {
                 loadUserPosts(getUserId(user));
                 return;
             } else {
-                showToast("Lỗi phân tích dữ liệu nguười dùng");
+                showToast("Lỗi phân tích dữ liệu nguời dùng");
             }
         }
 
@@ -176,7 +177,7 @@ public class UserActivity extends AppCompatActivity {
     // Load user data từ Firebase (fallback)
     private void loadUserDataFromFirebase(String userId) {
         database.getReference("Users").child(userId)
-            .addValueEventListener(new ValueEventListener() {
+            .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User user = snapshot.getValue(User.class);
@@ -275,7 +276,7 @@ public class UserActivity extends AppCompatActivity {
             return;
         }
         
-        postRef.addValueEventListener(new ValueEventListener() {
+        postRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 roomArrayList.clear();
@@ -289,7 +290,6 @@ public class UserActivity extends AppCompatActivity {
                             roomArrayList.add(room);
                             totalPosts++;
 
-                            // Count loves
                             DataSnapshot lovesSnapshot = roomSnapshot.child("userLovePost");
                             if (lovesSnapshot.exists()) {
                                 totalLoves += lovesSnapshot.getChildrenCount();
