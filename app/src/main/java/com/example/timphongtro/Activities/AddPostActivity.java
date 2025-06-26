@@ -402,7 +402,7 @@ public class AddPostActivity extends AppCompatActivity {
             type_room = "Chung cư Mini";
         }
 
-        String area_room = edtArea.getText().toString();
+        int area_room = Integer.parseInt(edtArea.getText().toString());
         String phone = edtPhone.getText().toString();
         int floor = Integer.parseInt(edtFloor.getText().toString());
         int person_in_room = Integer.parseInt(edtPerson.getText().toString());

@@ -33,7 +33,6 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
     ArrayList<Room> list;
     int maxitemcount = 10;
     FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-    FirebaseUser user = firebaseAuth.getCurrentUser();
 
     public RoomAdapter(Context context, ArrayList<Room> list) {
         this.context = context;
@@ -88,20 +87,17 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
         }
 
         holder.cardViewRoom.setOnClickListener(v -> {
-            String userID = "";
-            if (user != null) {
-                userID = user.getUid();
-            }
-            
-            Intent detailRoom = new Intent(context, PostDetailActivity.class);
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
+            if (currentUser != null) {
+                saveToUserHistory(currentUser.getUid(), room.getId_room());
+            }
+
+            Intent detailRoom = new Intent(context, PostDetailActivity.class);
             String roomJson = GsonUtils.toJson(room);
             if (roomJson != null) {
                 detailRoom.putExtra("DataRoom", roomJson);
                 context.startActivity(detailRoom);
-                if (user != null && room.getId_room() != null) {
-                    saveToUserHistory(userID, room.getId_room());
-                }
             } else {
                 Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();
             }

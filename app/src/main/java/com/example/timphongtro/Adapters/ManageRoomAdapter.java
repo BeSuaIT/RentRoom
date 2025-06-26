@@ -53,7 +53,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
         if (room != null) {
             holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
             holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
-            holder.area_room.setText(room.getArea_room() != null ? room.getArea_room() : "0");
+            holder.area_room.setText(String.valueOf(room.getArea_room()));
             holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
 
             String firstImage = room.getFirstImage();

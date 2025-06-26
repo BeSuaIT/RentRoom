@@ -63,8 +63,8 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,7 +87,6 @@ public class PostDetailActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference visitScheduleDatabaseRef, userPostReference, roomDatabaseRef;
     private Room room;
-    private UUID uuid;
     private boolean isRoomLoved;
     private Calendar bookingDate, bookingTime;
     private FurnitureAdapter furnitureAdapter;
@@ -283,7 +282,7 @@ public class PostDetailActivity extends AppCompatActivity {
         
         phoneTextView.setText(maskPhoneNumber(room.getPhone()));
         floorTextView.setText(String.valueOf(room.getFloor()));
-        roomAreaTextView.setText(room.getArea_room() != null ? room.getArea_room() : "0");
+        roomAreaTextView.setText(String.valueOf(room.getArea_room()));
         depositTextView.setText(decimalFormat.format(room.getDeposit_room()));
         capacityTextView.setText(String.valueOf(room.getPerson_in_room()));
         genderTextView.setText(room.getGender_room() != null ? room.getGender_room() : "Không xác định");
@@ -594,10 +593,10 @@ public class PostDetailActivity extends AppCompatActivity {
         });
 
         visitScheduleDatabaseRef = null;
-        uuid = UUID.randomUUID();
-        visitScheduleDatabaseRef = firebaseDatabase.getReference("MeetingSchedules/" + uuid.toString());
+        String meetingId = generateMeetingId();
+        visitScheduleDatabaseRef = firebaseDatabase.getReference("MeetingSchedules/" + meetingId);
 
-        confirmButton.setOnClickListener(v -> scheduleVisitRoom());
+        confirmButton.setOnClickListener(v -> scheduleVisitRoom(meetingId));
 
         scheduleVisitDialog.show();
         scheduleVisitDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -605,6 +604,25 @@ public class PostDetailActivity extends AppCompatActivity {
         scheduleVisitDialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         scheduleVisitDialog.getWindow().setGravity(Gravity.BOTTOM);
         scheduleVisitDialog.setCancelable(true);
+    }
+
+    private String generateMeetingId() {
+        // Format: MEET_YYYYMMDD_HHMMSS_USERID_ROOMID
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+        String timestamp = dateFormat.format(new Date());
+        
+        // Lấy 4 ký tự cuối của User ID
+        String userSuffix = currentUser.getUid().length() >= 4 ? 
+            currentUser.getUid().substring(currentUser.getUid().length() - 4) : 
+            currentUser.getUid();
+        
+        // Lấy Room ID suffix (nếu là timestamp format thì lấy 6 số cuối)
+        String roomSuffix = room.getId_room();
+        if (roomSuffix.length() > 6) {
+            roomSuffix = roomSuffix.substring(roomSuffix.length() - 6);
+        }
+        
+        return String.format("MEET_%s_%s_%s", timestamp, userSuffix, roomSuffix);
     }
 
     private void loadCurrentUserInfo() {
@@ -668,7 +686,7 @@ public class PostDetailActivity extends AppCompatActivity {
         phoneEditText.setText("");
     }
 
-    private void scheduleVisitRoom() {
+    private void scheduleVisitRoom(String meetingId) {
         boolean isValid = true;
 
         String name = nameEditText.getText().toString().trim();
@@ -726,7 +744,7 @@ public class PostDetailActivity extends AppCompatActivity {
             }
 
             Meeting schedule = new Meeting(
-                uuid.toString(), 
+                meetingId,
                 name,
                 phone,
                 note, 

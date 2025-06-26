@@ -322,7 +322,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         PostTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
         String formattedPrice = decimalFormat.format(room.getPrice_room()) + " đ/tháng";
         RoomCost.setText(formattedPrice);
-        DienTich.setText((room.getArea_room() != null ? room.getArea_room() : "0") + "m²");
+        DienTich.setText(room.getArea_room()  + " m²");
         Size.setText(room.getPerson_in_room() + " người");
 
         if (room.getAddress() != null) {

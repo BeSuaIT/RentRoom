@@ -9,11 +9,40 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import androidx.annotation.NonNull;
 
+/**
+ * Lớp tiện ích xử lý các chức năng liên quan đến quản lý hợp đồng
+ * Bao gồm: kiểm tra trạng thái, cập nhật hợp đồng hết hạn, dọn dẹp dữ liệu
+ */
 public class ContractUtils {
     private static final String TAG = "ContractUtils";
     
-    // ✅ CHECK NẾU CONTRACT CẦN UPDATE STATUS
+    /**
+     * Interface callback để xử lý kết quả cập nhật hợp đồng
+     */
+    public interface ContractUpdateCallback {
+        /**
+         * Được gọi khi cập nhật thành công
+         * @param updatedCount Số lượng hợp đồng được cập nhật
+         */
+        void onSuccess(int updatedCount);
+        
+        /**
+         * Được gọi khi có lỗi trong quá trình cập nhật
+         * @param error Thông điệp lỗi
+         */
+        void onFailure(String error);
+    }
+    
+    /**
+     * Kiểm tra xem hợp đồng có cần cập nhật trạng thái hay không
+     * Chỉ cập nhật khi hợp đồng đang hiệu lực nhưng đã hết hạn
+     * 
+     * @param contract Hợp đồng cần kiểm tra
+     * @return true nếu cần cập nhật, false nếu không cần
+     */
     public static boolean shouldUpdateStatus(Contract contract) {
+        if (contract == null) return false;
+        
         // Nếu đang ở trạng thái nháp (0) thì không auto update
         if (contract.getStatus() == 0) return false; 
         
@@ -25,21 +54,64 @@ public class ContractUtils {
         return (now > contract.getEndDate() && contract.getStatus() == 1);
     }
 
-    // ✅ AUTO UPDATE STATUS NẾU CẦN
+    /**
+     * Lấy trạng thái hiện tại của hợp đồng
+     * Tự động tính toán dựa trên thời gian hiện tại
+     * 
+     * @param contract Hợp đồng cần kiểm tra
+     * @return Trạng thái hiện tại (0: nháp, 1: hiệu lực, 2: hết hạn)
+     */
     public static int getCurrentStatus(Contract contract) {
+        if (contract == null) return 0;
+        
         if (shouldUpdateStatus(contract)) {
             return 2; // Hết hạn
         }
         return contract.getStatus();
     }
 
-    // ✅ CHECK HẾT HẠN
+    /**
+     * Kiểm tra hợp đồng đã hết hạn hay chưa
+     * 
+     * @param contract Hợp đồng cần kiểm tra
+     * @return true nếu hết hạn, false nếu còn hiệu lực
+     */
     public static boolean isExpired(Contract contract) {
         return getCurrentStatus(contract) == 2;
     }
+    
+    /**
+     * Kiểm tra hợp đồng có đang hiệu lực hay không
+     * 
+     * @param contract Hợp đồng cần kiểm tra
+     * @return true nếu đang hiệu lực, false nếu không
+     */
+    public static boolean isActive(Contract contract) {
+        return getCurrentStatus(contract) == 1;
+    }
+    
+    /**
+     * Kiểm tra hợp đồng có ở trạng thái nháp hay không
+     * 
+     * @param contract Hợp đồng cần kiểm tra
+     * @return true nếu là nháp, false nếu không
+     */
+    public static boolean isDraft(Contract contract) {
+        return contract != null && contract.getStatus() == 0;
+    }
 
-    // ✅ SYNC STATUS VỚI DATABASE
+    /**
+     * Đồng bộ trạng thái hợp đồng với Firebase Database
+     * Tự động cập nhật trạng thái nếu hợp đồng đã hết hạn
+     * 
+     * @param contract Hợp đồng cần đồng bộ
+     */
     public static void syncContractStatusWithDatabase(Contract contract) {
+        if (contract == null || contract.getContractId() == null) {
+            Log.w(TAG, "Contract hoặc Contract ID không hợp lệ");
+            return;
+        }
+        
         // Lấy status cũ
         int oldStatus = contract.getStatus();
         
@@ -57,16 +129,26 @@ public class ContractUtils {
                     .addOnSuccessListener(aVoid -> {
                         // Update local object
                         contract.setStatus(newStatus);
-                        Log.d(TAG, "Contract status updated: " + contract.getContractId() + " -> " + newStatus);
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to update contract status: " + e.getMessage());
                     });
         }
     }
     
-    // ✅ BATCH UPDATE TẤT CẢ CONTRACTS HẾT HẠN
+    /**
+     * Cập nhật hàng loạt tất cả các hợp đồng đã hết hạn trong database
+     * Sử dụng khi khởi động app hoặc định kỳ để đồng bộ dữ liệu
+     */
     public static void batchUpdateExpiredContracts() {
+        batchUpdateExpiredContracts(null);
+    }
+    
+    /**
+     * Cập nhật hàng loạt tất cả các hợp đồng đã hết hạn trong database với callback
+     * 
+     * @param callback Callback xử lý kết quả cập nhật
+     */
+    public static void batchUpdateExpiredContracts(ContractUpdateCallback callback) {
         DatabaseReference contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
         
         contractsRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -80,7 +162,7 @@ public class ContractUtils {
                     Integer status = contractSnapshot.child("status").getValue(Integer.class);
                     
                     if (endDate != null && status != null) {
-                        // ✅ NẾU HẾT HẠN NHƯNG STATUS CHƯA UPDATE
+                        // Nếu hết hạn nhưng status chưa update
                         if (currentTime > endDate && status == 1) {
                             contractSnapshot.getRef().child("status").setValue(2);
                             updatedCount++;
@@ -88,18 +170,32 @@ public class ContractUtils {
                     }
                 }
                 
-                Log.d(TAG, "Updated " + updatedCount + " expired contracts");
+                Log.d(TAG, "Đã cập nhật " + updatedCount + " hợp đồng hết hạn");
+                
+                if (callback != null) {
+                    callback.onSuccess(updatedCount);
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Failed to update expired contracts: " + error.getMessage());
+                String errorMsg = "Lỗi cập nhật hợp đồng hết hạn: " + error.getMessage();
+                Log.e(TAG, errorMsg);
+                
+                if (callback != null) {
+                    callback.onFailure(errorMsg);
+                }
             }
         });
     }
     
-    // ✅ DỌNG DẸP CÁC TRƯỜNG KHÔNG CẦN THIẾT TRONG DATABASE
-    public static void cleanupUnnecessaryFields() {
+    /**
+     * Dọn dẹp các trường dữ liệu không cần thiết trong Firebase Database
+     * Xóa các trường được tính toán động để tối ưu storage
+     * 
+     * @param callback Callback xử lý kết quả dọn dẹp
+     */
+    public static void cleanupUnnecessaryFields(ContractUpdateCallback callback) {
         DatabaseReference contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
         
         contractsRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -111,7 +207,7 @@ public class ContractUtils {
                     DatabaseReference contractRef = contractSnapshot.getRef();
                     boolean needsCleanup = false;
                     
-                    // ✅ CHECK XEM CÓ CÁC TRƯỜNG KHÔNG CẦN THIẾT KHÔNG
+                    // Kiểm tra xem có các trường không cần thiết không
                     if (contractSnapshot.hasChild("currentStatus") ||
                         contractSnapshot.hasChild("expired") ||
                         contractSnapshot.hasChild("formattedEndDate") ||
@@ -121,7 +217,7 @@ public class ContractUtils {
                     }
                     
                     if (needsCleanup) {
-                        // ✅ XÓA CÁC TRƯỜNG KHÔNG CẦN THIẾT
+                        // Xóa các trường không cần thiết
                         contractRef.child("currentStatus").removeValue();
                         contractRef.child("expired").removeValue();
                         contractRef.child("formattedEndDate").removeValue();
@@ -129,7 +225,7 @@ public class ContractUtils {
                         contractRef.child("formattedStartDate").removeValue();
                         cleanedCount++;
                         
-                        // ✅ ĐỒNG THỜI UPDATE STATUS NẾU CẦN
+                        // Đồng thời cập nhật status nếu cần
                         Long endDate = contractSnapshot.child("endDate").getValue(Long.class);
                         Integer status = contractSnapshot.child("status").getValue(Integer.class);
                         
@@ -143,13 +239,27 @@ public class ContractUtils {
                     }
                 }
                 
-                Log.d(TAG, "Cleaned up " + cleanedCount + " contracts");
+                if (callback != null) {
+                    callback.onSuccess(cleanedCount);
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Failed to cleanup unnecessary fields: " + error.getMessage());
+                String errorMsg = "Lỗi dọn dẹp dữ liệu: " + error.getMessage();
+                Log.e(TAG, errorMsg);
+                
+                if (callback != null) {
+                    callback.onFailure(errorMsg);
+                }
             }
         });
+    }
+    
+    /**
+     * Dọn dẹp các trường dữ liệu không cần thiết (không có callback)
+     */
+    public static void cleanupUnnecessaryFields() {
+        cleanupUnnecessaryFields(null);
     }
 }

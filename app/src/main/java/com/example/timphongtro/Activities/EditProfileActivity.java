@@ -164,7 +164,17 @@ public class EditProfileActivity extends AppCompatActivity {
                     if (user != null) {
                         nameEditText.setText(user.getName());
                         emailEditText.setText(user.getEmail());
-                        phoneEditText.setText(user.getPhone());
+
+                        String phone = user.getPhone();
+                        if (phone != null && 
+                            !phone.trim().isEmpty() && 
+                            !phone.equals("Chưa cập nhật") && 
+                            !phone.equals("null")) {
+                            phoneEditText.setText(phone);
+                        } else {
+                            phoneEditText.setText("");
+                        }
+                        
                         if (!isFinishing() && !isDestroyed()) {
                             updateProfileImage();
                         }
@@ -261,7 +271,10 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void updateUserProfile(String name, String phone, String avatarUrl) {
-        if (!phone.equals(user.getPhone())) {
+        String currentPhone = user.getPhone();
+        if (currentPhone == null) currentPhone = "Chưa cập nhật";
+        
+        if (!phone.equals(currentPhone) && !phone.equals("Chưa cập nhật")) {
             Intent intent = new Intent(this, PhoneVerificationActivity.class);
             intent.putExtra("phone", phone);
             phoneVerificationLauncher.launch(intent);
@@ -275,11 +288,13 @@ public class EditProfileActivity extends AppCompatActivity {
 
         userRef.updateChildren(updates)
             .addOnSuccessListener(aVoid -> {
-                showToast(avatarUrl.isEmpty() ? "Đã xóa ảnh đại diện" : "Cập nhật thành công");
                 if (avatarUrl.isEmpty()) {
+                    showToast("Đã xóa ảnh đại diện");
                     profileImageView.setVisibility(View.GONE);
                     profileTextView.setVisibility(View.VISIBLE);
-                    profileTextView.setText(String.valueOf(name.charAt(0)).toUpperCase());
+                    profileTextView.setText(getFirstLetter(name));
+                } else {
+                    showToast("Cập nhật thành công");
                 }
                 finish();
             })
@@ -287,17 +302,21 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void validateAndUpdateProfile() {
-        String name = nameEditText.getText().toString();
-        String phone = phoneEditText.getText().toString();
+        String name = nameEditText.getText().toString().trim();
+        String phone = phoneEditText.getText().toString().trim();
 
-        if (TextUtils.isEmpty(name) || TextUtils.isEmpty(phone)) {
-            showToast("Vui lòng nhập đầy đủ các trường thông tin");
+        if (TextUtils.isEmpty(name)) {
+            showToast("Vui lòng nhập họ và tên");
             return;
         }
 
-        if (!isValidPhoneNumber(phone)) {
-            showToast("Vui lòng nhập đúng định dạng số điện thoại");
+        if (!TextUtils.isEmpty(phone) && !isValidPhoneNumber(phone)) {
+            showToast("Vui lòng nhập đúng định dạng số điện thoại (10 chữ số)");
             return;
+        }
+
+        if (TextUtils.isEmpty(phone)) {
+            phone = "Chưa cập nhật";
         }
 
         uploadProfileImage(name, phone);

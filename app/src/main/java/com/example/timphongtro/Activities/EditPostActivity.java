@@ -208,7 +208,7 @@ public class EditPostActivity extends AppCompatActivity {
         edtTitleRoom.setText(roomData.getTitle_room() != null ? roomData.getTitle_room() : "");
         edtPrice.setText(String.valueOf(roomData.getPrice_room()));
         edtDeposit.setText(String.valueOf(roomData.getDeposit_room()));
-        edtArea.setText(roomData.getArea_room() != null ? roomData.getArea_room() : "0");
+        edtArea.setText(String.valueOf(roomData.getArea_room()));
         edtPhone.setText(roomData.getPhone() != null ? roomData.getPhone() : "");
         edtFloor.setText(String.valueOf(roomData.getFloor()));
         edtPerson.setText(String.valueOf(roomData.getPerson_in_room()));
@@ -797,6 +797,13 @@ public class EditPostActivity extends AppCompatActivity {
         }
 
         try {
+            if (!TextUtils.isEmpty(edtArea.getText())) {
+                double area = Double.parseDouble(edtArea.getText().toString());
+                if (area <= 0) {
+                    edtArea.setError("Diện tích phải lớn hơn 0");
+                    isValid = false;
+                }
+            }
             if (!TextUtils.isEmpty(edtPrice.getText())) {
                 long price = Long.parseLong(edtPrice.getText().toString());
                 if (price <= 0) {
@@ -890,7 +897,7 @@ public class EditPostActivity extends AppCompatActivity {
             }
 
             long price, deposit, electric , water, internet;
-            int park, person, floor;
+            int park, person, floor, area;
             
             try {
                 price = Long.parseLong(edtPrice.getText().toString());
@@ -898,6 +905,7 @@ public class EditPostActivity extends AppCompatActivity {
                 electric = Long.parseLong(edtElectric.getText().toString());
                 water = Long.parseLong(edtWater.getText().toString());
                 internet = Long.parseLong(edtInternet.getText().toString());
+                area = Integer.parseInt(edtArea.getText().toString());
                 park = Integer.parseInt(edtPark.getText().toString());
                 person = Integer.parseInt(edtPerson.getText().toString());
                 floor = Integer.parseInt(edtFloor.getText().toString());
@@ -912,7 +920,7 @@ public class EditPostActivity extends AppCompatActivity {
                     edtTitleRoom.getText().toString(),
                     price,
                     address,
-                    edtArea.getText().toString(),
+                    area,
                     deposit,
                     edtDescriptionRoom.getText().toString(),
                     gender_room,

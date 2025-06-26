@@ -3,10 +3,10 @@ package com.example.timphongtro.Models;
 import java.util.ArrayList;
 
 public class Room {
-    private String id_own_post, id_room, title_room, area_room, description_room, gender_room, phone, type_room;
+    private String id_own_post, id_room, title_room, description_room, gender_room, phone, type_room;
     private long price_room, deposit_room, price_electric, price_water, price_internet;
     private Address address;
-    private int park_slot, person_in_room, status_room, floor, loveCount;
+    private int park_slot, person_in_room, status_room, floor, loveCount, area_room;
     private ArrayList<String> images;
     private Object userLovePost;
     private ArrayList<Furniture> roomFurniture;
@@ -15,7 +15,7 @@ public class Room {
     public Room() {
     }
 
-    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, String area_room, long deposit_room,
+    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, int area_room, long deposit_room,
                 String description_room, String gender_room, int park_slot, int person_in_room, int status_room, String type_room, String phone,
                 int floor, ArrayList<String> images, ArrayList<Furniture> roomFurniture, ArrayList<Utility> roomUtilities,
                 long price_electric, long price_water, long price_internet) {
@@ -98,11 +98,11 @@ public class Room {
         this.address = address;
     }
 
-    public String getArea_room() {
+    public int getArea_room() {
         return area_room;
     }
 
-    public void setArea_room(String area_room) {
+    public void setArea_room(int area_room) {
         this.area_room = area_room;
     }
 

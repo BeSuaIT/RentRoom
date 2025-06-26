@@ -156,9 +156,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     private void updateRoomUI(ViewHolder holder, Room room) {
         holder.tvRoomTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
         if (room.getAddress() != null) {
-            String address = room.getAddress().getAddress_combine() + ", " +
-                           room.getAddress().getDistrict() + ", " +
-                           room.getAddress().getCity();
+            String address = room.getAddress().getAddress_combine();
             holder.tvAddress.setText(address);
         } else {
             holder.tvAddress.setText("Địa chỉ không xác định");
