@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
-import com.example.timphongtro.Utils.DataCleanupManager;
 import com.example.timphongtro.Utils.ContractUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -49,21 +48,7 @@ public class SplashScreen extends AppCompatActivity {
     }
 
     private void checkUserAndNavigate() {
-        DataCleanupManager cleanupManager = new DataCleanupManager();
-        
-        if (cleanupManager.shouldPerformCleanup(this)) {
-            cleanupManager.performDatabaseCleanup(
-                () -> {
-                    cleanupManager.markCleanupCompleted(this);
-                    performContractMaintenance();
-                },
-                error -> {
-                    performContractMaintenance();
-                }
-            );
-        } else {
-            performContractMaintenance();
-        }
+        performContractMaintenance();
     }
 
     private void performContractMaintenance() {
