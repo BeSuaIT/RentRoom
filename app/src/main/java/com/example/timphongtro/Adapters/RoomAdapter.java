@@ -121,13 +121,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
                 .child("histories")
                 .child(roomId);
 
-        userHistoryRef.setValue(currentTimestamp)
-                .addOnSuccessListener(unused -> {
-
-                })
-                .addOnFailureListener(e -> {
-
-                });
+        userHistoryRef.setValue(currentTimestamp);
     }
 
     @Override

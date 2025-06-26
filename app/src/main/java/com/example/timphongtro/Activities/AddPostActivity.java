@@ -57,9 +57,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -371,7 +374,7 @@ public class AddPostActivity extends AppCompatActivity {
     }
 
     private Room createRoomObject() {
-        String id_room = UUID.randomUUID().toString();
+        String id_room = generateSimpleRoomId();
         String city = spinnerCity.getSelectedItem().toString();
         String district = spinnerDistrict.getSelectedItem().toString();
         String detail = edtAddress.getText().toString();
@@ -419,6 +422,17 @@ public class AddPostActivity extends AppCompatActivity {
                 Long.parseLong(edtElectric.getText().toString()),
                 Long.parseLong(edtWater.getText().toString()),
                 Long.parseLong(edtInternet.getText().toString()));
+    }
+
+    private String generateSimpleRoomId() {
+        // Format: ROOM_YYYYMMDD_HHMMSS_XXX
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+        String timestamp = dateFormat.format(new Date());
+        
+        // Random 3 digits để tránh conflict
+        int randomSuffix = (int)(Math.random() * 900) + 100; // 100-999
+        
+        return String.format("ROOM_%s_%03d", timestamp, randomSuffix);
     }
 
     private void uploadRoomToFirebase(Room room) {

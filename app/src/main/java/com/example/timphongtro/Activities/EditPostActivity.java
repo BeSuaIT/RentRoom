@@ -202,7 +202,6 @@ public class EditPostActivity extends AppCompatActivity {
         districts = new ArrayList<>();
     }
 
-    // ✅ Cập nhật method populateDataFromRoom()
     private void populateDataFromRoom() {
         if (roomData == null) return;
 
@@ -219,39 +218,32 @@ public class EditPostActivity extends AppCompatActivity {
         edtWater.setText(String.valueOf(roomData.getPrice_water()));
         edtInternet.setText(String.valueOf(roomData.getPrice_internet()));
 
-        // ✅ SỬA: Handle Address với model mới
         address = roomData.getAddress();
         if (address != null) {
-            // ✅ Lấy detail để hiển thị trong edtAddress
             String detail = address.getDetail();
             edtAddress.setText(detail != null ? detail : "");
         } else {
             edtAddress.setText("");
         }
 
-        // ✅ SỬA: Logic gender với null safety
         String gender = roomData.getGender_room();
         if (gender != null) {
             genderCheckboxes[0].setChecked(gender.contains("Nam"));
             genderCheckboxes[1].setChecked(gender.contains("Nữ"));
         } else {
-            // ✅ Default: Nam/Nữ
             genderCheckboxes[0].setChecked(true);
             genderCheckboxes[1].setChecked(true);
         }
 
-        // ✅ Room type với null safety
         String roomType = roomData.getType_room();
         if ("Chung cư Mini".equals(roomType)) {
             radioGroupType.check(R.id.radiobtnChungCu);
         } else {
             radioGroupType.check(R.id.radiobtnTro);
         }
-        
-        // ✅ Room status
+
         radioGroupState.check(roomData.getStatus_room() == 1 ? R.id.radiobtnUnavailable : R.id.radiobtnAvailable);
 
-        // ✅ Images với null safety
         if (roomData.getImages() != null && !roomData.getImages().isEmpty()) {
             uploadedImageUrls = new ArrayList<>(roomData.getImages());
             selectedImages.clear();
@@ -263,7 +255,6 @@ public class EditPostActivity extends AppCompatActivity {
             imageAdapter.notifyDataSetChanged();
         }
 
-        // ✅ Utilities và Furniture với null safety
         setUtilityCheckboxes(roomData.getRoomUtilities());
         setFurnitureCheckboxes(roomData.getRoomFurniture());
     }
