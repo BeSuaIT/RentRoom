@@ -72,7 +72,7 @@ dependencies {
     implementation("commons-codec:commons-codec:1.18.0")
 
     // Testing
-    implementation("org.jetbrains:annotations:23.0.0")
+    implementation("org.jetbrains:annotations:26.0.2")
     implementation(fileTree(mapOf(
         "dir" to "D:\\DATN\\ZaloPay",
         "include" to listOf("*.aar", "*.jar"),
