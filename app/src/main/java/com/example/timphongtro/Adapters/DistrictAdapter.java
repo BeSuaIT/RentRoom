@@ -46,12 +46,10 @@ public class DistrictAdapter extends RecyclerView.Adapter<DistrictAdapter.MyView
         holder.name.setText(district.getName());
         
         holder.cardViewDistrict.setOnClickListener(v -> {
-            // ✅ Tìm thành phố chứa quận này
             findCityForDistrict(district);
         });
     }
 
-    // ✅ Method tìm thành phố chứa quận
     private void findCityForDistrict(District district) {
         FirebaseDatabase.getInstance().getReference("Cities")
             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -60,18 +58,18 @@ public class DistrictAdapter extends RecyclerView.Adapter<DistrictAdapter.MyView
                     for (DataSnapshot citySnapshot : snapshot.getChildren()) {
                         String cityName = citySnapshot.child("name").getValue(String.class);
                         
-                        // ✅ Kiểm tra Districts của thành phố này
+                        // Kiểm tra Districts của thành phố này
                         DataSnapshot districtsSnapshot = citySnapshot.child("Districts");
                         if (districtsSnapshot.exists()) {
                             for (DataSnapshot districtSnapshot : districtsSnapshot.getChildren()) {
                                 String districtId = districtSnapshot.child("id_district").getValue(String.class);
                                 String districtName = districtSnapshot.child("name").getValue(String.class);
                                 
-                                // ✅ So sánh theo cả ID và name để chắc chắn
+                                // So sánh theo cả ID và name để chắc chắn
                                 if ((district.getId_district() != null && district.getId_district().equals(districtId)) ||
                                     (district.getName() != null && district.getName().equals(districtName))) {
                                     
-                                    // ✅ Tìm thấy → chuyển sang SearchActivity
+                                    // Tìm thấy → chuyển sang SearchActivity
                                     Intent searchIntent = new Intent(context, SearchActivity.class);
                                     searchIntent.putExtra("selectedCity", cityName);
                                     searchIntent.putExtra("selectedDistrict", district.getName());
@@ -82,17 +80,11 @@ public class DistrictAdapter extends RecyclerView.Adapter<DistrictAdapter.MyView
                             }
                         }
                     }
-                    
-                    // ✅ Không tìm thấy thành phố → vẫn chuyển nhưng chỉ set quận
-                    Intent searchIntent = new Intent(context, SearchActivity.class);
-                    searchIntent.putExtra("selectedDistrict", district.getName());
-                    searchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(searchIntent);
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    // ✅ Lỗi → vẫn chuyển trang nhưng không set gì
+                    // Lỗi → vẫn chuyển trang nhưng không set gì
                     Intent searchIntent = new Intent(context, SearchActivity.class);
                     searchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(searchIntent);

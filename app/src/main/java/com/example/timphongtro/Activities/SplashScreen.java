@@ -12,7 +12,7 @@ import android.widget.TextView;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
 import com.example.timphongtro.Utils.DataCleanupManager;
-import com.example.timphongtro.Utils.ContractUtils; // ✅ THÊM
+import com.example.timphongtro.Utils.ContractUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -55,29 +55,20 @@ public class SplashScreen extends AppCompatActivity {
             cleanupManager.performDatabaseCleanup(
                 () -> {
                     cleanupManager.markCleanupCompleted(this);
-                    // ✅ SAU KHI CLEANUP XONG, CHẠY CONTRACT UTILS
                     performContractMaintenance();
                 },
                 error -> {
-                    // ✅ NGAY CẢ KHI LỖI, VẪN CHẠY CONTRACT UTILS
                     performContractMaintenance();
                 }
             );
         } else {
-            // ✅ KHÔNG CẦN CLEANUP, NHƯNG VẪN CHẠY CONTRACT UTILS
             performContractMaintenance();
         }
     }
 
-    // ✅ THÊM METHOD MỚI ĐỂ XỬ LÝ CONTRACT MAINTENANCE
     private void performContractMaintenance() {
-        // ✅ BATCH UPDATE TẤT CẢ CONTRACTS HẾT HẠN
         ContractUtils.batchUpdateExpiredContracts();
-        
-        // ✅ DỌNG DẸP CÁC TRƯỜNG KHÔNG CẦN THIẾT (CHỈ CHẠY 1 LẦN)
         ContractUtils.cleanupUnnecessaryFields();
-        
-        // ✅ SAU ĐÓ MỚI PROCEED VỚI USER CHECK
         proceedWithUserCheck();
     }
 

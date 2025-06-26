@@ -1,7 +1,6 @@
 package com.example.timphongtro.Models;
 
 public class Contract {
-    // ✅ CHỈ 15 TRƯỜNG ĐƯỢC LƯU VÀO DATABASE
     private String cccdBackImage;
     private String cccdFrontImage;
     private String contractId;
@@ -51,7 +50,6 @@ public class Contract {
              startDate, endDate, status, createdAt);
     }
 
-    // ✅ CHỈ GETTERS VÀ SETTERS - KHÔNG CÓ HELPER METHODS
     public String getCccdBackImage() { return cccdBackImage; }
     public void setCccdBackImage(String cccdBackImage) { this.cccdBackImage = cccdBackImage; }
 

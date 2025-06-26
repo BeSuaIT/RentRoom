@@ -192,30 +192,22 @@ public class MeetingManagementActivity extends AppCompatActivity {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
                 if (schedule != null) {
-                    // ✅ Kiểm tra meeting có liên quan đến user hiện tại không
+                    // Kiểm tra meeting có liên quan đến user hiện tại không
                     boolean isFromUser = currentUserId.equals(schedule.getIdFrom());
                     boolean isToUser = currentUserId.equals(schedule.getIdTo());
                     boolean isRelated = isFromUser || isToUser;
                     
                     if (isRelated) {
                         allCount++;
-                        
-                        // ✅ Tính "Tôi đặt" - chỉ những lịch user hiện tại tạo ra
                         if (isFromUser) {
                             myBookingsCount++;
                         }
-                        
-                        // ✅ Tính "Chờ duyệt" - chỉ những lịch gửi tới user hiện tại và status = 0
                         if (isToUser && schedule.getStatus() == 0) {
                             pendingCount++;
                         }
-                        
-                        // ✅ Tính "Đã duyệt" - tất cả lịch liên quan và status = 1
                         if (schedule.getStatus() == 1) {
                             approvedCount++;
                         }
-                        
-                        // ✅ Tính "Từ chối" - tất cả lịch liên quan và status = 2
                         if (schedule.getStatus() == 2) {
                             rejectedCount++;
                         }
@@ -239,7 +231,6 @@ public class MeetingManagementActivity extends AppCompatActivity {
         chipRejected.setText("❌ Từ chối (" + countMap.get("rejected") + ")");
     }
 
-    // ✅ Load all schedules related to current user
     private void loadAllSchedules() {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -264,7 +255,6 @@ public class MeetingManagementActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ Load schedules that current user created
     private void loadMyBookings() {
         meetingSchedulesRef.orderByChild("idFrom")
                 .equalTo(currentUser.getUid())
@@ -281,7 +271,6 @@ public class MeetingManagementActivity extends AppCompatActivity {
                 });
     }
 
-    // ✅ Load schedules pending approval by current user
     private void loadPendingSchedules() {
         meetingSchedulesRef.orderByChild("idTo")
                 .equalTo(currentUser.getUid())
@@ -298,7 +287,6 @@ public class MeetingManagementActivity extends AppCompatActivity {
                 });
     }
 
-    // ✅ Load approved schedules
     private void loadApprovedSchedules() {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -313,7 +301,6 @@ public class MeetingManagementActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ Load rejected schedules
     private void loadRejectedSchedules() {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -328,7 +315,6 @@ public class MeetingManagementActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ Load room data từ Posts
     private void loadRoomData() {
         postsRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -346,7 +332,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Handle error
+
             }
         });
     }

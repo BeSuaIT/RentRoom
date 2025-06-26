@@ -96,7 +96,6 @@ public class CartManagementActivity extends AppCompatActivity {
     private void retrieveCartItems() {
         if (user == null) return;
 
-        // ✅ SỬA: Load trực tiếp từ root Services thay vì duyệt categories
         DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
         DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts").child(user.getUid());
 
@@ -118,7 +117,6 @@ public class CartManagementActivity extends AppCompatActivity {
 
                                 if (serviceId == null || amount == null || amount <= 0) continue;
 
-                                // ✅ SỬA: Tìm service trực tiếp bằng serviceId
                                 Service foundService = findServiceInSnapshot(servicesSnapshot, serviceId);
                                 if (foundService != null) {
                                     Cart cart = new Cart(
@@ -157,9 +155,7 @@ public class CartManagementActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ SỬA: Tìm service trực tiếp trong root Services thay vì duyệt categories
     private Service findServiceInSnapshot(DataSnapshot servicesSnapshot, String serviceId) {
-        // Tìm trực tiếp trong root Services/{serviceId}
         DataSnapshot serviceSnap = servicesSnapshot.child(serviceId);
         if (serviceSnap.exists()) {
             Service service = serviceSnap.getValue(Service.class);

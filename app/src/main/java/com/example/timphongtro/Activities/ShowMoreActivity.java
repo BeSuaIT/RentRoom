@@ -3,7 +3,7 @@ package com.example.timphongtro.Activities;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
-import android.widget.ProgressBar; // ✅ THÊM: ProgressBar
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;

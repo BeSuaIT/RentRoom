@@ -7,7 +7,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.cardview.widget.CardView;
 import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.CredentialManager;
@@ -52,7 +51,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseUser firebaseUser;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
-    private ValueEventListener userDataListener; // ✅ THÊM: Reference để cleanup
+    private ValueEventListener userDataListener;
     private TextView nameTextView, emailTextView,
             signOutButton, manageRoomsButton, manageContractsButton, scheduleButton,
             historyButton, myProfileButton, billButton, cartButton;
@@ -171,11 +170,11 @@ public class ProfileFragment extends Fragment {
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference("Users/" + firebaseUser.getUid());
         
-        // ✅ Tạo listener riêng để có thể remove
+        // Tạo listener riêng để có thể remove
         userDataListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                // ✅ THÊM: Check fragment state trước khi xử lý
+                // Check fragment state trước khi xử lý
                 if (!isAdded() || getContext() == null) {
                     return;
                 }
@@ -191,7 +190,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // ✅ THÊM: Check context trước khi update UI
+                // Check context trước khi update UI
                 if (isAdded() && getContext() != null) {
                     manageRoomsButton.setVisibility(View.GONE);
                 }
@@ -257,9 +256,7 @@ public class ProfileFragment extends Fragment {
         getActivity().finish();
     }
 
-    // ✅ SỬA: updateProfileImage với safety checks
     private void updateProfileImage(User user) {
-        // ✅ THÊM: Multiple safety checks
         if (!isAdded() || getContext() == null || getActivity() == null) {
             return;
         }
@@ -269,8 +266,6 @@ public class ProfileFragment extends Fragment {
             if (!TextUtils.isEmpty(avatarUrl)) {
                 profileInitialTextView.setVisibility(View.GONE);
                 profileImageView.setVisibility(View.VISIBLE);
-
-                // ✅ SỬA: Dùng getContext() và check null
                 Context context = getContext();
                 if (context != null) {
                     Glide.with(context)
@@ -285,12 +280,10 @@ public class ProfileFragment extends Fragment {
                 profileInitialTextView.setText(getFirstLetter(user.getName()));
             }
         } catch (Exception e) {
-            // ✅ Log error nhưng không crash
             e.printStackTrace();
         }
     }
 
-    // ✅ THÊM: Cleanup Firebase listeners
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -303,7 +296,6 @@ public class ProfileFragment extends Fragment {
         cleanupFirebaseListeners();
     }
 
-    // ✅ THÊM: Method cleanup
     private void cleanupFirebaseListeners() {
         if (databaseReference != null && userDataListener != null) {
             databaseReference.removeEventListener(userDataListener);
@@ -311,7 +303,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    // ✅ GIỮ NGUYÊN: getFirstLetter method
     public static String getFirstLetter(String input) {
         if (input == null || input.isEmpty()) {
             return "";

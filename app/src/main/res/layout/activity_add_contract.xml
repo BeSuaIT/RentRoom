@@ -119,7 +119,6 @@
                 android:textColor="@color/gray"
                 android:layout_marginBottom="8dp" />
 
-            <!-- ✅ Cập nhật phần tìm kiếm với nút Clear -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
