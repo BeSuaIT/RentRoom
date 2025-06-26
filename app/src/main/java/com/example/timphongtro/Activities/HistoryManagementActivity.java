@@ -99,6 +99,72 @@ public class HistoryManagementActivity extends AppCompatActivity {
         
         swipeRefresh.setRefreshing(true);
 
+        cleanupInvalidHistory(() -> {
+            // Load data sau khi cleanup xong
+            loadValidHistory();
+        });
+    }
+
+    private void cleanupInvalidHistory(Runnable onComplete) {
+        userRef.child("histories").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
+                    onComplete.run();
+                    return;
+                }
+
+                Map<String, Long> timestamps = new HashMap<>();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    String roomId = child.getKey();
+                    Long timestamp = child.getValue(Long.class);
+                    if (roomId != null && timestamp != null) {
+                        timestamps.put(roomId, timestamp);
+                    }
+                }
+
+                if (timestamps.isEmpty()) {
+                    onComplete.run();
+                    return;
+                }
+
+                FirebaseDatabase.getInstance().getReference("Posts")
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
+                            Map<String, Object> updates = new HashMap<>();
+
+                            for (String roomId : timestamps.keySet()) {
+                                if (!postsSnapshot.hasChild(roomId)) {
+                                    // Room không tồn tại - xóa khỏi history
+                                    updates.put("histories/" + roomId, null);
+                            }
+                        }
+
+                        if (!updates.isEmpty()) {
+                            userRef.updateChildren(updates)
+                                    .addOnSuccessListener(aVoid -> onComplete.run())
+                                    .addOnFailureListener(e -> onComplete.run());
+                        } else {
+                            onComplete.run();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        onComplete.run();
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onComplete.run();
+            }
+        });
+    }
+
+    private void loadValidHistory() {
         userRef.child("histories").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

@@ -101,6 +101,72 @@ public class FollowFragment extends Fragment {
             swipeRefresh.setRefreshing(true);
         }
 
+        cleanupInvalidFollowPosts(() -> {
+            // Load data sau khi cleanup xong
+            loadValidFollowedRooms();
+        });
+    }
+
+    private void cleanupInvalidFollowPosts(Runnable onComplete) {
+        userRef.child("followPosts").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
+                    onComplete.run();
+                    return;
+                }
+
+                Map<String, Boolean> followedRoomIds = new HashMap<>();
+                for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                    String roomId = roomSnapshot.getKey();
+                    Boolean isFollowed = roomSnapshot.getValue(Boolean.class);
+                    if (roomId != null && Boolean.TRUE.equals(isFollowed)) {
+                        followedRoomIds.put(roomId, true);
+                    }
+                }
+
+                if (followedRoomIds.isEmpty()) {
+                    onComplete.run();
+                    return;
+                }
+                
+                DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Posts");
+                postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
+                        Map<String, Object> updates = new HashMap<>();
+
+                        for (String roomId : followedRoomIds.keySet()) {
+                            if (!postsSnapshot.hasChild(roomId)) {
+                                // Room không tồn tại - xóa khỏi follow list
+                                updates.put("followPosts/" + roomId, null);
+                            }
+                        }
+
+                        if (!updates.isEmpty()) {
+                            userRef.updateChildren(updates)
+                                    .addOnSuccessListener(aVoid -> onComplete.run())
+                                    .addOnFailureListener(e -> onComplete.run());
+                        } else {
+                            onComplete.run();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        onComplete.run();
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onComplete.run();
+            }
+        });
+    }
+
+    private void loadValidFollowedRooms() {
         userRef.child("followPosts").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

@@ -27,7 +27,9 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CartManagementActivity extends AppCompatActivity {
 
@@ -96,6 +98,92 @@ public class CartManagementActivity extends AppCompatActivity {
     private void retrieveCartItems() {
         if (user == null) return;
 
+        // Cleanup trước khi load
+        cleanupInvalidCartItems(() -> {
+            loadValidCartItems();
+        });
+    }
+
+    private void cleanupInvalidCartItems(Runnable onComplete) {
+        if (user == null) {
+            onComplete.run();
+            return;
+        }
+
+        DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
+        DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts").child(user.getUid());
+
+        cartRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
+                if (!cartSnapshot.exists() || cartSnapshot.getChildrenCount() == 0) {
+                    onComplete.run();
+                    return;
+                }
+
+                // Lấy tất cả service IDs từ cart
+                Map<String, String> cartServiceMap = new HashMap<>(); // serviceId -> sellerId
+                for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
+                    String sellerId = sellerSnapshot.getKey();
+                    if (sellerId == null) continue;
+
+                    for (DataSnapshot serviceSnapshot : sellerSnapshot.getChildren()) {
+                        String serviceId = serviceSnapshot.getKey();
+                        if (serviceId != null) {
+                            cartServiceMap.put(serviceId, sellerId);
+                        }
+                    }
+                }
+
+                if (cartServiceMap.isEmpty()) {
+                    onComplete.run();
+                    return;
+                }
+
+                servicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot servicesSnapshot) {
+                        Map<String, Object> updates = new HashMap<>();
+
+                        for (Map.Entry<String, String> entry : cartServiceMap.entrySet()) {
+                            String serviceId = entry.getKey();
+                            String sellerId = entry.getValue();
+
+                            if (!servicesSnapshot.hasChild(serviceId)) {
+                                // Service không tồn tại - xóa khỏi cart
+                                updates.put(sellerId + "/" + serviceId, null);
+                            }
+                        }
+
+                        if (!updates.isEmpty()) {
+                            cartRef.updateChildren(updates)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Delay một chút để Firebase hoàn thành việc xóa
+                                        new android.os.Handler().postDelayed(onComplete, 300);
+                                    })
+                                    .addOnFailureListener(e -> onComplete.run());
+                        } else {
+                            onComplete.run();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        onComplete.run();
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onComplete.run();
+            }
+        });
+    }
+
+    private void loadValidCartItems() {
+        if (user == null) return;
+
         DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
         DatabaseReference cartRef = FirebaseDatabase.getInstance().getReference("Carts").child(user.getUid());
 
@@ -117,8 +205,9 @@ public class CartManagementActivity extends AppCompatActivity {
 
                                 if (serviceId == null || amount == null || amount <= 0) continue;
 
+                                // Double-check service tồn tại
                                 Service foundService = findServiceInSnapshot(servicesSnapshot, serviceId);
-                                if (foundService != null) {
+                                if (foundService != null && isValidService(foundService)) {
                                     Cart cart = new Cart(
                                             serviceId,
                                             foundService.getTitle(),
@@ -143,26 +232,42 @@ public class CartManagementActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(CartManagementActivity.this, "Lỗi tải giỏ hàng: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        runOnUiThread(() -> {
+                            updateRecyclerViewVisibility();
+                        });
                     }
                 });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(CartManagementActivity.this, "Lỗi tải dữ liệu dịch vụ: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                runOnUiThread(() -> {
+                    updateRecyclerViewVisibility();
+                });
             }
         });
     }
 
+    // Kiểm tra service hợp lệ
+    private boolean isValidService(Service service) {
+        if (service == null) return false;
+        if (service.getServiceId() == null || service.getServiceId().trim().isEmpty()) return false;
+        if (service.getTitle() == null || service.getTitle().trim().isEmpty()) return false;
+        if (service.getPrice() <= 0) return false;
+
+        return true;
+    }
+
     private Service findServiceInSnapshot(DataSnapshot servicesSnapshot, String serviceId) {
+        if (servicesSnapshot == null || serviceId == null) return null;
+
         DataSnapshot serviceSnap = servicesSnapshot.child(serviceId);
         if (serviceSnap.exists()) {
             Service service = serviceSnap.getValue(Service.class);
-            if (service != null) {
+            if (service != null && isValidService(service)) {
                 service.setServiceId(serviceId); // Đảm bảo có serviceId
+                return service;
             }
-            return service;
         }
         return null;
     }

@@ -27,6 +27,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ContractManagementActivity extends AppCompatActivity {
 
@@ -38,7 +40,7 @@ public class ContractManagementActivity extends AppCompatActivity {
     private LinearLayout noDataLayout;
     private TextView noDataTitle, noDataMessage;
     private FirebaseAuth firebaseAuth;
-    private DatabaseReference contractsRef, usersRef;
+    private DatabaseReference contractsRef, usersRef, postsRef;
     private String currentUserRole;
 
     @Override
@@ -66,6 +68,7 @@ public class ContractManagementActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
         usersRef = FirebaseDatabase.getInstance().getReference("Users");
+        postsRef = FirebaseDatabase.getInstance().getReference("Posts"); // ✅ THÊM
     }
 
     private void setupListeners() {
@@ -93,7 +96,10 @@ public class ContractManagementActivity extends AppCompatActivity {
                 if (snapshot.exists()) {
                     currentUserRole = snapshot.child("role").getValue(String.class);
                     setupUIBasedOnRole();
-                    loadContracts();
+
+                    cleanupInvalidContracts(() -> {
+                        loadContracts();
+                    });
                 } else {
                     currentUserRole = null;
                     showNoDataState("Lỗi tài khoản", "Không tìm thấy thông tin tài khoản");
@@ -106,6 +112,60 @@ public class ContractManagementActivity extends AppCompatActivity {
                 currentUserRole = null;
                 showNoDataState("Lỗi kết nối", "Không thể tải thông tin người dùng");
                 fabAddContract.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void cleanupInvalidContracts(Runnable onComplete) {
+        contractsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
+                    onComplete.run();
+                    return;
+                }
+
+                // Lấy danh sách roomId từ contracts
+                Map<String, String> contractRoomMap = new HashMap<>(); // contractId -> roomId
+                for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
+                    Contract contract = contractSnapshot.getValue(Contract.class);
+                    if (contract != null && contract.getContractId() != null && contract.getRoomId() != null) {
+                        contractRoomMap.put(contract.getContractId(), contract.getRoomId());
+                    }
+                }
+
+                if (contractRoomMap.isEmpty()) {
+                    onComplete.run();
+                    return;
+                }
+
+                postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
+                        for (Map.Entry<String, String> entry : contractRoomMap.entrySet()) {
+                            String contractId = entry.getKey();
+                            String roomId = entry.getValue();
+                            
+                            if (!postsSnapshot.hasChild(roomId)) {
+                                // Room không tồn tại - xóa contract
+                                contractsRef.child(contractId).removeValue();
+                            }
+                        }
+                        
+                        // Delay để Firebase hoàn thành việc xóa
+                        new android.os.Handler().postDelayed(onComplete, 300);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        onComplete.run();
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onComplete.run();
             }
         });
     }
@@ -142,7 +202,10 @@ public class ContractManagementActivity extends AppCompatActivity {
                 for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
                     Contract contract = contractSnapshot.getValue(Contract.class);
                     if (contract != null && shouldShowContract(contract, currentUser.getUid())) {
-                        contractsList.add(contract);
+                        // Double-check contract validity trước khi add
+                        if (isValidContract(contract)) {
+                            contractsList.add(contract);
+                        }
                     }
                 }
 
@@ -166,7 +229,21 @@ public class ContractManagementActivity extends AppCompatActivity {
         });
     }
 
+    private boolean isValidContract(Contract contract) {
+        if (contract == null) return false;
+        if (contract.getContractId() == null || contract.getContractId().trim().isEmpty()) return false;
+        if (contract.getRoomId() == null || contract.getRoomId().trim().isEmpty()) return false;
+        if (contract.getLandlordId() == null || contract.getLandlordId().trim().isEmpty()) return false;
+        if (contract.getTenantId() == null || contract.getTenantId().trim().isEmpty()) return false;
+        
+        return true;
+    }
+
     private boolean shouldShowContract(Contract contract, String currentUserId) {
+        if (contract == null || currentUserId == null || currentUserRole == null) {
+            return false;
+        }
+
         switch (currentUserRole) {
             case "Chủ trọ":
                 return currentUserId.equals(contract.getLandlordId());
@@ -182,8 +259,6 @@ public class ContractManagementActivity extends AppCompatActivity {
             showNoDataState("Chưa có hợp đồng", "Bạn chưa tạo hợp đồng nào.\nNhấn nút + để tạo hợp đồng mới.");
         } else if ("Người thuê".equals(currentUserRole)) {
             showNoDataState("Chưa có hợp đồng", "Bạn chưa có hợp đồng thuê nào.");
-        } else if ("Admin".equals(currentUserRole)) {
-            showNoDataState("Chưa có hợp đồng", "Hệ thống chưa có hợp đồng nào.");
         } else {
             showNoDataState("Không có quyền truy cập", "Bạn không có quyền xem hợp đồng.");
         }
@@ -211,7 +286,59 @@ public class ContractManagementActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (currentUserRole != null) {
-            loadContracts();
+            cleanupInvalidContracts(() -> {
+                loadContracts();
+            });
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Remove listeners để tránh memory leak
+        if (contractsRef != null) {
+            contractsRef.removeEventListener(contractsValueEventListener);
+        }
+    }
+
+    private ValueEventListener contractsValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            contractsList.clear();
+
+            if (!snapshot.exists()) {
+                showNoDataState();
+                return;
+            }
+
+            FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+            if (currentUser == null) return;
+
+            for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
+                Contract contract = contractSnapshot.getValue(Contract.class);
+                if (contract != null && shouldShowContract(contract, currentUser.getUid())) {
+                    if (isValidContract(contract)) {
+                        contractsList.add(contract);
+                    }
+                }
+            }
+
+            Collections.sort(contractsList, (c1, c2) -> Long.compare(c2.getCreatedAt(), c1.getCreatedAt()));
+
+            if (contractsList.isEmpty()) {
+                showNoDataState();
+            } else {
+                showDataState();
+            }
+
+            contractAdapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError error) {
+            showNoDataState("Lỗi tải dữ liệu", "Không thể tải danh sách hợp đồng");
+            Toast.makeText(ContractManagementActivity.this,
+                    "Lỗi tải danh sách hợp đồng", Toast.LENGTH_SHORT).show();
+        }
+    };
 }

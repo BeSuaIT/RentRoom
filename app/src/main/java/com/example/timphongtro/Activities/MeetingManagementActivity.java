@@ -6,6 +6,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -147,6 +148,67 @@ public class MeetingManagementActivity extends AppCompatActivity {
     }
 
     private void loadAllSchedulesAndCount() {
+        cleanupInvalidMeetings(() -> {
+            // Load data sau khi cleanup xong
+            loadValidSchedulesAndCount();
+        });
+    }
+
+    private void cleanupInvalidMeetings(Runnable onComplete) {
+        meetingSchedulesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
+                    onComplete.run();
+                    return;
+                }
+
+                // Lấy danh sách room IDs từ meetings
+                Map<String, String> meetingRoomMap = new HashMap<>(); // meetingId -> roomId
+                for (DataSnapshot meetingSnapshot : snapshot.getChildren()) {
+                    Meeting meeting = meetingSnapshot.getValue(Meeting.class);
+                    if (meeting != null && meeting.getIdRoom() != null) {
+                        meetingRoomMap.put(meeting.getIdSchedule(), meeting.getIdRoom());
+                    }
+                }
+
+                if (meetingRoomMap.isEmpty()) {
+                    onComplete.run();
+                    return;
+                }
+
+                postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
+                        for (Map.Entry<String, String> entry : meetingRoomMap.entrySet()) {
+                            String meetingId = entry.getKey();
+                            String roomId = entry.getValue();
+                            
+                            if (!postsSnapshot.hasChild(roomId)) {
+                                // Room không tồn tại - xóa meeting
+                                meetingSchedulesRef.child(meetingId).removeValue();
+                            }
+                        }
+                        
+                        // Delay một chút để Firebase hoàn thành việc xóa
+                        new android.os.Handler().postDelayed(onComplete, 300);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        onComplete.run();
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onComplete.run();
+            }
+        });
+    }
+
+    private void loadValidSchedulesAndCount() {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -382,10 +444,12 @@ public class MeetingManagementActivity extends AppCompatActivity {
     }
 
     private boolean isValidSchedule(Meeting schedule) {
-        if (schedule == null) return false;
-        
+        if (schedule == null || schedule.getIdRoom() == null) return false;
+
+        // Kiểm tra room có tồn tại trong danh sách availableRooms
         return availableRooms.stream()
-                .anyMatch(room -> room.getId_room().equals(schedule.getIdRoom()));
+                .anyMatch(room -> room != null && room.getId_room() != null && 
+                         room.getId_room().equals(schedule.getIdRoom()));
     }
 
     private boolean isRelatedToCurrentUser(Meeting schedule) {
