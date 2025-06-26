@@ -36,6 +36,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class MeetingDetailActivity extends AppCompatActivity {
     
@@ -166,8 +167,8 @@ public class MeetingDetailActivity extends AppCompatActivity {
 
         try {
             Date date = new java.util.Date(timestamp);
-            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", new java.util.Locale("vi", "VN"));
-            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm, dd/MM/yyyy", new java.util.Locale("vi", "VN"));
+            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", new Locale("vi", "VN"));
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm, dd/MM/yyyy", new Locale("vi", "VN"));
 
             String dayOfWeek = dayFormat.format(date);
             String dateTime = dateTimeFormat.format(date);
