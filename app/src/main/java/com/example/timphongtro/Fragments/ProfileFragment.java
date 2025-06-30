@@ -29,7 +29,7 @@ import com.example.timphongtro.Activities.EditProfileActivity;
 import com.example.timphongtro.Activities.HistoryManagementActivity;
 import com.example.timphongtro.Activities.LoginActivity;
 import com.example.timphongtro.Activities.MainActivity;
-import com.example.timphongtro.Activities.PostManagementActivity;
+import com.example.timphongtro.Activities.RoomManagementActivity;
 import com.example.timphongtro.Activities.UserActivity;
 import com.example.timphongtro.Activities.MeetingManagementActivity;
 import com.example.timphongtro.R;
@@ -115,7 +115,7 @@ public class ProfileFragment extends Fragment {
         
         manageRoomsButton.setOnClickListener(v -> {
             if (getActivity() != null) {
-                startActivity(new Intent(getActivity(), PostManagementActivity.class));
+                startActivity(new Intent(getActivity(), RoomManagementActivity.class));
             }
         });
         

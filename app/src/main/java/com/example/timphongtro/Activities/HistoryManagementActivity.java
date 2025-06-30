@@ -128,7 +128,7 @@ public class HistoryManagementActivity extends AppCompatActivity {
                     return;
                 }
 
-                FirebaseDatabase.getInstance().getReference("Posts")
+                FirebaseDatabase.getInstance().getReference("Rooms")
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
@@ -198,7 +198,7 @@ public class HistoryManagementActivity extends AppCompatActivity {
             return;
         }
 
-        FirebaseDatabase.getInstance().getReference("Posts")
+        FirebaseDatabase.getInstance().getReference("Rooms")
             .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {

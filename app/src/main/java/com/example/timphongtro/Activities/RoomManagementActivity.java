@@ -24,7 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class PostManagementActivity extends AppCompatActivity {
+public class RoomManagementActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private View emptyView;
     private TabLayout tabLayout;
@@ -51,7 +51,7 @@ public class PostManagementActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         
         findViewById(R.id.imageViewBack).setOnClickListener(v -> finish());
-        findViewById(R.id.fabAddPost).setOnClickListener(v -> startActivity(new Intent(this, AddPostActivity.class)));
+        findViewById(R.id.fabAddPost).setOnClickListener(v -> startActivity(new Intent(this, AddRoomActivity.class)));
     }
 
     private void setupRecyclerView() {
@@ -62,7 +62,7 @@ public class PostManagementActivity extends AppCompatActivity {
         }
 
         roomList = new ArrayList<>();
-        roomsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
         adapter = new ManageRoomAdapter(roomList, this);
         
         recyclerView.setLayoutManager(
@@ -105,7 +105,7 @@ public class PostManagementActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PostManagementActivity.this,
+                Toast.makeText(RoomManagementActivity.this,
                     "Lỗi: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

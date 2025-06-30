@@ -128,7 +128,7 @@ public class AddContractActivity extends AppCompatActivity {
 
     private void initializeFirebase() {
         firebaseAuth = FirebaseAuth.getInstance();
-        postsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
         usersRef = FirebaseDatabase.getInstance().getReference("Users");
         contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
         storageRef = FirebaseStorage.getInstance().getReference();

@@ -949,7 +949,7 @@ public class EditPostActivity extends AppCompatActivity {
             return;
         }
 
-        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
         DatabaseReference roomRef = postsRef.child(room.getId_room());
 
         Map<String, Object> roomMap = new HashMap<>();

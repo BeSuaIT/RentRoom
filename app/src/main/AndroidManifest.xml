@@ -127,13 +127,13 @@
             android:name=".Activities.RegisterActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.AddPostActivity"
+            android:name=".Activities.AddRoomActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.PostManagementActivity"
+            android:name=".Activities.RoomManagementActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.PostDetailActivity"
+            android:name=".Activities.RoomDetailActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.SplashScreen"

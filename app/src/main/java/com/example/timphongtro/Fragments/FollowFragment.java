@@ -108,7 +108,7 @@ public class FollowFragment extends Fragment {
     }
 
     private void cleanupInvalidFollowPosts(Runnable onComplete) {
-        userRef.child("followPosts").addListenerForSingleValueEvent(new ValueEventListener() {
+        userRef.child("followRooms").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
@@ -130,7 +130,7 @@ public class FollowFragment extends Fragment {
                     return;
                 }
                 
-                DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Posts");
+                DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
                 postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot postsSnapshot) {
@@ -139,7 +139,7 @@ public class FollowFragment extends Fragment {
                         for (String roomId : followedRoomIds.keySet()) {
                             if (!postsSnapshot.hasChild(roomId)) {
                                 // Room không tồn tại - xóa khỏi follow list
-                                updates.put("followPosts/" + roomId, null);
+                                updates.put("followRooms/" + roomId, null);
                             }
                         }
 
@@ -167,7 +167,7 @@ public class FollowFragment extends Fragment {
     }
 
     private void loadValidFollowedRooms() {
-        userRef.child("followPosts").addListenerForSingleValueEvent(new ValueEventListener() {
+        userRef.child("followRooms").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 followedRooms.clear();
@@ -206,7 +206,7 @@ public class FollowFragment extends Fragment {
             return;
         }
 
-        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
         
         postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

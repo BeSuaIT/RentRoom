@@ -81,7 +81,7 @@ public class UserActivity extends AppCompatActivity {
         findViewById(R.id.imageView_back).setOnClickListener(v -> finish());
         
         database = FirebaseDatabase.getInstance();
-        postRef = database.getReference("Posts");
+        postRef = database.getReference("Rooms");
         roomArrayList = new ArrayList<>();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
 

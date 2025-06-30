@@ -24,7 +24,7 @@ import com.denzcoskun.imageslider.constants.ScaleTypes;
 import com.denzcoskun.imageslider.models.SlideModel;
 import com.example.timphongtro.Activities.CartManagementActivity;
 import com.example.timphongtro.Activities.ContractManagementActivity;
-import com.example.timphongtro.Activities.AddPostActivity;
+import com.example.timphongtro.Activities.AddRoomActivity;
 import com.example.timphongtro.Activities.SearchActivity;
 import com.example.timphongtro.Activities.ServiceActivity;
 import com.example.timphongtro.Activities.ShowMoreActivity;
@@ -99,7 +99,7 @@ public class HomeFragment extends Fragment {
         spinnerArrayList = new ArrayList<>();
         cityArrayList = new ArrayList<>();
         spinnerRef = FirebaseDatabase.getInstance().getReference("Cities");
-        roomRef = FirebaseDatabase.getInstance().getReference("Posts");
+        roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
 
         setupRecyclerViews(view);
         setupCitySpinner();
@@ -196,7 +196,7 @@ public class HomeFragment extends Fragment {
                     String userRole = snapshot.child("role").getValue(String.class);
                     
                     if ("Chủ trọ".equals(userRole)) {
-                        startActivity(new Intent(getContext(), AddPostActivity.class));
+                        startActivity(new Intent(getContext(), AddRoomActivity.class));
                     } else {
                         showToast("Chỉ có Chủ trọ mới được phép đăng tin cho thuê");
                     }

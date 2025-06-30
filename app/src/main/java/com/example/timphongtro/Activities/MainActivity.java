@@ -199,11 +199,11 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.findViewById(R.id.btn_post_room).setOnClickListener(v -> {
             dialog.dismiss();
-            startActivity(new Intent(this, AddPostActivity.class));
+            startActivity(new Intent(this, AddRoomActivity.class));
         });
         dialog.findViewById(R.id.btn_manage_posts).setOnClickListener(v -> {
             dialog.dismiss();
-            startActivity(new Intent(this, PostManagementActivity.class));
+            startActivity(new Intent(this, RoomManagementActivity.class));
         });
         dialog.findViewById(R.id.btn_add_contract).setOnClickListener(v -> {
             dialog.dismiss();

@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.PostDetailActivity;
+import com.example.timphongtro.Activities.RoomDetailActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
@@ -81,7 +81,7 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         }
 
         holder.cardViewRoom.setOnClickListener(v -> {
-            Intent detailRoom = new Intent(context, PostDetailActivity.class);
+            Intent detailRoom = new Intent(context, RoomDetailActivity.class);
 
             String roomJson = GsonUtils.toJson(room);
             if (roomJson != null) {

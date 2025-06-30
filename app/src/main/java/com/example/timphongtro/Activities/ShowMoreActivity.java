@@ -45,7 +45,7 @@ public class ShowMoreActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        roomsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
     }
 
     private void setupRecyclerView() {

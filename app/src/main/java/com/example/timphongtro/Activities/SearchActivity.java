@@ -52,7 +52,7 @@ public class SearchActivity extends AppCompatActivity {
         setupFilters();
         setupRecyclerView();
 
-        roomRef = FirebaseDatabase.getInstance().getReference("Posts");
+        roomRef = FirebaseDatabase.getInstance().getReference("Rooms");
         citiesRef = FirebaseDatabase.getInstance().getReference("Cities");
 
         fetchCitiesData();

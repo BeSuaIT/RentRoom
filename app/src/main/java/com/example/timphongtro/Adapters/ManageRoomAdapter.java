@@ -16,7 +16,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.PostDetailActivity;
+import com.example.timphongtro.Activities.RoomDetailActivity;
 import com.example.timphongtro.Activities.EditPostActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
@@ -82,7 +82,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             holder.constraintViewDetail.setOnClickListener(v -> {
                 String roomJson = GsonUtils.toJson(room);
                 if (roomJson != null) {
-                    Intent detailRoom = new Intent(context, PostDetailActivity.class);
+                    Intent detailRoom = new Intent(context, RoomDetailActivity.class);
                     detailRoom.putExtra("DataRoom", roomJson);
                     context.startActivity(detailRoom);
                 } else {
@@ -124,7 +124,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
         holder.textViewDelete.setText("Đang xóa...");
         
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference roomRef = database.getReference("Posts/" + room.getId_room());
+        DatabaseReference roomRef = database.getReference("Rooms/" + room.getId_room());
         
         roomRef.removeValue()
                 .addOnSuccessListener(aVoid -> {

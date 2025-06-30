@@ -66,7 +66,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         firebaseDatabase = FirebaseDatabase.getInstance();
         meetingSchedulesRef = firebaseDatabase.getReference("MeetingSchedules");
-        postsRef = firebaseDatabase.getReference("Posts");
+        postsRef = firebaseDatabase.getReference("Rooms");
         meetings = new ArrayList<>();
         availableRooms = new ArrayList<>();
 

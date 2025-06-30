@@ -129,7 +129,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
             holder.tvRoomTitle.setText("Phòng trọ");
             holder.tvAddress.setText("Đang tải thông tin...");
 
-            FirebaseDatabase.getInstance().getReference("Posts")
+            FirebaseDatabase.getInstance().getReference("Rooms")
                     .child(roomId)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -164,7 +164,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     }
 
     private void loadRoomData() {
-        FirebaseDatabase.getInstance().getReference("Posts")
+        FirebaseDatabase.getInstance().getReference("Rooms")
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {

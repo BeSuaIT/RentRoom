@@ -86,7 +86,7 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
             }
 
             DatabaseReference roomRef = FirebaseDatabase.getInstance()
-                    .getReference("Posts")
+                    .getReference("Rooms")
                     .child(contract.getRoomId());
 
             roomRef.addListenerForSingleValueEvent(new ValueEventListener() {

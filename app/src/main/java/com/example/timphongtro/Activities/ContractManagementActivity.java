@@ -68,7 +68,7 @@ public class ContractManagementActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
         usersRef = FirebaseDatabase.getInstance().getReference("Users");
-        postsRef = FirebaseDatabase.getInstance().getReference("Posts"); // ✅ THÊM
+        postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
     }
 
     private void setupListeners() {

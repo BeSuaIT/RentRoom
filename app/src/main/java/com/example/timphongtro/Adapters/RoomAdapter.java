@@ -14,7 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.PostDetailActivity;
+import com.example.timphongtro.Activities.RoomDetailActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
@@ -93,7 +93,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
                 saveToUserHistory(currentUser.getUid(), room.getId_room());
             }
 
-            Intent detailRoom = new Intent(context, PostDetailActivity.class);
+            Intent detailRoom = new Intent(context, RoomDetailActivity.class);
             String roomJson = GsonUtils.toJson(room);
             if (roomJson != null) {
                 detailRoom.putExtra("DataRoom", roomJson);

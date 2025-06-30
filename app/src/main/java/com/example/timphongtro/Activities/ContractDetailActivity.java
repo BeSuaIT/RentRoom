@@ -227,7 +227,7 @@ public class ContractDetailActivity extends AppCompatActivity {
             if (isLandlord && isLandlordRole && isExpired) {
                 editContractBtn.setVisibility(View.VISIBLE);
                 deleteContractBtn.setVisibility(View.VISIBLE);
-                editContractBtn.setText("Chỉnh sửa / Gia hạn");
+                editContractBtn.setText("Chỉnh sửa");
                 editContractBtn.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.orange_100));
                 deleteContractBtn.setStrokeColor(ContextCompat.getColorStateList(this, R.color.red));
             } else {
@@ -263,7 +263,7 @@ public class ContractDetailActivity extends AppCompatActivity {
 
     private void updateRoomStatusAfterDelete() {
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
-                .getReference("Posts")
+                .getReference("Rooms")
                 .child(contract.getRoomId())
                 .child("status_room");
 
@@ -289,7 +289,7 @@ public class ContractDetailActivity extends AppCompatActivity {
         }
 
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
-                .getReference("Posts")
+                .getReference("Rooms")
                 .child(contract.getRoomId());
 
         roomRef.addListenerForSingleValueEvent(new ValueEventListener() {

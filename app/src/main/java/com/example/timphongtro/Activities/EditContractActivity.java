@@ -128,7 +128,7 @@ public class EditContractActivity extends AppCompatActivity {
     private void initializeFirebase() {
         firebaseAuth = FirebaseAuth.getInstance();
         contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
-        roomsRef = FirebaseDatabase.getInstance().getReference("Posts");
+        roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
         storageRef = FirebaseStorage.getInstance().getReference();
     }
 
@@ -624,7 +624,7 @@ public class EditContractActivity extends AppCompatActivity {
         }
 
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
-                .getReference("Posts")
+                .getReference("Rooms")
                 .child(selectedRoom.getId_room())
                 .child("status_room");
 

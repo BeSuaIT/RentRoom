@@ -15,7 +15,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Activities.PostDetailActivity;
+import com.example.timphongtro.Activities.RoomDetailActivity;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
@@ -86,7 +86,7 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, PostDetailActivity.class);
+            Intent intent = new Intent(context, RoomDetailActivity.class);
 
             String roomJson = GsonUtils.toJson(room);
             if (roomJson != null) {

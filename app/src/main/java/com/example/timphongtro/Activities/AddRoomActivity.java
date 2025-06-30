@@ -64,11 +64,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class AddPostActivity extends AppCompatActivity {
+public class AddRoomActivity extends AppCompatActivity {
     private static final int PERMISSION_CODE = 1001;
     private FirebaseUser userCurrent;
     private FirebaseStorage storage;
@@ -191,7 +188,7 @@ public class AddPostActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(
-                        AddPostActivity.this,
+                        AddRoomActivity.this,
                         android.R.layout.simple_spinner_item,
                         cities
                 );
@@ -218,7 +215,7 @@ public class AddPostActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(AddPostActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddRoomActivity.this, "Failed to load cities", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -240,7 +237,7 @@ public class AddPostActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(
-                        AddPostActivity.this,
+                        AddRoomActivity.this,
                         android.R.layout.simple_spinner_item,
                         districts
                 );
@@ -250,7 +247,7 @@ public class AddPostActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(AddPostActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddRoomActivity.this, "Failed to load districts", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -359,7 +356,7 @@ public class AddPostActivity extends AppCompatActivity {
                         });
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(AddPostActivity.this,
+                        Toast.makeText(AddRoomActivity.this,
                                 "Lỗi khi tải ảnh lên", Toast.LENGTH_SHORT).show();
                         progressDialog.dismiss();
                     });
@@ -437,7 +434,7 @@ public class AddPostActivity extends AppCompatActivity {
 
     private void uploadRoomToFirebase(Room room) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("Posts");
+        DatabaseReference myRef = database.getReference("Rooms");
 
         Map<String, Object> roomMap = new HashMap<>();
         roomMap.put("id_own_post", room.getId_own_post());
@@ -465,11 +462,11 @@ public class AddPostActivity extends AppCompatActivity {
 
         myRef.child(room.getId_room()).setValue(roomMap)
                 .addOnSuccessListener(unused -> {
-                    Toast.makeText(AddPostActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AddRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                     finish();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(AddPostActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(AddRoomActivity.this, "Đăng thông tin phòng thất bại", Toast.LENGTH_SHORT).show()
                 );
     }
 

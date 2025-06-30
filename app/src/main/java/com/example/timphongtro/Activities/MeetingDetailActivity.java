@@ -295,7 +295,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         if (schedule == null) return;
         
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
-            .getReference("Posts")
+            .getReference("Rooms")
             .child(schedule.getIdRoom());
 
         roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -431,7 +431,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         if (room != null) {
             String roomJson = GsonUtils.toJson(room);
             if (roomJson != null) {
-                Intent intent = new Intent(this, PostDetailActivity.class);
+                Intent intent = new Intent(this, RoomDetailActivity.class);
                 intent.putExtra("DataRoom", roomJson);
                 startActivity(intent);
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
