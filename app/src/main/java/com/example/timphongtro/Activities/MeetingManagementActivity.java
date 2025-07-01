@@ -338,7 +338,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        updateScheduleListByStatus(snapshot, "0");
+                        updateScheduleListByStatus(snapshot, 0);
                     }
 
                     @Override
@@ -352,7 +352,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleListByStatusAndUser(snapshot, "1");
+                updateScheduleListByStatusAndUser(snapshot, 1);
             }
 
             @Override
@@ -366,7 +366,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateScheduleListByStatusAndUser(snapshot, "2");
+                updateScheduleListByStatusAndUser(snapshot, 2);
             }
 
             @Override
@@ -412,12 +412,12 @@ public class MeetingManagementActivity extends AppCompatActivity {
         updateRecyclerViewVisibility(!meetings.isEmpty());
     }
 
-    private void updateScheduleListByStatus(DataSnapshot snapshot, String targetStatus) {
+    private void updateScheduleListByStatus(DataSnapshot snapshot, int targetStatus) {
         meetings.clear();
         if (snapshot.exists()) {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
-                if (isValidSchedule(schedule) && targetStatus.equals(schedule.getStatus())) {
+                if (isValidSchedule(schedule) && schedule.getStatus() == targetStatus) {
                     meetings.add(schedule);
                 }
             }
@@ -426,14 +426,14 @@ public class MeetingManagementActivity extends AppCompatActivity {
         updateRecyclerViewVisibility(!meetings.isEmpty());
     }
 
-    private void updateScheduleListByStatusAndUser(DataSnapshot snapshot, String targetStatus) {
+    private void updateScheduleListByStatusAndUser(DataSnapshot snapshot, int targetStatus) {
         meetings.clear();
         if (snapshot.exists()) {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
-                if (isValidSchedule(schedule) && 
-                    targetStatus.equals(schedule.getStatus()) && 
-                    isRelatedToCurrentUser(schedule)) {
+                if (isValidSchedule(schedule) &&
+                        schedule.getStatus() == targetStatus &&
+                        isRelatedToCurrentUser(schedule)) {
                     meetings.add(schedule);
                 }
             }

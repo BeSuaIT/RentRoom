@@ -667,7 +667,7 @@ public class AddContractActivity extends AppCompatActivity {
 
     private void updateRoomStatus() {
         postsRef.child(selectedRoom.getRoomID())
-                .child("status_room")
+                .child("roomStatus")
                 .setValue(1)
                 .addOnSuccessListener(aVoid -> {
                     contractsRef.child(contractId).child("status").setValue(1)
