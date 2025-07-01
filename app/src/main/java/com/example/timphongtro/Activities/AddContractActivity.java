@@ -570,7 +570,7 @@ public class AddContractActivity extends AppCompatActivity {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser == null) return;
 
-        postsRef.orderByChild("id_own_post")
+        postsRef.orderByChild("ownerID")
                 .equalTo(currentUser.getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
