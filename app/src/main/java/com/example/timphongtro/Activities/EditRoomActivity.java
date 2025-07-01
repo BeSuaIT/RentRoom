@@ -63,7 +63,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EditPostActivity extends AppCompatActivity {
+public class EditRoomActivity extends AppCompatActivity {
 
     private static final int PERMISSION_CODE = 1001;
     private FirebaseUser userCurrent;
@@ -280,7 +280,7 @@ public class EditPostActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(
-                        EditPostActivity.this,
+                        EditRoomActivity.this,
                         android.R.layout.simple_spinner_item,
                         cities
                 );
@@ -314,7 +314,7 @@ public class EditPostActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(EditPostActivity.this, "Lỗi tải danh sách tỉnh thành", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditRoomActivity.this, "Lỗi tải danh sách tỉnh thành", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -337,7 +337,7 @@ public class EditPostActivity extends AppCompatActivity {
                     }
                 }
 
-                ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(EditPostActivity.this, android.R.layout.simple_spinner_item, districts);
+                ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(EditRoomActivity.this, android.R.layout.simple_spinner_item, districts);
                 districtAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerDistrict.setAdapter(districtAdapter);
 
@@ -351,7 +351,7 @@ public class EditPostActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(EditPostActivity.this, "Lỗi tải danh sách quận huyện", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditRoomActivity.this, "Lỗi tải danh sách quận huyện", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -703,7 +703,7 @@ public class EditPostActivity extends AppCompatActivity {
                             hasError[0] = true;
                             if (!isFinishing()) {
                                 progressDialog.dismiss();
-                                Toast.makeText(EditPostActivity.this,
+                                Toast.makeText(EditRoomActivity.this,
                                         "Lỗi tải ảnh: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
                             }
@@ -983,20 +983,20 @@ public class EditPostActivity extends AppCompatActivity {
 
             roomRef.setValue(roomMap)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(EditPostActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                         finish();
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(EditPostActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         }).addOnFailureListener(e -> {
             roomRef.setValue(roomMap)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(EditPostActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                         finish();
                     })
                     .addOnFailureListener(updateError -> {
-                        Toast.makeText(EditPostActivity.this, "Cập nhật thất bại: " + updateError.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thất bại: " + updateError.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         });
     }

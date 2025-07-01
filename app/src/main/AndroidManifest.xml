@@ -97,7 +97,7 @@
             android:name=".Activities.HistoryManagementActivity"
             android:exported="true" />
         <activity
-            android:name=".Activities.EditPostActivity"
+            android:name=".Activities.EditRoomActivity"
             android:exported="true" />
         <activity
             android:name=".Activities.CartManagementActivity"

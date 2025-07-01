@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.RoomDetailActivity;
-import com.example.timphongtro.Activities.EditPostActivity;
+import com.example.timphongtro.Activities.EditRoomActivity;
 import com.example.timphongtro.Models.Address;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.R;
@@ -104,7 +104,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             holder.textViewEdit.setOnClickListener(v -> {
                 String roomJson = GsonUtils.toJson(room);
                 if (roomJson != null) {
-                    Intent updateRoom = new Intent(context, EditPostActivity.class);
+                    Intent updateRoom = new Intent(context, EditRoomActivity.class);
                     updateRoom.putExtra("DataRoom", roomJson);
                     context.startActivity(updateRoom);
                 } else {
