@@ -95,11 +95,11 @@ public class ContractAdapter extends RecyclerView.Adapter<ContractAdapter.Contra
                     if (snapshot.exists()) {
                         Room room = snapshot.getValue(Room.class);
                         if (room != null) {
-                            roomTitleTv.setText(room.getTitle_room() != null ? 
-                                              room.getTitle_room() : "Phòng trọ");
+                            roomTitleTv.setText(room.getRoomTitle() != null ?
+                                              room.getRoomTitle() : "Phòng trọ");
                             
                             NumberFormat formatter = NumberFormat.getNumberInstance(Locale.getDefault());
-                            String formattedPrice = formatter.format(room.getPrice_room()) + " VNĐ/tháng";
+                            String formattedPrice = formatter.format(room.getRoomPrice()) + " VNĐ/tháng";
                             roomPriceTv.setText(formattedPrice);
                         }
                     } else {

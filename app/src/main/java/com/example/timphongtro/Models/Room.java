@@ -3,91 +3,91 @@ package com.example.timphongtro.Models;
 import java.util.ArrayList;
 
 public class Room {
-    private String id_own_post, id_room, title_room, description_room, gender_room, phone, type_room;
-    private long price_room, deposit_room, price_electric, price_water, price_internet;
+    private String ownerID, roomID, roomTitle, description, gender, phone, roomType;
+    private long roomPrice, roomDeposit, electricPrice, waterPrice, internetPrice;
     private Address address;
-    private int park_slot, person_in_room, status_room, floor, loveCount, area_room;
+    private int park_slot, people_in_room, roomStatus, floor, loveCount, roomSize;
     private ArrayList<String> images;
     private Object userLovePost;
-    private ArrayList<Furniture> roomFurniture;
-    private ArrayList<Utility> roomUtilities;
+    private ArrayList<Furniture> Furniture;
+    private ArrayList<Utility> Utilities;
 
     public Room() {
     }
 
-    public Room(String id_own_post, String id_room, String title_room, long price_room, Address address, int area_room, long deposit_room,
-                String description_room, String gender_room, int park_slot, int person_in_room, int status_room, String type_room, String phone,
-                int floor, ArrayList<String> images, ArrayList<Furniture> roomFurniture, ArrayList<Utility> roomUtilities,
-                long price_electric, long price_water, long price_internet) {
-        this.id_own_post = id_own_post;
-        this.id_room = id_room;
-        this.title_room = title_room;
-        this.price_room = price_room;
+    public Room(String ownerID, String roomID, String roomTitle, long roomPrice, Address address, int roomSize, long roomDeposit,
+                String description, String gender, int park_slot, int people_in_room, int roomStatus, String roomType, String phone,
+                int floor, ArrayList<String> images, ArrayList<Furniture> Furniture, ArrayList<Utility> Utilities,
+                long electricPrice, long waterPrice, long internetPrice) {
+        this.ownerID = ownerID;
+        this.roomID = roomID;
+        this.roomTitle = roomTitle;
+        this.roomPrice = roomPrice;
         this.address = address;
-        this.area_room = area_room;
-        this.deposit_room = deposit_room;
-        this.description_room = description_room;
-        this.gender_room = gender_room;
+        this.roomSize = roomSize;
+        this.roomDeposit = roomDeposit;
+        this.description = description;
+        this.gender = gender;
         this.park_slot = park_slot;
-        this.person_in_room = person_in_room;
-        this.status_room = status_room;
-        this.type_room = type_room;
+        this.people_in_room = people_in_room;
+        this.roomStatus = roomStatus;
+        this.roomType = roomType;
         this.phone = phone;
         this.floor = floor;
-        this.price_electric = price_electric;
-        this.price_water = price_water;
-        this.price_internet = price_internet;
+        this.electricPrice = electricPrice;
+        this.waterPrice = waterPrice;
+        this.internetPrice = internetPrice;
         this.images = images;
-        this.roomFurniture = roomFurniture;
-        this.roomUtilities = roomUtilities;
+        this.Furniture = Furniture;
+        this.Utilities = Utilities;
     }
 
-    public long getPrice_electric() {
-        return price_electric;
+    public long getElectricPrice() {
+        return electricPrice;
     }
 
-    public void setPrice_electric(long price_electric) {
-        this.price_electric = price_electric;
+    public void setElectricPrice(long price_electric) {
+        this.electricPrice = price_electric;
     }
 
-    public long getPrice_water() {
-        return price_water;
+    public long getWaterPrice() {
+        return waterPrice;
     }
 
-    public void setPrice_water(long price_water) {
-        this.price_water = price_water;
+    public void setWaterPrice(long price_water) {
+        this.waterPrice = price_water;
     }
 
-    public long getPrice_internet() {
-        return price_internet;
+    public long getInternetPrice() {
+        return internetPrice;
     }
 
-    public void setPrice_internet(long price_internet) {
-        this.price_internet = price_internet;
+    public void setInternetPrice(long price_internet) {
+        this.internetPrice = price_internet;
     }
 
-    public String getId_room() {
-        return id_room;
+    public String getRoomID() {
+        return roomID;
     }
 
-    public void setId_room(String id_room) {
-        this.id_room = id_room;
+    public void setRoomID(String id_room) {
+        this.roomID = id_room;
     }
 
-    public String getTitle_room() {
-        return title_room;
+    public String getRoomTitle() {
+        return roomTitle;
     }
 
-    public void setTitle_room(String title_room) {
-        this.title_room = title_room;
+    public void setRoomTitle(String title_room) {
+        this.roomTitle = title_room;
     }
 
-    public long getPrice_room() {
-        return price_room;
+    public long getRoomPrice() {
+        return roomPrice;
     }
 
-    public void setPrice_room(long price_room) {
-        this.price_room = price_room;
+    public void setRoomPrice(long price_room) {
+        this.roomPrice = price_room;
     }
 
     public Address getAddress() {
@@ -98,68 +98,68 @@ public class Room {
         this.address = address;
     }
 
-    public int getArea_room() {
-        return area_room;
+    public int getRoomSize() {
+        return roomSize;
     }
 
-    public void setArea_room(int area_room) {
-        this.area_room = area_room;
+    public void setRoomSize(int area_room) {
+        this.roomSize = area_room;
     }
 
-    public long getDeposit_room() {
-        return deposit_room;
+    public long getRoomDeposit() {
+        return roomDeposit;
     }
 
-    public void setDeposit_room(long deposit_room) {
-        this.deposit_room = deposit_room;
+    public void setRoomDeposit(long deposit_room) {
+        this.roomDeposit = deposit_room;
     }
 
-    public String getDescription_room() {
-        return description_room;
+    public String getDescription() {
+        return description;
     }
 
-    public void setDescription_room(String description_room) {
-        this.description_room = description_room;
+    public void setDescription(String description_room) {
+        this.description = description_room;
     }
 
-    public String getGender_room() {
-        return gender_room;
+    public String getGender() {
+        return gender;
     }
 
-    public void setGender_room(String gender_room) {
-        this.gender_room = gender_room;
+    public void setGender(String gender_room) {
+        this.gender = gender_room;
     }
 
-    public int getPark_slot() {
+    public int getParkingSlot() {
         return park_slot;
     }
 
-    public void setPark_slot(int park_slot) {
+    public void setParkingSlot(int park_slot) {
         this.park_slot = park_slot;
     }
 
-    public int getPerson_in_room() {
-        return person_in_room;
+    public int getPeopleInRoom() {
+        return people_in_room;
     }
 
-    public void setPerson_in_room(int person_in_room) {
-        this.person_in_room = person_in_room;
+    public void setPeopleInRoom(int person_in_room) {
+        this.people_in_room = person_in_room;
     }
 
-    public int getStatus_room() {
-        return status_room;
+    public int getRoomStatus() {
+        return roomStatus;
     }
 
-    public void setStatus_room(int status_room) {
-        this.status_room = status_room;
+    public void setRoomStatus(int status_room) {
+        this.roomStatus = status_room;
     }
 
-    public String getType_room() {
-        return type_room;
+    public String getRoomType() {
+        return roomType;
     }
 
-    public void setType_room(String type_room) {
-        this.type_room = type_room;
+    public void setRoomType(String type_room) {
+        this.roomType = type_room;
     }
 
     public String getPhone() {
@@ -182,12 +182,12 @@ public class Room {
         return images != null && !images.isEmpty() ? images.get(0) : "";
     }
     
-    public ArrayList<Furniture> getRoomFurniture() {
-        return roomFurniture;
+    public ArrayList<Furniture> getFurniture() {
+        return Furniture;
     }
 
-    public void setRoomFurniture(ArrayList<Furniture> roomFurniture) {
-        this.roomFurniture = roomFurniture;
+    public void setFurniture(ArrayList<Furniture> roomFurniture) {
+        this.Furniture = roomFurniture;
     }
 
     public int getFloor() {
@@ -198,12 +198,12 @@ public class Room {
         this.floor = floor;
     }
 
-    public ArrayList<Utility> getRoomUtilities() {
-        return roomUtilities;
+    public ArrayList<Utility> getUtilities() {
+        return Utilities;
     }
 
-    public void setRoomUtilities(ArrayList<Utility> roomUtilities) {
-        this.roomUtilities = roomUtilities;
+    public void setUtilities(ArrayList<Utility> roomUtilities) {
+        this.Utilities = roomUtilities;
     }
 
     public Object getUserLovePost() {
@@ -214,12 +214,12 @@ public class Room {
         this.userLovePost = userLovePost;
     }
 
-    public String getId_own_post() {
-        return id_own_post;
+    public String getOwnerID() {
+        return ownerID;
     }
 
-    public void setId_own_post(String id_own_post) {
-        this.id_own_post = id_own_post;
+    public void setOwnerID(String id_own_post) {
+        this.ownerID = id_own_post;
     }
 
     public int getLoveCount() {

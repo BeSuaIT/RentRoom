@@ -6,7 +6,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -448,8 +447,8 @@ public class MeetingManagementActivity extends AppCompatActivity {
 
         // Kiểm tra room có tồn tại trong danh sách availableRooms
         return availableRooms.stream()
-                .anyMatch(room -> room != null && room.getId_room() != null && 
-                         room.getId_room().equals(schedule.getIdRoom()));
+                .anyMatch(room -> room != null && room.getRoomID() != null &&
+                         room.getRoomID().equals(schedule.getIdRoom()));
     }
 
     private boolean isRelatedToCurrentUser(Meeting schedule) {

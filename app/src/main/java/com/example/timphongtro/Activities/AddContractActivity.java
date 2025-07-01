@@ -581,9 +581,9 @@ public class AddContractActivity extends AppCompatActivity {
 
                         for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                             Room room = roomSnapshot.getValue(Room.class);
-                            if (room != null && room.getStatus_room() == 0) {
+                            if (room != null && room.getRoomStatus() == 0) {
                                 roomsList.add(room);
-                                String displayText = room.getTitle_room() + " - " +
+                                String displayText = room.getRoomTitle() + " - " +
                                         room.getAddress().getAddress_combine();
                                 roomTitles.add(displayText);
                             }
@@ -640,7 +640,7 @@ public class AddContractActivity extends AppCompatActivity {
 
         Contract contract = new Contract(
                 contractId,
-                selectedRoom.getId_room(),
+                selectedRoom.getRoomID(),
                 currentUser.getUid(),
                 landlordNameEdt.getText().toString().trim(),
                 landlordPhoneEdt.getText().toString().trim(),
@@ -666,7 +666,7 @@ public class AddContractActivity extends AppCompatActivity {
     }
 
     private void updateRoomStatus() {
-        postsRef.child(selectedRoom.getId_room())
+        postsRef.child(selectedRoom.getRoomID())
                 .child("status_room")
                 .setValue(1)
                 .addOnSuccessListener(aVoid -> {

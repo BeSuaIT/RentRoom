@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -263,12 +262,12 @@ public class EditContractActivity extends AppCompatActivity {
                             Room room = roomSnapshot.getValue(Room.class);
                             if (room != null) {
                                 roomsList.add(room);
-                                String displayText = room.getTitle_room() + " - " +
+                                String displayText = room.getRoomTitle() + " - " +
                                         room.getAddress().getAddress_combine();
                                 roomTitles.add(displayText);
 
                                 // Select current contract room
-                                if (contract != null && room.getId_room().equals(contract.getRoomId())) {
+                                if (contract != null && room.getRoomID().equals(contract.getRoomId())) {
                                     selectedRoom = room;
                                 }
                             }
@@ -603,7 +602,7 @@ public class EditContractActivity extends AppCompatActivity {
         contract.setCccdBackImage(backImageUrl);
 
         if (selectedRoom != null) {
-            contract.setRoomId(selectedRoom.getId_room());
+            contract.setRoomId(selectedRoom.getRoomID());
         }
 
         contractsRef.child(contract.getContractId()).setValue(contract)
@@ -625,7 +624,7 @@ public class EditContractActivity extends AppCompatActivity {
 
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
                 .getReference("Rooms")
-                .child(selectedRoom.getId_room())
+                .child(selectedRoom.getRoomID())
                 .child("status_room");
 
         roomRef.setValue(1)

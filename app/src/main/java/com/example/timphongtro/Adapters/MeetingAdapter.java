@@ -117,7 +117,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     private void loadRoomInfo(ViewHolder holder, String roomId) {
         Room room = null;
         for (Room r : availableRooms) {
-            if (r.getId_room().equals(roomId)) {
+            if (r.getRoomID().equals(roomId)) {
                 room = r;
                 break;
             }
@@ -154,7 +154,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     }
 
     private void updateRoomUI(ViewHolder holder, Room room) {
-        holder.tvRoomTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
+        holder.tvRoomTitle.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
         if (room.getAddress() != null) {
             String address = room.getAddress().getAddress_combine();
             holder.tvAddress.setText(address);

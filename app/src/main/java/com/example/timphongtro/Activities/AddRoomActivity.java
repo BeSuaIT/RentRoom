@@ -437,30 +437,30 @@ public class AddRoomActivity extends AppCompatActivity {
         DatabaseReference myRef = database.getReference("Rooms");
 
         Map<String, Object> roomMap = new HashMap<>();
-        roomMap.put("id_own_post", room.getId_own_post());
-        roomMap.put("id_room", room.getId_room());
-        roomMap.put("title_room", room.getTitle_room());
-        roomMap.put("price_room", room.getPrice_room());
-        roomMap.put("deposit_room", room.getDeposit_room());
-        roomMap.put("area_room", room.getArea_room());
-        roomMap.put("description_room", room.getDescription_room());
-        roomMap.put("gender_room", room.getGender_room());  
-        roomMap.put("park_slot", room.getPark_slot());
-        roomMap.put("person_in_room", room.getPerson_in_room());
-        roomMap.put("status_room", room.getStatus_room());
-        roomMap.put("type_room", room.getType_room());
+        roomMap.put("ownerID", room.getOwnerID());
+        roomMap.put("roomID", room.getRoomID());
+        roomMap.put("roomTitle", room.getRoomTitle());
+        roomMap.put("roomPrice", room.getRoomPrice());
+        roomMap.put("roomDeposit", room.getRoomDeposit());
+        roomMap.put("roomSize", room.getRoomSize());
+        roomMap.put("description", room.getDescription());
+        roomMap.put("gender", room.getGender());
+        roomMap.put("park_slot", room.getParkingSlot());
+        roomMap.put("people_in_room", room.getPeopleInRoom());
+        roomMap.put("roomStatus", room.getRoomStatus());
+        roomMap.put("roomType", room.getRoomType());
         roomMap.put("phone", room.getPhone());
         roomMap.put("floor", room.getFloor());
-        roomMap.put("price_electric", room.getPrice_electric());
-        roomMap.put("price_water", room.getPrice_water());
-        roomMap.put("price_internet", room.getPrice_internet());
+        roomMap.put("electricPrice", room.getElectricPrice());
+        roomMap.put("waterPrice", room.getWaterPrice());
+        roomMap.put("internetPrice", room.getInternetPrice());
         roomMap.put("address", room.getAddress());
-        roomMap.put("roomFurniture", room.getRoomFurniture());
-        roomMap.put("roomUtilities", room.getRoomUtilities());
+        roomMap.put("Furniture", room.getFurniture());
+        roomMap.put("Utilities", room.getUtilities());
         roomMap.put("images", room.getImages());
         roomMap.put("timestamp", System.currentTimeMillis());
 
-        myRef.child(room.getId_room()).setValue(roomMap)
+        myRef.child(room.getRoomID()).setValue(roomMap)
                 .addOnSuccessListener(unused -> {
                     Toast.makeText(AddRoomActivity.this, "Đăng thông tin phòng thành công", Toast.LENGTH_SHORT).show();
                     finish();

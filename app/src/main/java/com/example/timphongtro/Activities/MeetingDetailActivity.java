@@ -320,11 +320,11 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private void updateRoomUI() {
         if (room == null) return;
 
-        PostTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
-        String formattedPrice = decimalFormat.format(room.getPrice_room()) + " đ/tháng";
+        PostTitle.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
+        String formattedPrice = decimalFormat.format(room.getRoomPrice()) + " đ/tháng";
         RoomCost.setText(formattedPrice);
-        DienTich.setText(room.getArea_room()  + " m²");
-        Size.setText(room.getPerson_in_room() + " người");
+        DienTich.setText(room.getRoomSize()  + " m²");
+        Size.setText(room.getPeopleInRoom() + " người");
 
         if (room.getAddress() != null) {
             String address = room.getAddress().getDistrict() + ", " + room.getAddress().getCity();
@@ -353,7 +353,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         
         DatabaseReference userRef = FirebaseDatabase.getInstance()
             .getReference("Users")
-            .child(room.getId_own_post());
+            .child(room.getOwnerID());
 
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -435,8 +435,8 @@ public class MeetingDetailActivity extends AppCompatActivity {
                 intent.putExtra("DataRoom", roomJson);
                 startActivity(intent);
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                if (currentUser != null && room.getId_room() != null) {
-                    saveToUserHistory(currentUser.getUid(), room.getId_room());
+                if (currentUser != null && room.getRoomID() != null) {
+                    saveToUserHistory(currentUser.getUid(), room.getRoomID());
                 }
             }
         }
@@ -480,7 +480,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         // Fallback nếu chưa load owner user
         if (room != null) {
             Intent intent = new Intent(this, UserActivity.class);
-            intent.putExtra("id_own_post", room.getId_own_post());
+            intent.putExtra("id_own_post", room.getOwnerID());
             intent.putExtra("fallbackMode", true);
             startActivity(intent);
         } else {

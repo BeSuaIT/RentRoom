@@ -51,10 +51,10 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Room room = list.get(position);
 
-        holder.title_room.setText(room.getTitle_room());
-        holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
-        holder.area_room.setText(String.valueOf(room.getArea_room()));
-        holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
+        holder.title_room.setText(room.getRoomTitle());
+        holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
+        holder.area_room.setText(String.valueOf(room.getRoomSize()));
+        holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
 
         if (room.getImages() != null && room.getFirstImage() != null) {
             Glide.with(context)
@@ -75,7 +75,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         holder.cardViewRoom.setOnClickListener(v -> {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user != null) {
-                saveToRecentlyRead(user.getUid(), room.getId_room());
+                saveToRecentlyRead(user.getUid(), room.getRoomID());
             }
             navigateToDetail(room);
         });

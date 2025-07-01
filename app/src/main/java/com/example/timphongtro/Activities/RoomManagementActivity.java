@@ -113,8 +113,8 @@ public class RoomManagementActivity extends AppCompatActivity {
 
     private boolean isValidRoom(Room room) {
         return room != null 
-            && currentUser.getUid().equals(room.getId_own_post()) 
-            && room.getStatus_room() == currentStatus;
+            && currentUser.getUid().equals(room.getOwnerID())
+            && room.getRoomStatus() == currentStatus;
     }
 
     private void updateViewVisibility() {

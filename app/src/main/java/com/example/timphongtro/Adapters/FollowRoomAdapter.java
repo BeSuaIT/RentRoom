@@ -65,9 +65,9 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
             holder.roomImage.setImageResource(R.drawable.img_no_image);
         }
 
-        holder.roomTitle.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
+        holder.roomTitle.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
         holder.roomPrice.setText(String.format("%s đ/tháng",
-                decimalFormat.format(room.getPrice_room())));
+                decimalFormat.format(room.getRoomPrice())));
 
         if (room.getAddress() != null && room.getAddress().getAddress_combine() != null) {
             holder.roomAddress.setText(room.getAddress().getAddress_combine());
@@ -75,7 +75,7 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
             holder.roomAddress.setText("Địa chỉ không xác định");
         }
 
-        if (room.getStatus_room() == 0) {
+        if (room.getRoomStatus() == 0) {
             holder.roomStatus.setText("Còn trống");
             holder.roomStatus.setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(context, R.color.status_available)));
@@ -94,8 +94,8 @@ public class FollowRoomAdapter extends RecyclerView.Adapter<FollowRoomAdapter.Vi
                 context.startActivity(intent);
 
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                if (currentUser != null && room.getId_room() != null) {
-                    saveToUserHistory(currentUser.getUid(), room.getId_room());
+                if (currentUser != null && room.getRoomID() != null) {
+                    saveToUserHistory(currentUser.getUid(), room.getRoomID());
                 }
             } else {
                 Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();

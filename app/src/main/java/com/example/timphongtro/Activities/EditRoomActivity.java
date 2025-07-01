@@ -205,18 +205,18 @@ public class EditRoomActivity extends AppCompatActivity {
     private void populateDataFromRoom() {
         if (roomData == null) return;
 
-        edtTitleRoom.setText(roomData.getTitle_room() != null ? roomData.getTitle_room() : "");
-        edtPrice.setText(String.valueOf(roomData.getPrice_room()));
-        edtDeposit.setText(String.valueOf(roomData.getDeposit_room()));
-        edtArea.setText(String.valueOf(roomData.getArea_room()));
+        edtTitleRoom.setText(roomData.getRoomTitle() != null ? roomData.getRoomTitle() : "");
+        edtPrice.setText(String.valueOf(roomData.getRoomPrice()));
+        edtDeposit.setText(String.valueOf(roomData.getRoomDeposit()));
+        edtArea.setText(String.valueOf(roomData.getRoomSize()));
         edtPhone.setText(roomData.getPhone() != null ? roomData.getPhone() : "");
         edtFloor.setText(String.valueOf(roomData.getFloor()));
-        edtPerson.setText(String.valueOf(roomData.getPerson_in_room()));
-        edtDescriptionRoom.setText(roomData.getDescription_room() != null ? roomData.getDescription_room() : "");
-        edtPark.setText(String.valueOf(roomData.getPark_slot()));
-        edtElectric.setText(String.valueOf(roomData.getPrice_electric()));
-        edtWater.setText(String.valueOf(roomData.getPrice_water()));
-        edtInternet.setText(String.valueOf(roomData.getPrice_internet()));
+        edtPerson.setText(String.valueOf(roomData.getPeopleInRoom()));
+        edtDescriptionRoom.setText(roomData.getDescription() != null ? roomData.getDescription() : "");
+        edtPark.setText(String.valueOf(roomData.getParkingSlot()));
+        edtElectric.setText(String.valueOf(roomData.getElectricPrice()));
+        edtWater.setText(String.valueOf(roomData.getWaterPrice()));
+        edtInternet.setText(String.valueOf(roomData.getInternetPrice()));
 
         address = roomData.getAddress();
         if (address != null) {
@@ -226,7 +226,7 @@ public class EditRoomActivity extends AppCompatActivity {
             edtAddress.setText("");
         }
 
-        String gender = roomData.getGender_room();
+        String gender = roomData.getGender();
         if (gender != null) {
             genderCheckboxes[0].setChecked(gender.contains("Nam"));
             genderCheckboxes[1].setChecked(gender.contains("Nữ"));
@@ -235,14 +235,14 @@ public class EditRoomActivity extends AppCompatActivity {
             genderCheckboxes[1].setChecked(true);
         }
 
-        String roomType = roomData.getType_room();
+        String roomType = roomData.getRoomType();
         if ("Chung cư Mini".equals(roomType)) {
             radioGroupType.check(R.id.radiobtnChungCu);
         } else {
             radioGroupType.check(R.id.radiobtnTro);
         }
 
-        radioGroupState.check(roomData.getStatus_room() == 1 ? R.id.radiobtnUnavailable : R.id.radiobtnAvailable);
+        radioGroupState.check(roomData.getRoomStatus() == 1 ? R.id.radiobtnUnavailable : R.id.radiobtnAvailable);
 
         if (roomData.getImages() != null && !roomData.getImages().isEmpty()) {
             uploadedImageUrls = new ArrayList<>(roomData.getImages());
@@ -255,8 +255,8 @@ public class EditRoomActivity extends AppCompatActivity {
             imageAdapter.notifyDataSetChanged();
         }
 
-        setUtilityCheckboxes(roomData.getRoomUtilities());
-        setFurnitureCheckboxes(roomData.getRoomFurniture());
+        setUtilityCheckboxes(roomData.getUtilities());
+        setFurnitureCheckboxes(roomData.getFurniture());
     }
 
     private void setupCitySpinner() {
@@ -848,8 +848,8 @@ public class EditRoomActivity extends AppCompatActivity {
         try {
             if (roomData == null) return null;
 
-            String id_room = roomData.getId_room();
-            String id_own_post = roomData.getId_own_post();
+            String roomID = roomData.getRoomID();
+            String ownerID = roomData.getOwnerID();
 
             String city = "";
             String district = "";
@@ -915,8 +915,8 @@ public class EditRoomActivity extends AppCompatActivity {
             }
 
             return new Room(
-                    id_own_post,
-                    id_room,
+                    ownerID,
+                    roomID,
                     edtTitleRoom.getText().toString(),
                     price,
                     address,
@@ -950,29 +950,29 @@ public class EditRoomActivity extends AppCompatActivity {
         }
 
         DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
-        DatabaseReference roomRef = postsRef.child(room.getId_room());
+        DatabaseReference roomRef = postsRef.child(room.getRoomID());
 
         Map<String, Object> roomMap = new HashMap<>();
-        roomMap.put("id_own_post", room.getId_own_post());
-        roomMap.put("id_room", room.getId_room());
-        roomMap.put("title_room", room.getTitle_room());
-        roomMap.put("price_room", room.getPrice_room());
-        roomMap.put("deposit_room", room.getDeposit_room());
-        roomMap.put("area_room", room.getArea_room());
-        roomMap.put("description_room", room.getDescription_room());
-        roomMap.put("gender_room", room.getGender_room());
-        roomMap.put("park_slot", room.getPark_slot());
-        roomMap.put("person_in_room", room.getPerson_in_room());
-        roomMap.put("status_room", room.getStatus_room());
-        roomMap.put("type_room", room.getType_room());
+        roomMap.put("id_own_post", room.getOwnerID());
+        roomMap.put("id_room", room.getRoomID());
+        roomMap.put("title_room", room.getRoomTitle());
+        roomMap.put("price_room", room.getRoomPrice());
+        roomMap.put("deposit_room", room.getRoomDeposit());
+        roomMap.put("area_room", room.getRoomSize());
+        roomMap.put("description_room", room.getDescription());
+        roomMap.put("gender_room", room.getGender());
+        roomMap.put("park_slot", room.getParkingSlot());
+        roomMap.put("person_in_room", room.getPeopleInRoom());
+        roomMap.put("status_room", room.getRoomStatus());
+        roomMap.put("type_room", room.getRoomType());
         roomMap.put("phone", room.getPhone());
         roomMap.put("floor", room.getFloor());
-        roomMap.put("price_electric", room.getPrice_electric());
-        roomMap.put("price_water", room.getPrice_water());
-        roomMap.put("price_internet", room.getPrice_internet());
+        roomMap.put("price_electric", room.getElectricPrice());
+        roomMap.put("price_water", room.getWaterPrice());
+        roomMap.put("price_internet", room.getInternetPrice());
         roomMap.put("address", room.getAddress());
-        roomMap.put("roomFurniture", room.getRoomFurniture());
-        roomMap.put("roomUtilities", room.getRoomUtilities());
+        roomMap.put("roomFurniture", room.getFurniture());
+        roomMap.put("roomUtilities", room.getUtilities());
         roomMap.put("images", room.getImages());
         roomMap.put("timestamp", System.currentTimeMillis());
 

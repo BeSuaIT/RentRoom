@@ -51,10 +51,10 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
         
         Room room = list.get(position);
         if (room != null) {
-            holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
-            holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
-            holder.area_room.setText(String.valueOf(room.getArea_room()));
-            holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
+            holder.title_room.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
+            holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
+            holder.area_room.setText(String.valueOf(room.getRoomSize()));
+            holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
 
             String firstImage = room.getFirstImage();
             if (firstImage != null && !firstImage.isEmpty()) {
@@ -93,7 +93,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
             holder.textViewDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("Xác nhận xóa")
-                        .setMessage("Bạn chắc chắn muốn xóa phòng \"" + room.getTitle_room() + "\" không?\n\nViệc này không thể hoàn tác.")
+                        .setMessage("Bạn chắc chắn muốn xóa phòng \"" + room.getRoomTitle() + "\" không?\n\nViệc này không thể hoàn tác.")
                         .setPositiveButton("Xóa", (dialog, which) -> {
                             deleteRoom(room, holder);
                         })
@@ -115,7 +115,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
     }
 
     private void deleteRoom(Room room, MyViewHolder holder) {
-        if (room == null || room.getId_room() == null) {
+        if (room == null || room.getRoomID() == null) {
             Toast.makeText(context, "Lỗi: Thông tin phòng không hợp lệ", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -124,7 +124,7 @@ public class ManageRoomAdapter extends RecyclerView.Adapter<ManageRoomAdapter.My
         holder.textViewDelete.setText("Đang xóa...");
         
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference roomRef = database.getReference("Rooms/" + room.getId_room());
+        DatabaseReference roomRef = database.getReference("Rooms/" + room.getRoomID());
         
         roomRef.removeValue()
                 .addOnSuccessListener(aVoid -> {

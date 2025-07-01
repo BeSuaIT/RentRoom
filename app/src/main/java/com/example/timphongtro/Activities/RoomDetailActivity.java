@@ -204,7 +204,7 @@ public class RoomDetailActivity extends AppCompatActivity {
         }
 
         Intent intent = new Intent(RoomDetailActivity.this, UserActivity.class);
-        intent.putExtra("id_own_post", room.getId_own_post());
+        intent.putExtra("id_own_post", room.getOwnerID());
         startActivity(intent);
     }
 
@@ -265,10 +265,10 @@ public class RoomDetailActivity extends AppCompatActivity {
     private void displayRoomDetails() {
         if (room == null) return;
 
-        roomTypeTextView.setText(room.getType_room() != null ? room.getType_room() : "Loại phòng");
-        roomTitleTextView.setText(room.getTitle_room() != null ? room.getTitle_room() : "Tiêu đề phòng");
+        roomTypeTextView.setText(room.getRoomType() != null ? room.getRoomType() : "Loại phòng");
+        roomTitleTextView.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Tiêu đề phòng");
         
-        long price = room.getPrice_room();
+        long price = room.getRoomPrice();
         DecimalFormat decimalFormat = new DecimalFormat("#,###.###");
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
         String priceNumber = decimalFormat.format(price) + " đ/tháng";
@@ -282,14 +282,14 @@ public class RoomDetailActivity extends AppCompatActivity {
         
         phoneTextView.setText(maskPhoneNumber(room.getPhone()));
         floorTextView.setText(String.valueOf(room.getFloor()));
-        roomAreaTextView.setText(String.valueOf(room.getArea_room()));
-        depositTextView.setText(decimalFormat.format(room.getDeposit_room()));
-        capacityTextView.setText(String.valueOf(room.getPerson_in_room()));
-        genderTextView.setText(room.getGender_room() != null ? room.getGender_room() : "Không xác định");
-        waterPriceTextView.setText(decimalFormat.format(room.getPrice_water()));
-        internetPriceTextView.setText(decimalFormat.format(room.getPrice_internet()));
-        electricPriceTextView.setText(decimalFormat.format(room.getPrice_electric()));
-        roomDescriptionTextView.setText(room.getDescription_room() != null ? room.getDescription_room() : "Không có mô tả");
+        roomAreaTextView.setText(String.valueOf(room.getRoomSize()));
+        depositTextView.setText(decimalFormat.format(room.getRoomDeposit()));
+        capacityTextView.setText(String.valueOf(room.getPeopleInRoom()));
+        genderTextView.setText(room.getGender() != null ? room.getGender() : "Không xác định");
+        waterPriceTextView.setText(decimalFormat.format(room.getWaterPrice()));
+        internetPriceTextView.setText(decimalFormat.format(room.getInternetPrice()));
+        electricPriceTextView.setText(decimalFormat.format(room.getElectricPrice()));
+        roomDescriptionTextView.setText(room.getDescription() != null ? room.getDescription() : "Không có mô tả");
     }
 
     private String maskPhoneNumber(String phoneNumber) {
@@ -328,16 +328,16 @@ public class RoomDetailActivity extends AppCompatActivity {
     }
 
     private void setupAdapters() {
-        if (room.getRoomFurniture() != null) {
-            furnitureAdapter = new FurnitureAdapter(this, room.getRoomFurniture());
+        if (room.getFurniture() != null) {
+            furnitureAdapter = new FurnitureAdapter(this, room.getFurniture());
         } else {
             furnitureAdapter = new FurnitureAdapter(this, new ArrayList<>());
         }
         furnitureRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         furnitureRecyclerView.setAdapter(furnitureAdapter);
 
-        if (room.getRoomUtilities() != null) {
-            utilityAdapter = new UtilityAdapter(this, room.getRoomUtilities());
+        if (room.getUtilities() != null) {
+            utilityAdapter = new UtilityAdapter(this, room.getUtilities());
         } else {
             utilityAdapter = new UtilityAdapter(this, new ArrayList<>());
         }
@@ -617,7 +617,7 @@ public class RoomDetailActivity extends AppCompatActivity {
             currentUser.getUid();
         
         // Lấy Room ID suffix (nếu là timestamp format thì lấy 6 số cuối)
-        String roomSuffix = room.getId_room();
+        String roomSuffix = room.getRoomID();
         if (roomSuffix.length() > 6) {
             roomSuffix = roomSuffix.substring(roomSuffix.length() - 6);
         }
@@ -749,13 +749,13 @@ public class RoomDetailActivity extends AppCompatActivity {
                 phone,
                 note, 
                 meetingTimestamp,
-                room.getId_own_post(), 
+                room.getOwnerID(),
                 currentUser.getUid(), 
                 0,
-                room.getId_room()
+                room.getRoomID()
             );
 
-            if (!currentUser.getUid().equals(room.getId_own_post())) {
+            if (!currentUser.getUid().equals(room.getOwnerID())) {
                 confirmButton.setEnabled(false);
                 confirmButton.setText("Đang xử lý...");
                 
@@ -778,7 +778,7 @@ public class RoomDetailActivity extends AppCompatActivity {
     }
 
     private void loadUserPostInfo() {
-        userPostReference = firebaseDatabase.getReference("Users/" + room.getId_own_post());
+        userPostReference = firebaseDatabase.getReference("Users/" + room.getOwnerID());
         
         userPostReference.addValueEventListener(new ValueEventListener() {
             @Override
@@ -798,7 +798,7 @@ public class RoomDetailActivity extends AppCompatActivity {
             }
         });
 
-        roomDatabaseRef = firebaseDatabase.getReference("Rooms/" + room.getId_room());
+        roomDatabaseRef = firebaseDatabase.getReference("Rooms/" + room.getRoomID());
     }
 
     private void updateUserProfileImage(User user) {
@@ -839,7 +839,7 @@ public class RoomDetailActivity extends AppCompatActivity {
                     .getReference("Users")
                     .child(currentUser.getUid())
                     .child("followRooms")
-                    .child(room.getId_room());
+                    .child(room.getRoomID());
 
             followRef.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
@@ -875,7 +875,7 @@ public class RoomDetailActivity extends AppCompatActivity {
                     .getReference("Users")
                     .child(currentUser.getUid())
                     .child("followRooms")
-                    .child(room.getId_room());
+                    .child(room.getRoomID());
 
             followRef.addValueEventListener(new ValueEventListener() {
                 @Override

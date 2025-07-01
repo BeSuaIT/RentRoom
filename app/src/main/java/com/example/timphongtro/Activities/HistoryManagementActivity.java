@@ -216,8 +216,8 @@ public class HistoryManagementActivity extends AppCompatActivity {
 
                     // Sort by timestamp (newest first)
                     rooms.sort((r1, r2) -> {
-                        Long t1 = timestamps.get(r1.getId_room());
-                        Long t2 = timestamps.get(r2.getId_room());
+                        Long t1 = timestamps.get(r1.getRoomID());
+                        Long t2 = timestamps.get(r2.getRoomID());
                         if (t1 == null) t1 = 0L;
                         if (t2 == null) t2 = 0L;
                         return t2.compareTo(t1);

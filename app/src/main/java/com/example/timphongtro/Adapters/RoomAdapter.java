@@ -53,10 +53,10 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
         
         Room room = list.get(position);
 
-        holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
-        holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
-        holder.area_room.setText(String.valueOf(room.getArea_room()));
-        holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
+        holder.title_room.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
+        holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
+        holder.area_room.setText(String.valueOf(room.getRoomSize()));
+        holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
 
         ArrayList<String> images = room.getImages();
         if (images != null && !images.isEmpty()) {
@@ -90,7 +90,7 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
             if (currentUser != null) {
-                saveToUserHistory(currentUser.getUid(), room.getId_room());
+                saveToUserHistory(currentUser.getUid(), room.getRoomID());
             }
 
             Intent detailRoom = new Intent(context, RoomDetailActivity.class);

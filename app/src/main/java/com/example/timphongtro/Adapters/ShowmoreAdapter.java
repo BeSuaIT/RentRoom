@@ -52,10 +52,10 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         
         Room room = list.get(position);
 
-        holder.title_room.setText(room.getTitle_room() != null ? room.getTitle_room() : "Phòng trọ");
-        holder.price_room.setText(decimalFormat.format(room.getPrice_room()));
-        holder.area_room.setText(String.valueOf(room.getArea_room()));
-        holder.people_room.setText(String.valueOf(room.getPerson_in_room()));
+        holder.title_room.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
+        holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
+        holder.area_room.setText(String.valueOf(room.getRoomSize()));
+        holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
 
         String firstImage = room.getFirstImage();
         if (firstImage != null && !firstImage.isEmpty()) {
@@ -88,8 +88,8 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
                 detailRoom.putExtra("DataRoom", roomJson);
                 context.startActivity(detailRoom);
 
-                if (user != null && room.getId_room() != null) {
-                    saveToUserHistory(user.getUid(), room.getId_room());
+                if (user != null && room.getRoomID() != null) {
+                    saveToUserHistory(user.getUid(), room.getRoomID());
                 }
             } else {
                 Toast.makeText(context, "Lỗi mở chi tiết phòng", Toast.LENGTH_SHORT).show();

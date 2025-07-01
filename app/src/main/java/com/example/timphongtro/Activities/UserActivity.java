@@ -285,7 +285,7 @@ public class UserActivity extends AppCompatActivity {
                 if (snapshot.exists()) {
                     for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
                         Room room = roomSnapshot.getValue(Room.class);
-                        if (room != null && userId.equals(room.getId_own_post())) {
+                        if (room != null && userId.equals(room.getOwnerID())) {
                             roomArrayList.add(room);
                             totalPosts++;
 

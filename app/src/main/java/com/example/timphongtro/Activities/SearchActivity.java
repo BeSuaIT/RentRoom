@@ -236,21 +236,21 @@ public class SearchActivity extends AppCompatActivity {
         boolean isFemaleChecked = checkboxFemale.isChecked();
 
         for (Room room : roomArrayList) {
-            boolean matchesSearch = room.getTitle_room().toLowerCase().contains(searchText) ||
+            boolean matchesSearch = room.getRoomTitle().toLowerCase().contains(searchText) ||
                     room.getAddress().getDistrict().toLowerCase().contains(searchText);
             boolean matchesCity = selectedCity.isEmpty() || room.getAddress().getCity().equals(selectedCity);
             boolean matchesDistrict = selectedDistrict.isEmpty() || room.getAddress().getDistrict().equals(selectedDistrict);
-            boolean matchesRoomType = selectedRoomType.isEmpty() || room.getType_room().equals(selectedRoomType);
+            boolean matchesRoomType = selectedRoomType.isEmpty() || room.getRoomType().equals(selectedRoomType);
             boolean matchesGender;
 
             if (!isMaleChecked && !isFemaleChecked) {
                 matchesGender = true;
             } else if (isMaleChecked && !isFemaleChecked) {
-                matchesGender = room.getGender_room().equals("Nam");
+                matchesGender = room.getGender().equals("Nam");
             } else if (!isMaleChecked && isFemaleChecked) {
-                matchesGender = room.getGender_room().equals("Nữ");
+                matchesGender = room.getGender().equals("Nữ");
             } else {
-                matchesGender = room.getGender_room().equals("Nam/Nữ");
+                matchesGender = room.getGender().equals("Nam/Nữ");
             }
 
             if (matchesSearch && matchesCity && matchesDistrict && matchesRoomType && matchesGender) {
