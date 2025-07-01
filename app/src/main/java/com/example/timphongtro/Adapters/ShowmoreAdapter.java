@@ -55,7 +55,7 @@ public class ShowmoreAdapter extends RecyclerView.Adapter<ShowmoreAdapter.MyView
         holder.title_room.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
         holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
         holder.area_room.setText(String.valueOf(room.getRoomSize()));
-        holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
+        holder.people_room.setText(String.valueOf(room.getpeople_in_room()));
 
         String firstImage = room.getFirstImage();
         if (firstImage != null && !firstImage.isEmpty()) {

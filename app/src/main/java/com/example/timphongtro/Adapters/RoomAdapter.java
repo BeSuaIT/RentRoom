@@ -32,7 +32,6 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
     Context context;
     ArrayList<Room> list;
     int maxitemcount = 10;
-    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
     public RoomAdapter(Context context, ArrayList<Room> list) {
         this.context = context;
@@ -55,8 +54,8 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.MyViewHolder> 
 
         holder.title_room.setText(room.getRoomTitle() != null ? room.getRoomTitle() : "Phòng trọ");
         holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
-        holder.area_room.setText(String.valueOf(room.getRoomSize()));
-        holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
+        holder.area_room.setText(room.getRoomSize() + " m²");
+        holder.people_room.setText(room.getpeople_in_room() + " người");
 
         ArrayList<String> images = room.getImages();
         if (images != null && !images.isEmpty()) {

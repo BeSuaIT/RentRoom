@@ -211,9 +211,9 @@ public class EditRoomActivity extends AppCompatActivity {
         edtArea.setText(String.valueOf(roomData.getRoomSize()));
         edtPhone.setText(roomData.getPhone() != null ? roomData.getPhone() : "");
         edtFloor.setText(String.valueOf(roomData.getFloor()));
-        edtPerson.setText(String.valueOf(roomData.getPeopleInRoom()));
+        edtPerson.setText(String.valueOf(roomData.getpeople_in_room()));
         edtDescriptionRoom.setText(roomData.getDescription() != null ? roomData.getDescription() : "");
-        edtPark.setText(String.valueOf(roomData.getParkingSlot()));
+        edtPark.setText(String.valueOf(roomData.getpark_slot()));
         edtElectric.setText(String.valueOf(roomData.getElectricPrice()));
         edtWater.setText(String.valueOf(roomData.getWaterPrice()));
         edtInternet.setText(String.valueOf(roomData.getInternetPrice()));
@@ -961,8 +961,8 @@ public class EditRoomActivity extends AppCompatActivity {
         roomMap.put("area_room", room.getRoomSize());
         roomMap.put("description_room", room.getDescription());
         roomMap.put("gender_room", room.getGender());
-        roomMap.put("park_slot", room.getParkingSlot());
-        roomMap.put("person_in_room", room.getPeopleInRoom());
+        roomMap.put("park_slot", room.getpark_slot());
+        roomMap.put("person_in_room", room.getpeople_in_room());
         roomMap.put("status_room", room.getRoomStatus());
         roomMap.put("type_room", room.getRoomType());
         roomMap.put("phone", room.getPhone());

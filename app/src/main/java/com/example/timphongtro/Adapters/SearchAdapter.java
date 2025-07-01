@@ -54,7 +54,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.MyViewHold
         holder.title_room.setText(room.getRoomTitle());
         holder.price_room.setText(decimalFormat.format(room.getRoomPrice()));
         holder.area_room.setText(String.valueOf(room.getRoomSize()));
-        holder.people_room.setText(String.valueOf(room.getPeopleInRoom()));
+        holder.people_room.setText(String.valueOf(room.getpeople_in_room()));
 
         if (room.getImages() != null && room.getFirstImage() != null) {
             Glide.with(context)

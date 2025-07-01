@@ -130,20 +130,20 @@ public class Room {
         this.gender = gender_room;
     }
 
-    public int getParkingSlot() {
+    public int getpark_slot() {
         return park_slot;
     }
 
-    public void setParkingSlot(int park_slot) {
+    public void setpark_slot(int park_slot) {
         this.park_slot = park_slot;
     }
 
-    public int getPeopleInRoom() {
+    public int getpeople_in_room() {
         return people_in_room;
     }
 
-    public void setPeopleInRoom(int person_in_room) {
-        this.people_in_room = person_in_room;
+    public void setpeople_in_room(int people_in_room) {
+        this.people_in_room = people_in_room;
     }
 
     public int getRoomStatus() {

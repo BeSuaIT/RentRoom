@@ -445,8 +445,8 @@ public class AddRoomActivity extends AppCompatActivity {
         roomMap.put("roomSize", room.getRoomSize());
         roomMap.put("description", room.getDescription());
         roomMap.put("gender", room.getGender());
-        roomMap.put("park_slot", room.getParkingSlot());
-        roomMap.put("people_in_room", room.getPeopleInRoom());
+        roomMap.put("park_slot", room.getpark_slot());
+        roomMap.put("people_in_room", room.getpeople_in_room());
         roomMap.put("roomStatus", room.getRoomStatus());
         roomMap.put("roomType", room.getRoomType());
         roomMap.put("phone", room.getPhone());

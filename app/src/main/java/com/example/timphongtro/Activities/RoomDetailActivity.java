@@ -73,7 +73,7 @@ public class RoomDetailActivity extends AppCompatActivity {
     private TextView roomTitleTextView, priceTextView, addressCombinedTextView, phoneTextView, roomTypeTextView,
             floorTextView, roomAreaTextView, depositTextView, capacityTextView, genderTextView,
             waterPriceTextView, internetPriceTextView, electricPriceTextView, roomDescriptionTextView,
-            userNameTextView, scheduleTime, userProfileTextView, loveTextView, scheduleDate;
+            userNameTextView, scheduleTime, userProfileTextView, loveTextView, scheduleDate, parkSlotTextView;
     private RecyclerView furnitureRecyclerView, utilityRecyclerView;
     private ImageView imageViewBack, imageViewLove;
     private Button callButton, scheduleVisitButton;
@@ -154,6 +154,7 @@ public class RoomDetailActivity extends AppCompatActivity {
         roomAreaTextView = findViewById(R.id.roomAreaTextView);
         depositTextView = findViewById(R.id.depositTextView);
         capacityTextView = findViewById(R.id.capacityTextView);
+        parkSlotTextView = findViewById(R.id.parkSlotTextView);
         genderTextView = findViewById(R.id.genderTextView);
         furnitureRecyclerView = findViewById(R.id.furnitureRecyclerView);
         utilityRecyclerView = findViewById(R.id.utilityRecyclerView);
@@ -284,7 +285,8 @@ public class RoomDetailActivity extends AppCompatActivity {
         floorTextView.setText(String.valueOf(room.getFloor()));
         roomAreaTextView.setText(String.valueOf(room.getRoomSize()));
         depositTextView.setText(decimalFormat.format(room.getRoomDeposit()));
-        capacityTextView.setText(String.valueOf(room.getPeopleInRoom()));
+        capacityTextView.setText(String.valueOf(room.getpeople_in_room()));
+        parkSlotTextView.setText(String.valueOf(room.getpark_slot()));
         genderTextView.setText(room.getGender() != null ? room.getGender() : "Không xác định");
         waterPriceTextView.setText(decimalFormat.format(room.getWaterPrice()));
         internetPriceTextView.setText(decimalFormat.format(room.getInternetPrice()));

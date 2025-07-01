@@ -309,6 +309,34 @@
                                 android:textStyle="bold"
                                 tools:text="2"/>
                         </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_columnWeight="1"
+                            android:layout_margin="8dp"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_parking"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Chỗ để xe"/>
+
+                            <TextView
+                                android:id="@+id/parkSlotTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                tools:text="2"/>
+                        </LinearLayout>
                     </GridLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

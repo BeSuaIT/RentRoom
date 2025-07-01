@@ -324,7 +324,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         String formattedPrice = decimalFormat.format(room.getRoomPrice()) + " đ/tháng";
         RoomCost.setText(formattedPrice);
         DienTich.setText(room.getRoomSize()  + " m²");
-        Size.setText(room.getPeopleInRoom() + " người");
+        Size.setText(room.getpeople_in_room() + " người");
 
         if (room.getAddress() != null) {
             String address = room.getAddress().getDistrict() + ", " + room.getAddress().getCity();
