@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.timphongtro.Activities.ServiceDetailActivity;
+import com.example.timphongtro.Models.Cart;
 import com.example.timphongtro.Models.Service;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
@@ -31,6 +32,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceViewHolder> {
 
@@ -143,28 +145,28 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
             return;
         }
 
-        DatabaseReference cartRef = FirebaseDatabase.getInstance()
-                .getReference("Carts")
-                .child(userId)
-                .child(service.getId_seller());
+        DatabaseReference cartsRef = FirebaseDatabase.getInstance().getReference("Carts");
 
-        cartRef.child(service.getServiceId()).addListenerForSingleValueEvent(new ValueEventListener() {
+        cartsRef.orderByChild("buyerId").equalTo(userId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                try {
-                    if (dataSnapshot.exists()) {
-                        Integer currentAmount = dataSnapshot.getValue(Integer.class);
-                        int newAmount = (currentAmount != null ? currentAmount : 0) + 1;
-                        cartRef.child(service.getServiceId()).setValue(newAmount);
-                    } else {
-                        cartRef.child(service.getServiceId()).setValue(1);
+                Cart existingCart = null;
+                String existingCartId = null;
+
+                for (DataSnapshot cartSnapshot : dataSnapshot.getChildren()) {
+                    Cart cart = cartSnapshot.getValue(Cart.class);
+                    if (cart != null && service.getId_seller().equals(cart.getSellerId())) {
+                        existingCart = cart;
+                        existingCartId = cartSnapshot.getKey();
+                        break;
                     }
-                    
-                    String serviceName = service.getTitle() != null ? service.getTitle() : "Dịch vụ";
-                    Toast.makeText(context, serviceName + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
-                    
-                } catch (Exception e) {
-                    Toast.makeText(context, "Lỗi thêm vào giỏ hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+
+                if (existingCart != null && existingCartId != null) {
+                    updateExistingCart(cartsRef, existingCartId, existingCart, service);
+                } else {
+                    createNewCart(cartsRef, userId, service);
                 }
             }
 
@@ -173,6 +175,35 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
                 Toast.makeText(context, "Không thể thêm vào giỏ hàng: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void updateExistingCart(DatabaseReference cartsRef, String cartId, Cart existingCart, Service service) {
+        Map<String, Integer> cartItems = existingCart.getCartItems();
+        int currentAmount = cartItems.getOrDefault(service.getServiceId(), 0);
+        cartItems.put(service.getServiceId(), currentAmount + 1);
+
+        cartsRef.child(cartId).child("cartItems").setValue(cartItems)
+                .addOnSuccessListener(aVoid -> {
+                    String serviceName = service.getTitle() != null ? service.getTitle() : "Dịch vụ";
+                    Toast.makeText(context, serviceName + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Lỗi thêm vào giỏ hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void createNewCart(DatabaseReference cartsRef, String userId, Service service) {
+        Cart newCart = new Cart(userId, service.getId_seller());
+        newCart.addOrUpdateItem(service.getServiceId(), 1);
+
+        cartsRef.child(newCart.getCartId()).setValue(newCart)
+                .addOnSuccessListener(aVoid -> {
+                    String serviceName = service.getTitle() != null ? service.getTitle() : "Dịch vụ";
+                    Toast.makeText(context, serviceName + " đã thêm vào giỏ hàng!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Lỗi thêm vào giỏ hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void navigateToServiceDetail(Service service) {

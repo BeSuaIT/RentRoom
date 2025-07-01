@@ -1,79 +1,75 @@
 package com.example.timphongtro.Models;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Cart {
-    private String serviceId, title, id_seller;
-    private int amount, price;
-    private ArrayList<String> images;
-
-    public Cart(String serviceId, String title, String id_seller, int amount, int price, ArrayList<String> images) {
-        this.serviceId = serviceId;
-        this.title = title;
-        this.id_seller = id_seller;
-        this.amount = amount;
-        this.price = price;
-        this.images = images;
-    }
+    private String cartId;
+    private String buyerId;
+    private String sellerId;
+    private Map<String, Integer> cartItems;
 
     public Cart() {
+        this.cartItems = new HashMap<>();
     }
 
-    public String getServiceId() {
-        return serviceId;
+    public Cart(String buyerId, String sellerId) {
+        this.cartId = generateCartId();
+        this.buyerId = buyerId;
+        this.sellerId = sellerId;
+        this.cartItems = new HashMap<>();
     }
 
-    public void setServiceId(String serviceId) {
-        this.serviceId = serviceId;
+    public Cart(String cartId, String buyerId, String sellerId) {
+        this.cartId = cartId;
+        this.buyerId = buyerId;
+        this.sellerId = sellerId;
+        this.cartItems = new HashMap<>();
     }
 
-    public String getTitle() {
-        return title;
+    public static String generateCartId() {
+        return "CART_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getId_seller() {
-        return id_seller;
-    }
-
-    public void setId_seller(String id_seller) {
-        this.id_seller = id_seller;
-    }
-
-    public int getAmount() {
-        return amount;
-    }
-
-    public void setAmount(int amount) {
-        this.amount = amount;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public ArrayList<String> getImages() {
-        return images;
-    }
-
-    public void setImages(Object imagesObj) {
-        if (imagesObj == null) {
-            this.images = new ArrayList<>();
-        } else if (imagesObj instanceof ArrayList) {
-            this.images = (ArrayList<String>) imagesObj;
-        } else if (imagesObj instanceof Map) {
-            Map<String, String> map = (Map<String, String>) imagesObj;
-            this.images = new ArrayList<>(map.values());
+    public void addOrUpdateItem(String serviceId, int amount) {
+        if (cartItems.containsKey(serviceId)) {
+            int currentAmount = cartItems.get(serviceId);
+            cartItems.put(serviceId, currentAmount + amount);
         } else {
-            this.images = new ArrayList<>();
+            cartItems.put(serviceId, amount);
         }
+    }
+
+    public String getCartId() {
+        return cartId;
+    }
+
+    public void setCartId(String cartId) {
+        this.cartId = cartId;
+    }
+
+    public String getBuyerId() {
+        return buyerId;
+    }
+
+    public void setBuyerId(String buyerId) {
+        this.buyerId = buyerId;
+    }
+
+    public String getSellerId() {
+        return sellerId;
+    }
+
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
+
+    public Map<String, Integer> getCartItems() {
+        return cartItems != null ? cartItems : new HashMap<>();
+    }
+
+    public void setCartItems(Map<String, Integer> cartItems) {
+        this.cartItems = cartItems != null ? cartItems : new HashMap<>();
     }
 }

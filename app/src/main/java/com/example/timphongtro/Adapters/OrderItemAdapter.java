@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.timphongtro.Models.Cart;
+import com.example.timphongtro.Models.CartItem;
 import com.example.timphongtro.R;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -28,19 +28,20 @@ import java.util.Map;
 
 public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.SellerViewHolder> {
     private final Context context;
-    private final Map<String, List<Cart>> sellerItemsMap;
+    private final Map<String, List<CartItem>> sellerItemsMap;
     private final List<String> sellerIds;
     private final DecimalFormat decimalFormat;
 
-    public OrderItemAdapter(Context context, List<Cart> orderItems) {
+    public OrderItemAdapter(Context context, List<CartItem> orderItems) {
         this.context = context;
         this.decimalFormat = new DecimalFormat("#,###.###");
         this.decimalFormat.setDecimalSeparatorAlwaysShown(false);
         this.sellerItemsMap = new HashMap<>();
         this.sellerIds = new ArrayList<>();
 
+        // Group by sellerId từ CartItem
         orderItems.forEach(item -> {
-            String sellerId = item.getId_seller();
+            String sellerId = item.getSellerId();
             sellerItemsMap.computeIfAbsent(sellerId, k -> new ArrayList<>()).add(item);
             if (!sellerIds.contains(sellerId)) {
                 sellerIds.add(sellerId);
@@ -58,7 +59,7 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Sell
     @Override
     public void onBindViewHolder(@NonNull SellerViewHolder holder, int position) {
         String sellerId = sellerIds.get(position);
-        List<Cart> sellerItems = sellerItemsMap.get(sellerId);
+        List<CartItem> sellerItems = sellerItemsMap.get(sellerId);
 
         DatabaseReference sellerRef = FirebaseDatabase.getInstance().getReference("Users").child(sellerId);
         sellerRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -85,9 +86,9 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Sell
     }
 
     private class SellerItemsAdapter extends RecyclerView.Adapter<SellerItemsAdapter.ItemViewHolder> {
-        private final List<Cart> items;
+        private final List<CartItem> items;
 
-        SellerItemsAdapter(List<Cart> items) {
+        SellerItemsAdapter(List<CartItem> items) {
             this.items = items;
         }
 
@@ -100,7 +101,7 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Sell
 
         @Override
         public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
-            Cart item = items.get(position);
+            CartItem item = items.get(position);
             holder.bindData(item);
         }
 
@@ -121,7 +122,7 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Sell
                 price = itemView.findViewById(R.id.textView_price);
             }
 
-            void bindData(Cart item) {
+            void bindData(CartItem item) {
                 serviceName.setText(item.getTitle());
                 amount.setText(String.format("Số lượng: %d x %s VNĐ",
                         item.getAmount(),

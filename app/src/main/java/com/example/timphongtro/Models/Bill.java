@@ -1,6 +1,5 @@
 package com.example.timphongtro.Models;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 public class Bill {
@@ -11,15 +10,14 @@ public class Bill {
     private long totalAmount;
     private long orderDate;
     private int status;
-    private String city;
-    private String district;
     private String paymentMethod;
-    private String detailAddress;
+    private String address;
 
     public Bill() {
     }
 
-    public Bill(String id, String userId, String sellerId, Map<String, Integer> items, long totalAmount, long orderDate, int status, String city, String district, String paymentMethod, String detailAddress) {
+    public Bill(String id, String userId, String sellerId, Map<String, Integer> items, 
+                long totalAmount, long orderDate, int status, String paymentMethod, String address) {
         this.id = id;
         this.userId = userId;
         this.sellerId = sellerId;
@@ -27,10 +25,16 @@ public class Bill {
         this.totalAmount = totalAmount;
         this.orderDate = orderDate;
         this.status = status;
-        this.city = city;
-        this.district = district;
         this.paymentMethod = paymentMethod;
-        this.detailAddress = detailAddress;
+        this.address = address;
+    }
+
+    public String getAddress() {
+        return address != null ? address : "";
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getId() {
@@ -89,35 +93,11 @@ public class Bill {
         this.status = status;
     }
 
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getDistrict() {
-        return district;
-    }
-
-    public void setDistrict(String district) {
-        this.district = district;
-    }
-
     public String getPaymentMethod() {
         return paymentMethod;
     }
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
-    }
-
-    public String getDetailAddress() {
-        return detailAddress;
-    }
-
-    public void setDetailAddress(String detailAddress) {
-        this.detailAddress = detailAddress;
     }
 }

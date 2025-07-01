@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timphongtro.Adapters.OrderItemAdapter;
 import com.example.timphongtro.Api.CreateOrder;
-import com.example.timphongtro.Models.Cart;
+import com.example.timphongtro.Models.CartItem;
 import com.example.timphongtro.Models.City;
 import com.example.timphongtro.Models.District;
 import com.example.timphongtro.R;
@@ -54,7 +54,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
     private ArrayList<String> spinnerArrayList;
     private ArrayAdapter<String> spinnerAdapter, districtAdapter, paymentAdapter;
     private RecyclerView rcvOrderItems;
-    private ArrayList<Cart> cartList;
+    private ArrayList<CartItem> cartItemList;
     private TextView totalAmount;
     private ArrayList<String> districtNames;
     private long totalPriceValue;
@@ -88,15 +88,15 @@ public class ConfirmOrderActivity extends AppCompatActivity {
     private void loadCartDataFromIntent() {
         String cartJson = getIntent().getStringExtra("cartList");
         if (!TextUtils.isEmpty(cartJson)) {
-            cartList = GsonUtils.fromJson(cartJson, GsonUtils.getListType(Cart.class));
+            cartItemList = GsonUtils.fromJson(cartJson, GsonUtils.getListType(CartItem.class));
             
-            if (cartList == null) {
-                cartList = new ArrayList<>();
+            if (cartItemList == null) {
+                cartItemList = new ArrayList<>();
                 Toast.makeText(this, "Lỗi: Dữ liệu giỏ hàng không hợp lệ", Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
-            cartList = new ArrayList<>();
+            cartItemList = new ArrayList<>();
             Toast.makeText(this, "Lỗi: Không có dữ liệu giỏ hàng", Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -126,7 +126,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         spinnerDistrict.setAdapter(districtAdapter);
 
         rcvOrderItems.setLayoutManager(new LinearLayoutManager(this));
-        OrderItemAdapter orderItemAdapter = new OrderItemAdapter(this, cartList);
+        OrderItemAdapter orderItemAdapter = new OrderItemAdapter(this, cartItemList);
         rcvOrderItems.setAdapter(orderItemAdapter);
 
         spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -179,7 +179,7 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             return false;
         }
 
-        if (cartList.isEmpty()) {
+        if (cartItemList.isEmpty()) {
             Toast.makeText(this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -241,70 +241,84 @@ public class ConfirmOrderActivity extends AppCompatActivity {
 
         EditText editTextAddress = findViewById(R.id.editText_address);
         String detailAddress = editTextAddress.getText().toString().trim();
-        DatabaseReference cartRef = FirebaseDatabase.getInstance()
-                .getReference("Carts")
-                .child(user.getUid());
+        String city = spinnerCity.getSelectedItem().toString();
+        String district = spinnerDistrict.getSelectedItem().toString();
 
-        cartRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot cartSnapshot) {
-                DatabaseReference ordersRef = FirebaseDatabase.getInstance().getReference("Bills");
-                final int[] successCount = {0};
-                final int totalOrders = (int) cartSnapshot.getChildrenCount();
+        String fullAddress;
+        if (detailAddress.isEmpty()) {
+            fullAddress = district + ", " + city;
+        } else {
+            fullAddress = detailAddress + ", " + district + ", " + city;
+        }
 
-                if (totalOrders == 0) {
-                    btnConfirm.setEnabled(true);
-                    btnConfirm.setText("Xác nhận đặt hàng");
-                    Toast.makeText(ConfirmOrderActivity.this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+        DatabaseReference cartsRef = FirebaseDatabase.getInstance().getReference("Carts");
 
-                for (DataSnapshot sellerSnapshot : cartSnapshot.getChildren()) {
-                    String sellerId = sellerSnapshot.getKey();
-                    if (sellerId == null) continue;
+        cartsRef.orderByChild("buyerId").equalTo(user.getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot cartsSnapshot) {
+                        DatabaseReference ordersRef = FirebaseDatabase.getInstance().getReference("Bills");
+                        final int[] successCount = {0};
+                        final int totalOrders = (int) cartsSnapshot.getChildrenCount();
 
-                    String orderId = generateOrderId();
-                    Map<String, Object> orderData = createOrderData(user.getUid(), sellerId, status, 
-                        detailAddress, sellerSnapshot);
-
-                    ordersRef.child(orderId).setValue(orderData)
-                        .addOnSuccessListener(aVoid -> {
-                            if (status == 1) {
-                                updateServiceSoldCount(sellerSnapshot);
-                            }
-                            
-                            successCount[0]++;
-                            if (successCount[0] == totalOrders) {
-                                showPaymentNotification(selectedPaymentMethod, true);
-                                cartRef.removeValue();
-                                finish();
-                            }
-                        })
-                        .addOnFailureListener(e -> {
+                        if (totalOrders == 0) {
                             btnConfirm.setEnabled(true);
                             btnConfirm.setText("Xác nhận đặt hàng");
-                            showPaymentNotification(selectedPaymentMethod, false);
-                            Toast.makeText(ConfirmOrderActivity.this, 
-                                "Lỗi tạo đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
-                }
-            }
+                            Toast.makeText(ConfirmOrderActivity.this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                btnConfirm.setEnabled(true);
-                btnConfirm.setText("Xác nhận đặt hàng");
-                showPaymentNotification(selectedPaymentMethod, false);
-                Toast.makeText(ConfirmOrderActivity.this, 
-                    "Lỗi truy cập giỏ hàng: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+                        for (DataSnapshot cartSnapshot : cartsSnapshot.getChildren()) {
+                            DataSnapshot sellerIdSnapshot = cartSnapshot.child("sellerId");
+                            DataSnapshot cartItemsSnapshot = cartSnapshot.child("cartItems");
+
+                            if (!sellerIdSnapshot.exists() || !cartItemsSnapshot.exists()) continue;
+
+                            String sellerId = sellerIdSnapshot.getValue(String.class);
+                            if (sellerId == null) continue;
+
+                            String orderId = generateOrderId();
+                            Map<String, Object> orderData = createOrderData(user.getUid(), sellerId, status,
+                                    fullAddress, cartItemsSnapshot);
+
+                            ordersRef.child(orderId).setValue(orderData)
+                                    .addOnSuccessListener(aVoid -> {
+                                        if (status == 1) {
+                                            updateServiceSoldCount(cartItemsSnapshot);
+                                        }
+
+                                        successCount[0]++;
+                                        if (successCount[0] == totalOrders) {
+                                            showPaymentNotification(selectedPaymentMethod, true);
+                                            clearUserCarts(user.getUid());
+                                            finish();
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        btnConfirm.setEnabled(true);
+                                        btnConfirm.setText("Xác nhận đặt hàng");
+                                        showPaymentNotification(selectedPaymentMethod, false);
+                                        Toast.makeText(ConfirmOrderActivity.this,
+                                                "Lỗi tạo đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        btnConfirm.setEnabled(true);
+                        btnConfirm.setText("Xác nhận đặt hàng");
+                        showPaymentNotification(selectedPaymentMethod, false);
+                        Toast.makeText(ConfirmOrderActivity.this,
+                                "Lỗi truy cập giỏ hàng: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    private void updateServiceSoldCount(DataSnapshot sellerSnapshot) {
+    private void updateServiceSoldCount(DataSnapshot cartItemsSnapshot) {
         DatabaseReference servicesRef = FirebaseDatabase.getInstance().getReference("Services");
         
-        for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
+        for (DataSnapshot itemSnapshot : cartItemsSnapshot.getChildren()) {
             String serviceId = itemSnapshot.getKey();
             Integer quantity = itemSnapshot.getValue(Integer.class);
             
@@ -334,21 +348,18 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         });
     }
 
-    private Map<String, Object> createOrderData(String userId, String sellerId, 
-        int status, String detailAddress, DataSnapshot sellerSnapshot) {
-        
+    private Map<String, Object> createOrderData(String userId, String sellerId, int status, String fullAddress, DataSnapshot cartItemsSnapshot) {
+
         Map<String, Object> orderData = new HashMap<>();
         orderData.put("userId", userId);
         orderData.put("sellerId", sellerId);
         orderData.put("orderDate", ServerValue.TIMESTAMP);
         orderData.put("status", status);
-        orderData.put("city", spinnerCity.getSelectedItem().toString());
-        orderData.put("district", spinnerDistrict.getSelectedItem().toString());
-        orderData.put("detailAddress", detailAddress);
+        orderData.put("address", fullAddress);
         orderData.put("paymentMethod", selectedPaymentMethod);
 
         Map<String, Integer> items = new HashMap<>();
-        long totalAmount = calculateTotalAmount(sellerSnapshot, items);
+        long totalAmount = calculateTotalAmount(cartItemsSnapshot, items);
 
         orderData.put("items", items);
         orderData.put("totalAmount", totalAmount);
@@ -356,16 +367,17 @@ public class ConfirmOrderActivity extends AppCompatActivity {
         return orderData;
     }
 
-    private long calculateTotalAmount(DataSnapshot sellerSnapshot, Map<String, Integer> items) {
+    private long calculateTotalAmount(DataSnapshot cartItemsSnapshot, Map<String, Integer> items) {
         long totalAmount = 0;
-        for (DataSnapshot itemSnapshot : sellerSnapshot.getChildren()) {
+        
+        for (DataSnapshot itemSnapshot : cartItemsSnapshot.getChildren()) {
             String serviceId = itemSnapshot.getKey();
             Integer amount = itemSnapshot.getValue(Integer.class);
             if (serviceId == null || amount == null) continue;
 
             items.put(serviceId, amount);
 
-            for (Cart cartItem : cartList) {
+            for (CartItem cartItem : cartItemList) {
                 if (cartItem != null && cartItem.getServiceId().equals(serviceId)) {
                     totalAmount += (long) cartItem.getPrice() * amount;
                     break;
@@ -373,6 +385,32 @@ public class ConfirmOrderActivity extends AppCompatActivity {
             }
         }
         return totalAmount;
+    }
+
+    private void clearUserCarts(String userId) {
+        DatabaseReference cartsRef = FirebaseDatabase.getInstance().getReference("Carts");
+        cartsRef.orderByChild("buyerId").equalTo(userId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Map<String, Object> updates = new HashMap<>();
+                for (DataSnapshot cartSnapshot : snapshot.getChildren()) {
+                    String cartId = cartSnapshot.getKey();
+                    if (cartId != null) {
+                        updates.put(cartId, null); // Set to null to delete
+                    }
+                }
+                
+                if (!updates.isEmpty()) {
+                    cartsRef.updateChildren(updates);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error if needed
+            }
+        });
     }
 
     private void showPaymentNotification(String paymentMethod, boolean isSuccess) {

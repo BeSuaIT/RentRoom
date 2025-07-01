@@ -53,10 +53,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
         holder.tvOrderId.setText(bill.getId());
         holder.tvDateTime.setText(formatDate(bill.getOrderDate()));
         holder.tvTotalAmount.setText(String.format("%,d VNĐ", bill.getTotalAmount()));
-        String fullAddress = bill.getDetailAddress() + ", " +
-                bill.getDistrict() + ", " +
-                bill.getCity();
-        holder.tvLocation.setText(fullAddress);
+        holder.tvLocation.setText(bill.getAddress());
 
         setupStatusAndCancelButton(holder, bill, position);
 
@@ -141,10 +138,7 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
 
         tvBillId.setText(bill.getId());
         tvBillDate.setText(formatDate(bill.getOrderDate()));
-        String fullAddress = bill.getDetailAddress() + ", " +
-                bill.getDistrict() + ", " +
-                bill.getCity();
-        tvBillAddress.setText("Địa chỉ: " + fullAddress);
+        tvBillAddress.setText("Địa chỉ: " + bill.getAddress());
         tvPayMethod.setText("Phương thức thanh toán: " + bill.getPaymentMethod());
         tvBillTotal.setText(String.format("Tổng tiền: %,d VNĐ", bill.getTotalAmount()));
 
