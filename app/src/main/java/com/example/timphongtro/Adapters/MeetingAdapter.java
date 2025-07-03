@@ -23,6 +23,7 @@ import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
+import com.example.timphongtro.Utils.MeetingUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -38,10 +39,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHolder> {
-    private static final int STATUS_PENDING = 0;
-    private static final int STATUS_APPROVED = 1;
-    private static final int STATUS_REJECTED = 2;
-
     Context context;
     ArrayList<Meeting> schedules;
     ArrayList<Room> availableRooms;
@@ -188,16 +185,17 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
     }
 
     private void setupStatusView(TextView statusView, Meeting schedule, String userId) {
+        MeetingUtils.syncMeetingStatusWithDatabase(schedule);
+        int status = MeetingUtils.getCurrentStatus(schedule);
+
         int backgroundColor;
         String statusText;
-        
+
         boolean isReceiver = userId.equals(schedule.getIdTo());
         boolean isSender = userId.equals(schedule.getIdFrom());
-        
-        int status = schedule.getStatus();
 
         switch (status) {
-            case STATUS_PENDING:
+            case MeetingUtils.STATUS_PENDING:
                 if (isReceiver) {
                     backgroundColor = R.color.status_pending;
                     statusText = "Xác nhận";
@@ -209,17 +207,22 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                     statusText = "Chờ xử lý";
                 }
                 break;
-                
-            case STATUS_APPROVED:
+
+            case MeetingUtils.STATUS_APPROVED:
                 backgroundColor = R.color.status_approved;
                 statusText = "Đã xác nhận";
                 break;
-                
-            case STATUS_REJECTED:
+
+            case MeetingUtils.STATUS_REJECTED:
                 backgroundColor = R.color.status_rejected;
                 statusText = "Đã từ chối";
                 break;
-                
+
+            case MeetingUtils.STATUS_EXPIRED:
+                backgroundColor = R.color.gray_500;
+                statusText = "Hết hạn";
+                break;
+
             default:
                 backgroundColor = R.color.gray_500;
                 statusText = "Không xác định";
@@ -231,7 +234,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
         background.setShape(GradientDrawable.RECTANGLE);
         background.setCornerRadius(14f);
         background.setColor(ContextCompat.getColor(context, backgroundColor));
-        
+
         statusView.setBackground(background);
         statusView.setText(statusText);
         statusView.setTextColor(ContextCompat.getColor(context, R.color.white_100));
@@ -243,18 +246,21 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
             return;
         }
 
+        int status = MeetingUtils.getCurrentStatus(schedule);
         int backgroundColor;
-        int status = schedule.getStatus();
-        
+
         switch (status) {
-            case STATUS_PENDING:
+            case MeetingUtils.STATUS_PENDING:
                 backgroundColor = R.color.orange_100;
                 break;
-            case STATUS_APPROVED:
+            case MeetingUtils.STATUS_APPROVED:
                 backgroundColor = R.color.green_100;
                 break;
-            case STATUS_REJECTED:
+            case MeetingUtils.STATUS_REJECTED:
                 backgroundColor = R.color.red_100;
+                break;
+            case MeetingUtils.STATUS_EXPIRED:
+                backgroundColor = R.color.gray_500;
                 break;
             default:
                 backgroundColor = R.color.gray_500;
@@ -264,12 +270,12 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
         GradientDrawable background = new GradientDrawable();
         background.setShape(GradientDrawable.OVAL);
         background.setColor(ContextCompat.getColor(context, backgroundColor));
-        
+
         avatarView.setBackground(background);
     }
 
     private boolean shouldShowConfirmButtons(Meeting schedule, String userId) {
-        return STATUS_PENDING == schedule.getStatus() && userId.equals(schedule.getIdTo());
+        return MeetingUtils.isPending(schedule) && !MeetingUtils.isExpired(schedule) && userId.equals(schedule.getIdTo());
     }
 
     private void navigateToDetail(Meeting schedule, String currentUserId) {
@@ -400,10 +406,28 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                 return;
             }
 
-            if (meeting.getStatus() == STATUS_PENDING && 
-                currentUser.getUid().equals(meeting.getIdFrom())) {
-                btn_revoke.setVisibility(View.VISIBLE);
-                btn_revoke.setOnClickListener(v -> showRevokeDialog(meeting, position));
+            MeetingUtils.syncMeetingStatusWithDatabase(meeting);
+            int status = MeetingUtils.getCurrentStatus(meeting);
+            boolean isExpired = MeetingUtils.isExpired(meeting);
+            boolean isSender = currentUser.getUid().equals(meeting.getIdFrom());
+
+            if (isSender) {
+                if (isExpired) {
+                    // Hiển thị nút xóa nếu đã hết hạn
+                    btn_revoke.setVisibility(View.VISIBLE);
+                    btn_revoke.setText("Xóa");
+                    btn_revoke.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.red));
+                    btn_revoke.setOnClickListener(v -> showDeleteDialog(meeting, position));
+                } else if (status == MeetingUtils.STATUS_PENDING) {
+                    // Hiển thị nút thu hồi nếu pending và chưa hết hạn
+                    btn_revoke.setVisibility(View.VISIBLE);
+                    btn_revoke.setText("Thu hồi");
+                    btn_revoke.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.red));
+                    btn_revoke.setOnClickListener(v -> showRevokeDialog(meeting, position));
+                } else {
+                    // Đã xác nhận/từ chối nhưng chưa hết hạn - ẩn nút
+                    btn_revoke.setVisibility(View.GONE);
+                }
             } else {
                 btn_revoke.setVisibility(View.GONE);
             }
@@ -418,6 +442,17 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
             });
         }
 
+        private void showDeleteDialog(Meeting meeting, int position) {
+            new AlertDialog.Builder(context)
+                    .setTitle("Xóa lịch hẹn")
+                    .setMessage("Bạn có chắc chắn muốn xóa lịch hẹn này không?\n\nHành động này không thể hoàn tác.")
+                    .setPositiveButton("Xóa", (dialog, which) -> {
+                        deleteMeeting(meeting, position);
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
+        }
+
         private void showRevokeDialog(Meeting meeting, int position) {
             new AlertDialog.Builder(context)
                     .setTitle("Thu hồi lịch hẹn")
@@ -427,6 +462,31 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.ViewHold
                     })
                     .setNegativeButton("Hủy", null)
                     .show();
+        }
+
+        private void deleteMeeting(Meeting meeting, int position) {
+            if (meeting == null || TextUtils.isEmpty(meeting.getIdSchedule())) {
+                Toast.makeText(context, "Lỗi: Thông tin lịch hẹn không hợp lệ", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            btn_revoke.setEnabled(false);
+            btn_revoke.setText("Đang xử lý...");
+
+            DatabaseReference meetingRef = FirebaseDatabase.getInstance()
+                    .getReference("MeetingSchedules")
+                    .child(meeting.getIdSchedule());
+
+            meetingRef.removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Toast.makeText(context, "Xóa lịch hẹn thành công", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Lỗi xóa lịch hẹn", Toast.LENGTH_SHORT).show();
+
+                    btn_revoke.setEnabled(true);
+                    btn_revoke.setText("Xóa");
+                }
+            });
         }
 
         private void revokeMeeting(Meeting meeting, int position) {

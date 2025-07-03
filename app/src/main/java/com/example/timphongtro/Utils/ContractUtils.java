@@ -42,11 +42,9 @@ public class ContractUtils {
      */
     public static boolean shouldUpdateStatus(Contract contract) {
         if (contract == null) return false;
-        
-        // Nếu đang ở trạng thái nháp (0) thì không auto update
+
         if (contract.getStatus() == 0) return false; 
-        
-        // Nếu đã hết hạn rồi thì không cần update nữa
+
         if (contract.getStatus() == 2) return false;
         
         // Chỉ update khi: status = 1 (đang hiệu lực) nhưng thời gian đã hết
@@ -187,79 +185,5 @@ public class ContractUtils {
                 }
             }
         });
-    }
-    
-    /**
-     * Dọn dẹp các trường dữ liệu không cần thiết trong Firebase Database
-     * Xóa các trường được tính toán động để tối ưu storage
-     * 
-     * @param callback Callback xử lý kết quả dọn dẹp
-     */
-    public static void cleanupUnnecessaryFields(ContractUpdateCallback callback) {
-        DatabaseReference contractsRef = FirebaseDatabase.getInstance().getReference("Contracts");
-        
-        contractsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                int cleanedCount = 0;
-                
-                for (DataSnapshot contractSnapshot : snapshot.getChildren()) {
-                    DatabaseReference contractRef = contractSnapshot.getRef();
-                    boolean needsCleanup = false;
-                    
-                    // Kiểm tra xem có các trường không cần thiết không
-                    if (contractSnapshot.hasChild("currentStatus") ||
-                        contractSnapshot.hasChild("expired") ||
-                        contractSnapshot.hasChild("formattedEndDate") ||
-                        contractSnapshot.hasChild("formattedPeriod") ||
-                        contractSnapshot.hasChild("formattedStartDate")) {
-                        needsCleanup = true;
-                    }
-                    
-                    if (needsCleanup) {
-                        // Xóa các trường không cần thiết
-                        contractRef.child("currentStatus").removeValue();
-                        contractRef.child("expired").removeValue();
-                        contractRef.child("formattedEndDate").removeValue();
-                        contractRef.child("formattedPeriod").removeValue();
-                        contractRef.child("formattedStartDate").removeValue();
-                        cleanedCount++;
-                        
-                        // Đồng thời cập nhật status nếu cần
-                        Long endDate = contractSnapshot.child("endDate").getValue(Long.class);
-                        Integer status = contractSnapshot.child("status").getValue(Integer.class);
-                        
-                        if (endDate != null && status != null) {
-                            long now = System.currentTimeMillis();
-                            // Nếu hết hạn nhưng status chưa update
-                            if (now > endDate && status == 1) {
-                                contractRef.child("status").setValue(2);
-                            }
-                        }
-                    }
-                }
-                
-                if (callback != null) {
-                    callback.onSuccess(cleanedCount);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                String errorMsg = "Lỗi dọn dẹp dữ liệu: " + error.getMessage();
-                Log.e(TAG, errorMsg);
-                
-                if (callback != null) {
-                    callback.onFailure(errorMsg);
-                }
-            }
-        });
-    }
-    
-    /**
-     * Dọn dẹp các trường dữ liệu không cần thiết (không có callback)
-     */
-    public static void cleanupUnnecessaryFields() {
-        cleanupUnnecessaryFields(null);
     }
 }

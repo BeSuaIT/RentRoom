@@ -7,7 +7,7 @@ public class Meeting {
     private long timeVisitRoom;
     private String idTo;
     private String idFrom;
-    private int status; //0 la tao, 1 la chap nhan, 2 la tu choi
+    private int status; //0 la tao, 1 la chap nhan, 2 la tu choi, 3 la het han
     private String idRoom;
     private String idSchedule;
     

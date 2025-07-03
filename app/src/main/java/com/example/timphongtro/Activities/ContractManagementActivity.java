@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.timphongtro.Adapters.ContractAdapter;
 import com.example.timphongtro.Models.Contract;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.ContractUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -47,6 +48,8 @@ public class ContractManagementActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contract_management);
+
+        ContractUtils.batchUpdateExpiredContracts();
 
         initializeViews();
         initializeFirebase();
@@ -285,6 +288,7 @@ public class ContractManagementActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        ContractUtils.batchUpdateExpiredContracts();
         if (currentUserRole != null) {
             cleanupInvalidContracts(() -> {
                 loadContracts();

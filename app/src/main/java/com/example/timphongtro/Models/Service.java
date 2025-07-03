@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Service {
-    private String serviceId, description, id_own_post, id_seller, title, category;
+    private String serviceId, description, id_seller, title, category;
     private ArrayList<String> images;
     private int price, sold, amount;
     private long createdAt;
@@ -34,9 +34,6 @@ public class Service {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-
-    public String getId_own_post() { return id_own_post; }
-    public void setId_own_post(String id_own_post) { this.id_own_post = id_own_post; }
 
     public String getId_seller() { return id_seller; }
     public void setId_seller(String id_seller) { this.id_seller = id_seller; }

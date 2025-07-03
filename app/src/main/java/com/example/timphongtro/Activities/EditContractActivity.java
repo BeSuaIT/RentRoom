@@ -249,7 +249,7 @@ public class EditContractActivity extends AppCompatActivity {
         ArrayList<String> roomTitles = new ArrayList<>();
         roomTitles.add("Chọn phòng cho thuê");
 
-        roomsRef.orderByChild("id_own_post")
+        roomsRef.orderByChild("ownerID")
                 .equalTo(currentUser.getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override

@@ -362,7 +362,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.SellerViewHold
                     service.setDescription("Đang tải mô tả...");
                     service.setSold(0);
                     service.setCreatedAt(System.currentTimeMillis());
-                    service.setId_own_post(cartItem.getSellerId());
                     service.setCategory("Không xác định");
                     
                     return service;

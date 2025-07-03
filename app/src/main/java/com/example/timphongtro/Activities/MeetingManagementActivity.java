@@ -16,6 +16,7 @@ import com.example.timphongtro.Adapters.MeetingAdapter;
 import com.example.timphongtro.Models.Room;
 import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.R;
+import com.example.timphongtro.Utils.MeetingUtils;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
@@ -38,7 +39,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
     private RecyclerView scheduleVisitRecyclerView;
     private LinearLayout noDataLayout;
     private TextView noDataTitle, noDataMessage;
-    private Chip chipAll, chipMyBookings, chipPending, chipApproved, chipRejected;
+    private Chip chipAll, chipMyBookings, chipPending, chipApproved, chipRejected, chipExpired;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference meetingSchedulesRef, postsRef;
     private ArrayList<Meeting> meetings;
@@ -53,6 +54,8 @@ public class MeetingManagementActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_meeting_management);
+
+        MeetingUtils.batchUpdateExpiredMeetings();
 
         initializeVariables();
         setupViews();
@@ -74,6 +77,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         countMap.put("pending", 0);
         countMap.put("approved", 0);
         countMap.put("rejected", 0);
+        countMap.put("expired", 0);
     }
 
     private void setupViews() {
@@ -86,6 +90,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         chipPending = findViewById(R.id.chipPending);
         chipApproved = findViewById(R.id.chipApproved);
         chipRejected = findViewById(R.id.chipRejected);
+        chipExpired = findViewById(R.id.chipExpired);
         scheduleVisitRecyclerView = findViewById(R.id.rcvScheduleVisit);
         noDataLayout = findViewById(R.id.noHasLovePost);
         noDataTitle = findViewById(R.id.noDataTitle);
@@ -132,6 +137,9 @@ public class MeetingManagementActivity extends AppCompatActivity {
         } else if (chipId == R.id.chipRejected) {
             currentFilter = "rejected";
             loadRejectedSchedules();
+        } else if (chipId == R.id.chipExpired) {
+            currentFilter = "expired";
+            loadExpiredSchedules();
         }
     }
 
@@ -230,6 +238,9 @@ public class MeetingManagementActivity extends AppCompatActivity {
                     case "rejected":
                         loadRejectedSchedules();
                         break;
+                    case "expired":
+                        loadExpiredSchedules();
+                        break;
                 }
             }
 
@@ -246,6 +257,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         int pendingCount = 0;
         int approvedCount = 0;
         int rejectedCount = 0;
+        int expiredCount = 0;
         
         if (snapshot.exists() && currentUser != null) {
             String currentUserId = currentUser.getUid();
@@ -253,7 +265,8 @@ public class MeetingManagementActivity extends AppCompatActivity {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
                 if (schedule != null) {
-                    // Kiểm tra meeting có liên quan đến user hiện tại không
+                    int currentStatus = MeetingUtils.getCurrentStatus(schedule);
+                    
                     boolean isFromUser = currentUserId.equals(schedule.getIdFrom());
                     boolean isToUser = currentUserId.equals(schedule.getIdTo());
                     boolean isRelated = isFromUser || isToUser;
@@ -263,14 +276,20 @@ public class MeetingManagementActivity extends AppCompatActivity {
                         if (isFromUser) {
                             myBookingsCount++;
                         }
-                        if (isToUser && schedule.getStatus() == 0) {
-                            pendingCount++;
-                        }
-                        if (schedule.getStatus() == 1) {
-                            approvedCount++;
-                        }
-                        if (schedule.getStatus() == 2) {
-                            rejectedCount++;
+
+                        switch (currentStatus) {
+                            case MeetingUtils.STATUS_PENDING:
+                                if (isToUser) pendingCount++;
+                                break;
+                            case MeetingUtils.STATUS_APPROVED:
+                                approvedCount++;
+                                break;
+                            case MeetingUtils.STATUS_REJECTED:
+                                rejectedCount++;
+                                break;
+                            case MeetingUtils.STATUS_EXPIRED:
+                                expiredCount++;
+                                break;
                         }
                     }
                 }
@@ -282,6 +301,7 @@ public class MeetingManagementActivity extends AppCompatActivity {
         countMap.put("pending", pendingCount);
         countMap.put("approved", approvedCount);
         countMap.put("rejected", rejectedCount);
+        countMap.put("expired", expiredCount);
     }
 
     private void updateChipCounts() {
@@ -290,6 +310,21 @@ public class MeetingManagementActivity extends AppCompatActivity {
         chipPending.setText("⏳ Chờ duyệt (" + countMap.get("pending") + ")");
         chipApproved.setText("✅ Đã duyệt (" + countMap.get("approved") + ")");
         chipRejected.setText("❌ Từ chối (" + countMap.get("rejected") + ")");
+        chipExpired.setText("⌛ Hết hạn (" + countMap.get("expired") + ")");
+    }
+
+    private void loadExpiredSchedules() {
+        meetingSchedulesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                updateScheduleListByStatusAndUser(snapshot, MeetingUtils.STATUS_EXPIRED);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                updateRecyclerViewVisibility(false);
+            }
+        });
     }
 
     private void loadAllSchedules() {
@@ -431,10 +466,11 @@ public class MeetingManagementActivity extends AppCompatActivity {
         if (snapshot.exists()) {
             for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                 Meeting schedule = dataSnapshot.getValue(Meeting.class);
-                if (isValidSchedule(schedule) &&
-                        schedule.getStatus() == targetStatus &&
-                        isRelatedToCurrentUser(schedule)) {
-                    meetings.add(schedule);
+                if (isValidSchedule(schedule) && isRelatedToCurrentUser(schedule)) {
+                    int currentStatus = MeetingUtils.getCurrentStatus(schedule);
+                    if (currentStatus == targetStatus) {
+                        meetings.add(schedule);
+                    }
                 }
             }
         }
@@ -488,6 +524,10 @@ public class MeetingManagementActivity extends AppCompatActivity {
             case "rejected":
                 title = "Chưa có lịch bị từ chối";
                 message = "Chưa có lịch hẹn nào bị từ chối";
+                break;
+            case "expired":
+                title = "Không có lịch hết hạn";
+                message = "Không có lịch hẹn nào đã hết hạn";
                 break;
             default:
                 title = "Không có dữ liệu";

@@ -22,6 +22,7 @@ import com.example.timphongtro.Models.Meeting;
 import com.example.timphongtro.Models.User;
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.GsonUtils;
+import com.example.timphongtro.Utils.MeetingUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -39,10 +40,6 @@ import java.util.Date;
 import java.util.Locale;
 
 public class MeetingDetailActivity extends AppCompatActivity {
-    
-    private static final int STATUS_PENDING = 0;
-    private static final int STATUS_APPROVED = 1;
-    private static final int STATUS_REJECTED = 2;
     private ImageView imageViewBack;
     private TextView tvStatusIndicator;
     private MaterialCardView cardViewRoom, bottomActionCard;
@@ -111,10 +108,17 @@ public class MeetingDetailActivity extends AppCompatActivity {
 
     private void setupActionButtons() {
         boolean showButtons = getIntent().getIntExtra("showbtn", 1) == 1;
-        bottomActionCard.setVisibility(showButtons ? View.VISIBLE : View.GONE);
+        boolean isExpired = MeetingUtils.isExpired(schedule);
+        boolean isPending = MeetingUtils.isPending(schedule);
 
-        btnRefuse.setOnClickListener(v -> updateScheduleStatus(STATUS_REJECTED, "Đã từ chối lịch hẹn"));
-        btnAccept.setOnClickListener(v -> updateScheduleStatus(STATUS_APPROVED, "Đã xác nhận lịch hẹn"));
+        if (showButtons && !isExpired && isPending) {
+            bottomActionCard.setVisibility(View.VISIBLE);
+        } else {
+            bottomActionCard.setVisibility(View.GONE);
+        }
+
+        btnRefuse.setOnClickListener(v -> updateScheduleStatus(MeetingUtils.STATUS_REJECTED, "Đã từ chối lịch hẹn"));
+        btnAccept.setOnClickListener(v -> updateScheduleStatus(MeetingUtils.STATUS_APPROVED, "Đã xác nhận lịch hẹn"));
     }
 
     private void loadScheduleData() {
@@ -230,8 +234,9 @@ public class MeetingDetailActivity extends AppCompatActivity {
 
     private void setupStatusIndicator() {
         if (schedule == null || currentUser == null) return;
-        
-        int status = schedule.getStatus();
+
+        MeetingUtils.syncMeetingStatusWithDatabase(schedule);
+        int status = MeetingUtils.getCurrentStatus(schedule);
         boolean isReceiver = currentUser.getUid().equals(schedule.getIdTo());
         boolean isSender = currentUser.getUid().equals(schedule.getIdFrom());
         
@@ -239,7 +244,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         String statusText;
         
         switch (status) {
-            case STATUS_PENDING:
+            case MeetingUtils.STATUS_PENDING:
                 if (isReceiver) {
                     backgroundColor = R.color.status_pending;
                     statusText = "Chờ xác nhận";
@@ -252,14 +257,19 @@ public class MeetingDetailActivity extends AppCompatActivity {
                 }
                 break;
                 
-            case STATUS_APPROVED:
+            case MeetingUtils.STATUS_APPROVED:
                 backgroundColor = R.color.status_approved;
                 statusText = "Đã xác nhận";
                 break;
                 
-            case STATUS_REJECTED:
+            case MeetingUtils.STATUS_REJECTED:
                 backgroundColor = R.color.status_rejected;
                 statusText = "Đã từ chối";
+                break;
+                
+            case MeetingUtils.STATUS_EXPIRED:
+                backgroundColor = R.color.gray_500;
+                statusText = "Hết hạn";
                 break;
                 
             default:
@@ -404,6 +414,11 @@ public class MeetingDetailActivity extends AppCompatActivity {
     private void updateScheduleStatus(int status, String message) {
         if (schedule == null) {
             showToast("Lỗi: Không có dữ liệu lịch hẹn");
+            return;
+        }
+
+        if (MeetingUtils.isExpired(schedule)) {
+            showToast("Không thể cập nhật lịch hẹn đã hết hạn");
             return;
         }
         

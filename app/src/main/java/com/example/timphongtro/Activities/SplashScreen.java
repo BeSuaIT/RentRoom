@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.example.timphongtro.R;
 import com.example.timphongtro.Utils.AuthUtils;
-import com.example.timphongtro.Utils.ContractUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -48,12 +47,6 @@ public class SplashScreen extends AppCompatActivity {
     }
 
     private void checkUserAndNavigate() {
-        performContractMaintenance();
-    }
-
-    private void performContractMaintenance() {
-        ContractUtils.batchUpdateExpiredContracts();
-        ContractUtils.cleanupUnnecessaryFields();
         proceedWithUserCheck();
     }
 

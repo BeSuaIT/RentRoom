@@ -145,6 +145,20 @@
                     app:chipCornerRadius="16dp"
                     app:chipMinHeight="36dp" />
 
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipExpired"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⌛ Hết hạn"
+                    android:checkable="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/gray_700"
+                    app:chipBackgroundColor="@color/gray_100"
+                    app:chipStrokeColor="@color/gray_500"
+                    app:chipStrokeWidth="1dp"
+                    app:chipCornerRadius="16dp"
+                    app:chipMinHeight="36dp" />
+
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 
