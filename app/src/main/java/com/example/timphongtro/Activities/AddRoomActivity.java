@@ -641,16 +641,16 @@ public class AddRoomActivity extends AppCompatActivity {
             }
         }
 
-        if (spinnerCity.getSelectedItemPosition() == -1 || 
-            spinnerCity.getSelectedItem() == null ||
-            spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
+        if (spinnerCity.getSelectedItemPosition() == -1 ||
+                spinnerCity.getSelectedItem() == null ||
+                spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
             Toast.makeText(this, "Vui lòng chọn thành phố", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
 
-        if (spinnerDistrict.getSelectedItemPosition() == -1 || 
-            spinnerDistrict.getSelectedItem() == null ||
-            spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
+        if (spinnerDistrict.getSelectedItemPosition() == -1 ||
+                spinnerDistrict.getSelectedItem() == null ||
+                spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
             Toast.makeText(this, "Vui lòng chọn quận/huyện", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
@@ -719,6 +719,43 @@ public class AddRoomActivity extends AppCompatActivity {
             isValid = false;
         }
 
+        if (isValid && !isEmpty(edtTitleRoom)) {
+            String title = edtTitleRoom.getText().toString().trim();
+            boolean[] titleCheckResult = {true};
+
+            DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+            roomsRef.orderByChild("roomTitle").equalTo(title)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            boolean isDuplicate = false;
+
+                            for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                                String ownerID = roomSnapshot.child("ownerID").getValue(String.class);
+                                if (ownerID != null && !ownerID.equals(userCurrent.getUid())) {
+                                    isDuplicate = true;
+                                    break;
+                                }
+                            }
+
+                            if (isDuplicate) {
+                                edtTitleRoom.setError("Tiêu đề này đã tồn tại, vui lòng chọn tiêu đề khác");
+                                edtTitleRoom.requestFocus();
+                                titleCheckResult[0] = false;
+                            } else {
+                                titleCheckResult[0] = true;
+                                proceedWithValidation();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            proceedWithValidation();
+                        }
+                    });
+            return false;
+        }
+
         return isValid;
     }
 
@@ -777,20 +814,26 @@ public class AddRoomActivity extends AppCompatActivity {
         dialog.setCancelable(true);
     }
 
+    private void proceedWithValidation() {
+        if (!selectedImages.isEmpty()) {
+            AlertDialog progressDialog = new AlertDialog.Builder(this)
+                    .setView(R.layout.progress_layout)
+                    .setCancelable(false)
+                    .create();
+            progressDialog.show();
+            uploadImages(progressDialog);
+        } else {
+            Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void showConfirmationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Xác nhận")
                 .setMessage("Bạn có muốn đăng bài không?")
                 .setPositiveButton("Có", (dialog, which) -> {
-                    if (!selectedImages.isEmpty()) {
-                        AlertDialog progressDialog = new AlertDialog.Builder(this)
-                                .setView(R.layout.progress_layout)
-                                .setCancelable(false)
-                                .create();
-                        progressDialog.show();
-                        uploadImages(progressDialog);
-                    } else {
-                        Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_LONG).show();
+                    if (validateInputs()) {
+                        proceedWithValidation();
                     }
                 })
                 .setNegativeButton("Không", null)

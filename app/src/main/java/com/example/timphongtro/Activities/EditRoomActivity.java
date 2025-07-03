@@ -619,6 +619,25 @@ public class EditRoomActivity extends AppCompatActivity {
         }
     }
 
+    private void proceedWithValidation() {
+        Room updatedRoom = createRoomObject();
+        if (updatedRoom == null) {
+            Toast.makeText(this, "Lỗi tạo dữ liệu phòng", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!selectedImages.isEmpty()) {
+            AlertDialog progressDialog = new AlertDialog.Builder(this)
+                    .setView(R.layout.progress_layout)
+                    .setCancelable(false)
+                    .create();
+            progressDialog.show();
+            uploadImagesAndUpdateRoom(progressDialog, updatedRoom);
+        } else {
+            uploadRoomToFirebase(updatedRoom);
+        }
+    }
+
     private void showConfirmationDialog() {
         AlertDialog confirmDialog = new AlertDialog.Builder(this)
                 .setTitle("Xác nhận")
@@ -632,23 +651,8 @@ public class EditRoomActivity extends AppCompatActivity {
             positiveButton.setOnClickListener(view -> {
                 confirmDialog.dismiss();
 
-                if (!validateInputs()) return;
-                Room updatedRoom = createRoomObject();
-
-                if (updatedRoom == null) {
-                    Toast.makeText(this, "Lỗi tạo dữ liệu phòng", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (!selectedImages.isEmpty()) {
-                    AlertDialog progressDialog = new AlertDialog.Builder(this)
-                            .setView(R.layout.progress_layout)
-                            .setCancelable(false)
-                            .create();
-                    progressDialog.show();
-                    uploadImagesAndUpdateRoom(progressDialog, updatedRoom);
-                } else {
-                    uploadRoomToFirebase(updatedRoom);
+                if (validateInputs()) {
+                    proceedWithValidation();
                 }
             });
         });
@@ -765,16 +769,16 @@ public class EditRoomActivity extends AppCompatActivity {
             isValid = false;
         }
 
-        if (spinnerCity.getSelectedItemPosition() == -1 || 
-            spinnerCity.getSelectedItem() == null ||
-            spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
+        if (spinnerCity.getSelectedItemPosition() == -1 ||
+                spinnerCity.getSelectedItem() == null ||
+                spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
             Toast.makeText(this, "Vui lòng chọn thành phố", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
 
-        if (spinnerDistrict.getSelectedItemPosition() == -1 || 
-            spinnerDistrict.getSelectedItem() == null ||
-            spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
+        if (spinnerDistrict.getSelectedItemPosition() == -1 ||
+                spinnerDistrict.getSelectedItem() == null ||
+                spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
             Toast.makeText(this, "Vui lòng chọn quận/huyện", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
@@ -839,6 +843,50 @@ public class EditRoomActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Vui lòng nhập số hợp lệ cho các trường số", Toast.LENGTH_SHORT).show();
             isValid = false;
+        }
+
+        if (isValid && !TextUtils.isEmpty(edtTitleRoom.getText())) {
+            String title = edtTitleRoom.getText().toString().trim();
+            String originalTitle = roomData != null ? roomData.getRoomTitle() : "";
+
+            if (title.equals(originalTitle)) {
+                return true;
+            }
+
+            DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+            roomsRef.orderByChild("roomTitle").equalTo(title)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            boolean isDuplicate = false;
+
+                            for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                                String roomID = roomSnapshot.child("roomID").getValue(String.class);
+                                String ownerID = roomSnapshot.child("ownerID").getValue(String.class);
+
+                                if (roomID != null && ownerID != null &&
+                                        !roomID.equals(roomData.getRoomID()) &&
+                                        !ownerID.equals(userCurrent.getUid())) {
+                                    isDuplicate = true;
+                                    break;
+                                }
+                            }
+
+                            if (isDuplicate) {
+                                edtTitleRoom.setError("Tiêu đề này đã tồn tại, vui lòng chọn tiêu đề khác");
+                                edtTitleRoom.requestFocus();
+                            } else {
+                                proceedWithValidation();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            proceedWithValidation();
+                        }
+                    });
+
+            return false;
         }
 
         return isValid;
