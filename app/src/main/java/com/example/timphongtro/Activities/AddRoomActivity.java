@@ -522,6 +522,10 @@ public class AddRoomActivity extends AppCompatActivity {
     }
 
     private boolean validateInputs() {
+        return validateBasicInputs();
+    }
+
+    private boolean validateBasicInputs() {
         boolean isValid = true;
 
         if (isEmpty(edtTitleRoom)) {
@@ -719,44 +723,48 @@ public class AddRoomActivity extends AppCompatActivity {
             isValid = false;
         }
 
-        if (isValid && !isEmpty(edtTitleRoom)) {
-            String title = edtTitleRoom.getText().toString().trim();
-            boolean[] titleCheckResult = {true};
-
-            DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
-            roomsRef.orderByChild("roomTitle").equalTo(title)
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            boolean isDuplicate = false;
-
-                            for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
-                                String ownerID = roomSnapshot.child("ownerID").getValue(String.class);
-                                if (ownerID != null && !ownerID.equals(userCurrent.getUid())) {
-                                    isDuplicate = true;
-                                    break;
-                                }
-                            }
-
-                            if (isDuplicate) {
-                                edtTitleRoom.setError("Tiêu đề này đã tồn tại, vui lòng chọn tiêu đề khác");
-                                edtTitleRoom.requestFocus();
-                                titleCheckResult[0] = false;
-                            } else {
-                                titleCheckResult[0] = true;
-                                proceedWithValidation();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            proceedWithValidation();
-                        }
-                    });
-            return false;
-        }
-
         return isValid;
+    }
+
+    private void validateTitleAndProceed() {
+        String title = edtTitleRoom.getText().toString().trim();
+
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setView(R.layout.progress_layout)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        roomsRef.orderByChild("roomTitle").equalTo(title)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        boolean isDuplicate = false;
+
+                        for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                            String ownerID = roomSnapshot.child("ownerID").getValue(String.class);
+                            if (ownerID != null && !ownerID.equals(userCurrent.getUid())) {
+                                isDuplicate = true;
+                                break;
+                            }
+                        }
+
+                        if (isDuplicate) {
+                            progressDialog.dismiss();
+                            edtTitleRoom.setError("Tiêu đề này đã tồn tại, vui lòng chọn tiêu đề khác");
+                            edtTitleRoom.requestFocus();
+                        } else {
+                            uploadImages(progressDialog);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressDialog.dismiss();
+                        Toast.makeText(AddRoomActivity.this, "Lỗi kiểm tra dữ liệu", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private boolean isEmpty(EditText text) {
@@ -814,26 +822,13 @@ public class AddRoomActivity extends AppCompatActivity {
         dialog.setCancelable(true);
     }
 
-    private void proceedWithValidation() {
-        if (!selectedImages.isEmpty()) {
-            AlertDialog progressDialog = new AlertDialog.Builder(this)
-                    .setView(R.layout.progress_layout)
-                    .setCancelable(false)
-                    .create();
-            progressDialog.show();
-            uploadImages(progressDialog);
-        } else {
-            Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_LONG).show();
-        }
-    }
-
     private void showConfirmationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Xác nhận")
                 .setMessage("Bạn có muốn đăng bài không?")
                 .setPositiveButton("Có", (dialog, which) -> {
-                    if (validateInputs()) {
-                        proceedWithValidation();
+                    if (validateBasicInputs()) {
+                        validateTitleAndProceed();
                     }
                 })
                 .setNegativeButton("Không", null)

@@ -619,6 +619,285 @@ public class EditRoomActivity extends AppCompatActivity {
         }
     }
 
+    private boolean validateBasicInputs() {
+        boolean isValid = true;
+
+        if (isEmpty(edtTitleRoom)) {
+            edtTitleRoom.setError("Vui lòng nhập tiêu đề bài đăng");
+            isValid = false;
+        }
+
+        if (isEmpty(edtPrice)) {
+            edtPrice.setError("Vui lòng nhập giá phòng");
+            isValid = false;
+        } else {
+            try {
+                long price = Long.parseLong(edtPrice.getText().toString());
+                if (price <= 0) {
+                    edtPrice.setError("Giá phòng phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtPrice.setError("Vui lòng nhập số hợp lệ cho giá phòng");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtDeposit)) {
+            edtDeposit.setError("Vui lòng nhập tiền cọc");
+            isValid = false;
+        } else {
+            try {
+                long deposit = Long.parseLong(edtDeposit.getText().toString());
+                if (deposit < 0) {
+                    edtDeposit.setError("Tiền cọc không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtDeposit.setError("Vui lòng nhập số hợp lệ cho tiền cọc");
+                isValid = false;
+            }
+        }
+
+        if (radioGroupType.getCheckedRadioButtonId() == -1) {
+            Toast.makeText(this, "Vui lòng chọn loại phòng", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (isEmpty(edtArea)) {
+            edtArea.setError("Vui lòng nhập diện tích");
+            isValid = false;
+        } else {
+            try {
+                int area = Integer.parseInt(edtArea.getText().toString());
+                if (area <= 0) {
+                    edtArea.setError("Diện tích phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtArea.setError("Vui lòng nhập số hợp lệ cho diện tích");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtPhone)) {
+            edtPhone.setError("Vui lòng nhập số điện thoại");
+            isValid = false;
+        } else {
+            String phone = edtPhone.getText().toString().trim();
+            if (!phone.matches("^\\d{10}$")) {
+                edtPhone.setError("Số điện thoại phải có 10 chữ số");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtFloor)) {
+            edtFloor.setError("Vui lòng nhập số tầng");
+            isValid = false;
+        } else {
+            try {
+                int floor = Integer.parseInt(edtFloor.getText().toString());
+                if (floor <= 0) {
+                    edtFloor.setError("Tầng phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtFloor.setError("Vui lòng nhập số hợp lệ cho tầng");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtPerson)) {
+            edtPerson.setError("Vui lòng nhập số người/phòng");
+            isValid = false;
+        } else {
+            try {
+                int person = Integer.parseInt(edtPerson.getText().toString());
+                if (person <= 0) {
+                    edtPerson.setError("Số người phải lớn hơn 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtPerson.setError("Vui lòng nhập số hợp lệ cho số người");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtDescriptionRoom)) {
+            edtDescriptionRoom.setError("Vui lòng nhập mô tả phòng chi tiết");
+            isValid = false;
+        } else {
+            String description = edtDescriptionRoom.getText().toString().trim();
+            if (description.length() < 10) {
+                edtDescriptionRoom.setError("Mô tả phòng phải ít nhất 10 ký tự");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtPark)) {
+            edtPark.setError("Vui lòng nhập số chỗ để xe trong 1 phòng");
+            isValid = false;
+        } else {
+            try {
+                int park = Integer.parseInt(edtPark.getText().toString());
+                if (park < 0) {
+                    edtPark.setError("Số chỗ để xe không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtPark.setError("Vui lòng nhập số hợp lệ cho chỗ để xe");
+                isValid = false;
+            }
+        }
+
+        if (spinnerCity.getSelectedItemPosition() == -1 ||
+                spinnerCity.getSelectedItem() == null ||
+                spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn thành phố", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (spinnerDistrict.getSelectedItemPosition() == -1 ||
+                spinnerDistrict.getSelectedItem() == null ||
+                spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn quận/huyện", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        String addressDetail = edtAddress.getText().toString().trim();
+        if (!addressDetail.isEmpty() && addressDetail.length() < 5) {
+            edtAddress.setError("Địa chỉ chi tiết phải ít nhất 5 ký tự");
+            isValid = false;
+        }
+
+        if (!genderCheckboxes[0].isChecked() && !genderCheckboxes[1].isChecked()) {
+            Toast.makeText(this, "Vui lòng chọn giới tính", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (isEmpty(edtElectric)) {
+            edtElectric.setError("Vui lòng nhập giá điện");
+            isValid = false;
+        } else {
+            try {
+                long electric = Long.parseLong(edtElectric.getText().toString());
+                if (electric < 0) {
+                    edtElectric.setError("Giá điện không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtElectric.setError("Vui lòng nhập số hợp lệ cho giá điện");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtWater)) {
+            edtWater.setError("Vui lòng nhập giá nước");
+            isValid = false;
+        } else {
+            try {
+                long water = Long.parseLong(edtWater.getText().toString());
+                if (water < 0) {
+                    edtWater.setError("Giá nước không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtWater.setError("Vui lòng nhập số hợp lệ cho giá nước");
+                isValid = false;
+            }
+        }
+
+        if (isEmpty(edtInternet)) {
+            edtInternet.setError("Vui lòng nhập giá Internet");
+            isValid = false;
+        } else {
+            try {
+                long internet = Long.parseLong(edtInternet.getText().toString());
+                if (internet < 0) {
+                    edtInternet.setError("Giá Internet không được âm");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                edtInternet.setError("Vui lòng nhập số hợp lệ cho giá Internet");
+                isValid = false;
+            }
+        }
+
+        boolean hasNewImages = !selectedImages.isEmpty();
+        boolean hasOldImages = roomData != null && roomData.getImages() != null && !roomData.getImages().isEmpty();
+        
+        if (!hasNewImages && !hasOldImages) {
+            Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private void validateTitleAndProceed() {
+        String title = edtTitleRoom.getText().toString().trim();
+        String originalTitle = roomData != null ? roomData.getRoomTitle() : "";
+
+        if (title.equals(originalTitle)) {
+            proceedWithValidation();
+            return;
+        }
+
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setView(R.layout.progress_layout)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        roomsRef.orderByChild("roomTitle").equalTo(title)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        boolean isDuplicate = false;
+
+                        for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                            String roomID = roomSnapshot.child("roomID").getValue(String.class);
+                            String ownerID = roomSnapshot.child("ownerID").getValue(String.class);
+
+                            if (roomID != null && ownerID != null &&
+                                    !roomID.equals(roomData.getRoomID()) &&
+                                    !ownerID.equals(userCurrent.getUid())) {
+                                isDuplicate = true;
+                                break;
+                            }
+                        }
+
+                        if (isDuplicate) {
+                            progressDialog.dismiss();
+                            edtTitleRoom.setError("Tiêu đề này đã tồn tại, vui lòng chọn tiêu đề khác");
+                            edtTitleRoom.requestFocus();
+                        } else {
+                            uploadImagesAndUpdateRoom(progressDialog, createRoomObject());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressDialog.dismiss();
+                        Toast.makeText(EditRoomActivity.this, "Lỗi kiểm tra dữ liệu", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void showConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Xác nhận")
+                .setMessage("Bạn có muốn cập nhật thông tin phòng không?")
+                .setPositiveButton("Có", (dialog, which) -> {
+                    if (validateBasicInputs()) {
+                        validateTitleAndProceed();
+                    }
+                })
+                .setNegativeButton("Không", null)
+                .show();
+    }
+
     private void proceedWithValidation() {
         Room updatedRoom = createRoomObject();
         if (updatedRoom == null) {
@@ -626,37 +905,17 @@ public class EditRoomActivity extends AppCompatActivity {
             return;
         }
 
-        if (!selectedImages.isEmpty()) {
-            AlertDialog progressDialog = new AlertDialog.Builder(this)
-                    .setView(R.layout.progress_layout)
-                    .setCancelable(false)
-                    .create();
-            progressDialog.show();
-            uploadImagesAndUpdateRoom(progressDialog, updatedRoom);
-        } else {
-            uploadRoomToFirebase(updatedRoom);
-        }
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setView(R.layout.progress_layout)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        uploadImagesAndUpdateRoom(progressDialog, updatedRoom);
     }
 
-    private void showConfirmationDialog() {
-        AlertDialog confirmDialog = new AlertDialog.Builder(this)
-                .setTitle("Xác nhận")
-                .setMessage("Bạn có muốn cập nhật thông tin phòng không?")
-                .setPositiveButton("Có", null)
-                .setNegativeButton("Không", null)
-                .create();
-
-        confirmDialog.setOnShowListener(dialogInterface -> {
-            Button positiveButton = confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positiveButton.setOnClickListener(view -> {
-                confirmDialog.dismiss();
-
-                if (validateInputs()) {
-                    proceedWithValidation();
-                }
-            });
-        });
-        confirmDialog.show();
+    private boolean isEmpty(EditText text) {
+        return TextUtils.isEmpty(text.getText().toString().trim());
     }
 
     private void uploadImagesAndUpdateRoom(AlertDialog progressDialog, Room updatedRoom) {
@@ -741,155 +1000,62 @@ public class EditRoomActivity extends AppCompatActivity {
         }
     }
 
-    private boolean validateInputs() {
-        boolean isValid = true;
-
-        if (TextUtils.isEmpty(edtTitleRoom.getText())) {
-            edtTitleRoom.setError("Vui lòng nhập tiêu đề");
-            isValid = false;
+    private void uploadRoomToFirebase(Room room) {
+        if (room == null) {
+            Toast.makeText(this, "Lỗi: Dữ liệu phòng không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        if (TextUtils.isEmpty(edtPrice.getText())) {
-            edtPrice.setError("Vui lòng nhập giá phòng");
-            isValid = false;
-        }
+        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
+        DatabaseReference roomRef = postsRef.child(room.getRoomID());
 
-        if (TextUtils.isEmpty(edtDeposit.getText())) {
-            edtDeposit.setError("Vui lòng nhập tiền cọc");
-            isValid = false;
-        }
+        Map<String, Object> roomMap = new HashMap<>();
+        roomMap.put("ownerID", room.getOwnerID());
+        roomMap.put("roomID", room.getRoomID());
+        roomMap.put("roomTitle", room.getRoomTitle());
+        roomMap.put("roomPrice", room.getRoomPrice());
+        roomMap.put("roomDeposit", room.getRoomDeposit());
+        roomMap.put("roomSize", room.getRoomSize());
+        roomMap.put("description", room.getDescription());
+        roomMap.put("gender", room.getGender());
+        roomMap.put("park_slot", room.getpark_slot());
+        roomMap.put("people_in_room", room.getpeople_in_room());
+        roomMap.put("roomStatus", room.getRoomStatus());
+        roomMap.put("roomType", room.getRoomType());
+        roomMap.put("phone", room.getPhone());
+        roomMap.put("floor", room.getFloor());
+        roomMap.put("electricPrice", room.getElectricPrice());
+        roomMap.put("waterPrice", room.getWaterPrice());
+        roomMap.put("internetPrice", room.getInternetPrice());
+        roomMap.put("address", room.getAddress());
+        roomMap.put("Furniture", room.getFurniture());
+        roomMap.put("Utilities", room.getUtilities());
+        roomMap.put("images", room.getImages());
+        roomMap.put("timestamp", System.currentTimeMillis());
 
-        if (TextUtils.isEmpty(edtArea.getText())) {
-            edtArea.setError("Vui lòng nhập diện tích");
-            isValid = false;
-        }
-
-        if (TextUtils.isEmpty(edtPhone.getText())) {
-            edtPhone.setError("Vui lòng nhập số điện thoại");
-            isValid = false;
-        }
-
-        if (spinnerCity.getSelectedItemPosition() == -1 ||
-                spinnerCity.getSelectedItem() == null ||
-                spinnerCity.getSelectedItem().toString().trim().isEmpty()) {
-            Toast.makeText(this, "Vui lòng chọn thành phố", Toast.LENGTH_SHORT).show();
-            isValid = false;
-        }
-
-        if (spinnerDistrict.getSelectedItemPosition() == -1 ||
-                spinnerDistrict.getSelectedItem() == null ||
-                spinnerDistrict.getSelectedItem().toString().trim().isEmpty()) {
-            Toast.makeText(this, "Vui lòng chọn quận/huyện", Toast.LENGTH_SHORT).show();
-            isValid = false;
-        }
-
-        String addressDetail = edtAddress.getText().toString().trim();
-        if (!addressDetail.isEmpty() && addressDetail.length() < 5) {
-            edtAddress.setError("Địa chỉ chi tiết phải ít nhất 5 ký tự");
-            isValid = false;
-        }
-
-        if (!genderCheckboxes[0].isChecked() && !genderCheckboxes[1].isChecked()) {
-            Toast.makeText(this, "Vui lòng chọn giới tính", Toast.LENGTH_SHORT).show();
-            isValid = false;
-        }
-
-        String phone = edtPhone.getText().toString().trim();
-        if (!phone.isEmpty() && !phone.matches("^\\d{10}$")) {
-            edtPhone.setError("Số điện thoại phải có 10 chữ số");
-            isValid = false;
-        }
-
-        try {
-            if (!TextUtils.isEmpty(edtArea.getText())) {
-                double area = Double.parseDouble(edtArea.getText().toString());
-                if (area <= 0) {
-                    edtArea.setError("Diện tích phải lớn hơn 0");
-                    isValid = false;
-                }
-            }
-            if (!TextUtils.isEmpty(edtPrice.getText())) {
-                long price = Long.parseLong(edtPrice.getText().toString());
-                if (price <= 0) {
-                    edtPrice.setError("Giá phòng phải lớn hơn 0");
-                    isValid = false;
-                }
+        roomRef.child("userLovePost").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult().getValue() != null) {
+                roomMap.put("userLovePost", task.getResult().getValue());
             }
 
-            if (!TextUtils.isEmpty(edtDeposit.getText())) {
-                long deposit = Long.parseLong(edtDeposit.getText().toString());
-                if (deposit < 0) {
-                    edtDeposit.setError("Tiền cọc không được âm");
-                    isValid = false;
-                }
-            }
-
-            if (!TextUtils.isEmpty(edtFloor.getText())) {
-                int floor = Integer.parseInt(edtFloor.getText().toString());
-                if (floor <= 0) {
-                    edtFloor.setError("Tầng phải lớn hơn 0");
-                    isValid = false;
-                }
-            }
-
-            if (!TextUtils.isEmpty(edtPerson.getText())) {
-                int person = Integer.parseInt(edtPerson.getText().toString());
-                if (person <= 0) {
-                    edtPerson.setError("Số người phải lớn hơn 0");
-                    isValid = false;
-                }
-            }
-
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "Vui lòng nhập số hợp lệ cho các trường số", Toast.LENGTH_SHORT).show();
-            isValid = false;
-        }
-
-        if (isValid && !TextUtils.isEmpty(edtTitleRoom.getText())) {
-            String title = edtTitleRoom.getText().toString().trim();
-            String originalTitle = roomData != null ? roomData.getRoomTitle() : "";
-
-            if (title.equals(originalTitle)) {
-                return true;
-            }
-
-            DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
-            roomsRef.orderByChild("roomTitle").equalTo(title)
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            boolean isDuplicate = false;
-
-                            for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
-                                String roomID = roomSnapshot.child("roomID").getValue(String.class);
-                                String ownerID = roomSnapshot.child("ownerID").getValue(String.class);
-
-                                if (roomID != null && ownerID != null &&
-                                        !roomID.equals(roomData.getRoomID()) &&
-                                        !ownerID.equals(userCurrent.getUid())) {
-                                    isDuplicate = true;
-                                    break;
-                                }
-                            }
-
-                            if (isDuplicate) {
-                                edtTitleRoom.setError("Tiêu đề này đã tồn tại, vui lòng chọn tiêu đề khác");
-                                edtTitleRoom.requestFocus();
-                            } else {
-                                proceedWithValidation();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            proceedWithValidation();
-                        }
+            roomRef.setValue(roomMap)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
-
-            return false;
-        }
-
-        return isValid;
+        }).addOnFailureListener(e -> {
+            roomRef.setValue(roomMap)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(updateError -> {
+                        Toast.makeText(EditRoomActivity.this, "Cập nhật thất bại: " + updateError.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        });
     }
 
     private Room createRoomObject() {
@@ -989,63 +1155,5 @@ public class EditRoomActivity extends AppCompatActivity {
             Toast.makeText(this, "Lỗi tạo dữ liệu phòng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             return null;
         }
-    }
-
-    private void uploadRoomToFirebase(Room room) {
-        if (room == null) {
-            Toast.makeText(this, "Lỗi: Dữ liệu phòng không hợp lệ", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference("Rooms");
-        DatabaseReference roomRef = postsRef.child(room.getRoomID());
-
-        Map<String, Object> roomMap = new HashMap<>();
-        roomMap.put("ownerID", room.getOwnerID());
-        roomMap.put("roomID", room.getRoomID());
-        roomMap.put("roomTitle", room.getRoomTitle());
-        roomMap.put("roomPrice", room.getRoomPrice());
-        roomMap.put("roomDeposit", room.getRoomDeposit());
-        roomMap.put("roomSize", room.getRoomSize());
-        roomMap.put("description", room.getDescription());
-        roomMap.put("gender", room.getGender());
-        roomMap.put("park_slot", room.getpark_slot());
-        roomMap.put("people_in_room", room.getpeople_in_room());
-        roomMap.put("roomStatus", room.getRoomStatus());
-        roomMap.put("roomType", room.getRoomType());
-        roomMap.put("phone", room.getPhone());
-        roomMap.put("floor", room.getFloor());
-        roomMap.put("electricPrice", room.getElectricPrice());
-        roomMap.put("waterPrice", room.getWaterPrice());
-        roomMap.put("internetPrice", room.getInternetPrice());
-        roomMap.put("address", room.getAddress());
-        roomMap.put("Furniture", room.getFurniture());
-        roomMap.put("Utilities", room.getUtilities());
-        roomMap.put("images", room.getImages());
-        roomMap.put("timestamp", System.currentTimeMillis());
-
-        roomRef.child("userLovePost").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult().getValue() != null) {
-                roomMap.put("userLovePost", task.getResult().getValue());
-            }
-
-            roomRef.setValue(roomMap)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(EditRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
-                        finish();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(EditRoomActivity.this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-        }).addOnFailureListener(e -> {
-            roomRef.setValue(roomMap)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(EditRoomActivity.this, "Cập nhật thông tin phòng thành công", Toast.LENGTH_SHORT).show();
-                        finish();
-                    })
-                    .addOnFailureListener(updateError -> {
-                        Toast.makeText(EditRoomActivity.this, "Cập nhật thất bại: " + updateError.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-        });
     }
 }
